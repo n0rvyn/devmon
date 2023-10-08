@@ -116,15 +116,20 @@ snmp:
       description: '主机名'
       show: True  # 为True，则该OID定义仅作为PM时展示用
 ssh:
+  username: 'root'
+  password: 'PASSWORD'
+  timeout: 30
+  auth_timeout: 30
+  banner_timeout: 30
+  invoke_shell: False
+  openssh: False
+  end_of_command: 'echo EOT'
+  end_of_symbol: 'EOT'
   entries:
-    - table: ''
-      label: ''
-      regexp: ''
-      read_name_from: ''
-      name_regexp: ''
-      reference: ''
-
-    - group:
-        - 'group command 1'
-        - 'group command 2'
-      label: ''
+    - table: 'free -m'
+      label: 'freeMemoryPercent'
+      regexp: grep Mem | awk '{print ($4/$2)}'
+      name_regexp: 'MemoryFreePercent'
+      watermark:
+        low: 0
+        high: 50

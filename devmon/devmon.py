@@ -683,8 +683,6 @@ class DevMon(object):
         def read_with_processing(agent: Agent):
             shared_list.extend(self._read_agent(agent, perf, pm, alert))
 
-        # TODO deleting this
-        start = time.perf_counter()
         multiprocessing.set_start_method('fork', force=True)
         with Manager() as manager:
             shared_list = manager.list()
@@ -694,7 +692,6 @@ class DevMon(object):
             [p.join() for p in proc]
 
             agents_entries_values = list(shared_list)
-        print('Multiprocessing: ', time.perf_counter() - start)
 
         # agents_entries_values = []
         if multithread:
