@@ -1,0 +1,46 @@
+---
+# device address which runs SNMP agent
+address: XIV_MGMT_ADDR  # the address which be listened by SNMP Daemon
+region: A  # the region of device, e.g. DCA, DCB, DataCenterA...
+area: Prod  # the business area
+addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
+snmp:
+  version: '2c'  # the SNMPD version
+  community: 'XIV'  # the SNMPD community
+  timeout: 2  # second(s) to timeout
+  retries: 1  # time(s) to retry after failed
+  mib: 'XIV-MIB'
+  OIDs:
+  # Filled Disks
+  - id: 'xivFailedDisks'
+    label: xivFailedDidks
+    explanation: '已故障硬盘'
+    watermark:
+      low: -1
+      high: 0
+  # xivMachineStatus
+  - id: 'xivMachineStatus'
+    label: 'xivMachineStatus'
+    explanation: 'XIV机器状态'
+    severity: '3'
+    reference: 'Full Redundancy'
+  - id: 'xivUtilizationSoft'
+    label: xivUtilizationSoft
+    explanation: 'XIV软使用率'
+    severity: '3'
+    watermark:
+      low: 80
+      high: 100
+  - id: 'xivUtilizationHard'
+    label: 'xivUtilizationHard'
+    explanation: 'XIV硬使用率'
+    severity: '3'
+    watermark:
+      low: 80
+      high: 100
+  # xivIfStatus
+  - id: 'xivIfStatus'
+    label: xivIfStatus
+    explanation: 'XIV接口状态'
+    reference: 'ok, ready'
+    severity: '1'

@@ -1,0 +1,78 @@
+---
+# 设备IP，SNMP Daemon接口地址，必选项
+address: SomeAddress
+# 设备物理区域， 如：DCA，DataCenterA...，必选项
+region: SomeRegion
+# 设备业务区域，如Dev, Prod...， 必选项
+area: SomeArea
+# 设备在CMDB中录入IP，用于关联CMDB中资源ID，必选项
+addr_in_cmdb: SomeAddr
+# 手动指定资源ID，如无此字段，则尝试在MongoDB(需先同步) 对应表中查找，可选项，数量少建议手动查找指定。
+rid: 'THis is resource ID'
+# SNMP客户端配置
+snmp:
+  # SNMP版本，2c或者3，必选项
+  version: '2c'
+  # SNMP团体名，如v3则不需要，v2c时必选
+  community: 'public'
+  # SNMP v3协议用户名，v3协议必选项
+  username: 'user1'
+  # SNMP MIB库，部分设备必选
+  mib: 'ANY-MIB'
+  # 博科系光纤交换机上下文（虚拟光交）ID，配置了虚拟光交的必选
+  context: 128
+  # snmpwalk读取OID超时时间，可选
+  timeout: 2
+  # snmpwalk读取OID失败后尝试次数，可选
+  retries: 1
+  # OID关联配置
+  OIDs:
+  # 以单个OID定义，id, id_range, table三必选一
+  - id: 'SNMPv2-MIB::sysName.0'
+    # OID标签，用于巡检展示分类（建议字符不宜过长），必选项
+    label: System Name
+    # OID解释，用于拼凑告警内容，必选项
+    explanation: '主机名'
+    # OID参考值，等于或包含OID读取值，则视为正常，否则触发告警，与watermark二必选一
+    reference: 'monitor'
+  # 以OID范围定义
+  - id_range:
+      # OID开始值，如果不以.1(为例)结尾，则默认起始索引为1，以id_range定义必选项
+      start: 'ifOperStatus.1'
+      # OID范围内的总数量，或以 'end' 关键字为终止ID，与'end'二必选一
+      count: 31  # the number of the OID range
+      # end: 'ifOperStatus.3'
+    label: 'NetworkInterface'
+    explanation: '网卡状态'
+    # OID名称或者描述需从其它OID读取的，则定义'related_symbol'，索引自动参考当前OID
+    # 注意：不以索引号结尾！！！
+    # 根据需要配置，可选。
+    related_symbol: 'IF-MIB::ifDescr'
+    reference: 'up(1)'  # a reference value which been considered as normal stat
+  # 列表定义OID，OID为列表入口(table entry)，三必选一
+  - table: 'hrStorageUsed'
+    # 需读取当前索引号的OID列表入口，可选项
+    table_index: 'hrStorageIndex'
+    label: 'Storage Used Percent'
+    explanation: '存储设备使用率'
+    # 用于拼凑告警内容，可选，有默认值。
+    alert: '严重异常，请管理员务必关注！'
+    # 需排除读取的索引号，可选。
+    exclude_index: '35, 36, 44, 73'
+    # 同上，读取OID实际名称或者描述，可选。
+    related_symbol: 'hrStorageDescr'
+    # 取值需计算，例如存储百分比，可选。
+    arithmetic: '%'
+    # 算术另一元的OID列表入口，'arithmetic', 'arith_symbol', 'arith_pos'三者在则同在，不在则都不在
+    arith_symbol: 'hrStorageSize'
+    # 额外取值的OID处于算术符号的位置（1或者2），1在前，2在后
+    arith_pos: 2
+    # OID结果需比对阈值（或者限制值）范围，与参考值二必选一。
+    watermark:
+      low: -1
+      high: 80
+      # 限制类型开关；
+      # True则该水位为限制区间：取值在low与high之间则告警，之外则正常；
+      # False则该水位为阈值区间，取值在low与high之间则正常，反之则告警；
+      # 可选值
+      # restricted: False

@@ -1,0 +1,93 @@
+---
+# device address which runs SNMP agent
+address: localhost  # the address which been listened by SNMP Daemon
+region: local  # the region of device, e.g. DCA, DCB, DataCenterA...
+area: localArea  # the business area
+addr_in_cmdb: localhost  # the address which related with Resource ID in CMDB
+snmp:
+  version: '2c'  # the SNMPD version
+  community: 'public'  # the SNMPD community
+  timeout: 2  # second(s) to timeout
+  retries: 1  # time(s) to retry after failed
+  OIDs:
+  - table: 'hrStorageUsed'
+    table_index: 'hrStorageIndex'
+    label: 'Storage Used Percent'
+    explanation: '存储设备使用率Table'
+    exclude_index: '35, 36, 44, 73'
+    related_symbol: 'hrStorageDescr'
+    arithmetic: '%'
+    arith_symbol: 'hrStorageSize'
+    arith_pos: 2
+    watermark:
+      low: 80
+      high: 100
+      restricted: True
+  - id: 'SNMPv2-MIB::sysName.0'
+    label: SystemName
+    explanation: '主机名'
+    reference: 'MacHome.local'
+  - id: 'HOST-RESOURCES-MIB::hrMemorySize.0'
+    label: 'Memory Size'
+    explanation: 'The Size of Memory'
+    reference: '16777216'
+  # OID configuration for Network Interface Cards' Stat
+  - id_range:
+      start: 'IF-MIB::ifOperStatus.1'  # the base part of an OID range
+      count: 31  # the number of the OID range
+    label: 'Network Interface'
+    explanation: '网卡状态'
+    related_symbol: 'IF-MIB::ifDescr'  # OID symbol to fetch a related name
+    reference: 'up(1)'  # a reference value which been considered as normal stat
+  # OID configuration for Memory Usage Percent
+  - id: 'UCD-SNMP-MIB::memTotalFree.0'
+    label: 'Memory Usage Percent'
+    explanation: '内存使用率'
+    arith_symbol: 'UCD-SNMP-MIB::memTotalReal'
+    arithmetic: '%'
+    arith_pos: 2
+    watermark:
+      low: 0
+      high: 50
+  - id: 'UCD-SNMP-MIB::memAvailSwap.0'
+    label: 'SWAP Available Percent'
+    explanation: '交换空间使用率'
+    arith_symbol: 'UCD-SNMP-MIB::memTotalSwap'
+    arithmetic: '%'
+    arith_pos: 2
+    watermark:
+      low: 80
+      high: 100
+  - id_range:
+      start: 'UCD-DISKIO-MIB::diskIOLA15.1'
+      end: 'UCD-DISKIO-MIB::diskIOLA15.32'
+    label: 'Disk I/O Load 15(minutes) Average'
+    explanation: '硬盘I/O负载15分钟平均值'
+    related_symbol: 'UCD-DISKIO-MIB::diskIODevice'
+    severity: '1'
+    watermark:
+      low: 50
+      high: 80
+      restricted: True
+  - id_range:
+      start: 'UCD-DISKIO-MIB::diskIOLA15.1'
+      end: 'UCD-DISKIO-MIB::diskIOLA15.32'
+    label: 'Disk I/O Load 15(minutes) Average'
+    explanation: '硬盘I/O负载15分钟平均值'
+    alert: '非常异常请持续关注'
+    related_symbol: 'UCD-DISKIO-MIB::diskIODevice'
+    severity: '3'
+    watermark:
+      low: 80
+      high: 100
+      restricted: True
+  - id: 'UCD-SNMP-MIB::ssCpuIdle.0'
+    label: 'CPU IDLE'
+    explanation: 'CPU空闲率'
+    alert: '异常请关注'
+    severity: '1'
+    watermark:
+      low: 0
+      high: 80
+      restricted: True
+
