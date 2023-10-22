@@ -10,9 +10,13 @@
 # File Name: pushmsg.py
 # Tools: PyCharm
 
+"""
+Pushing messages to remote log server
+"""
 from subprocess import getoutput
 from subprocess import getstatusoutput
 from platform import system
+from os import path
 import socket
 
 
@@ -22,6 +26,9 @@ class PushMsg(object):
         self.port = port
         self.nc = nc_path if nc_path else getoutput('which nc')
         self.nc_args = '-w1 -u'
+
+        # if not path.exists(self.nc):
+        #     raise FileNotFoundError
 
     def __push(self, msg: str):
         # for macOS, '-w1' means different with different nc versions.
@@ -52,6 +59,13 @@ class PushMsg(object):
 
 
 if __name__ == '__main__':
-    pass
+    pm = PushMsg('localhost', nc_path='/usr/bin/nc', port=10514)
+    print(pm.push(f"""{getoutput('date "+%y/%m/%d %H:%M:%S"')} Hello World! """))
+
+
+
+
+
+
 
 

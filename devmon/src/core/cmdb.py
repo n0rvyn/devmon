@@ -25,8 +25,7 @@ class CMDB(object):
         except pymysql.err.OperationalError as e:
             raise e
 
-    def select_id(self) -> list[dict]:
-        s = f"""select name, endpoint from t_cm_endpoint where endpoint like '300002%';"""
+    def select_id(self, sql: str = None) -> list[dict]:
         data = self.cursor.fetchall()
         l_data = []
 
@@ -50,4 +49,6 @@ class CMDB(object):
 
 
 if __name__ == '__main__':
-    pass
+    cmdb = CMDB('192.168.1.1', 'root', 'password', 'cmdb_db')
+    print(cmdb.select_id())
+

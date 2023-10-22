@@ -21,6 +21,7 @@ import os
 import sys
 from dataclasses import asdict
 
+
 _FILE_ = os.path.abspath(__file__)
 _SRC_ = os.path.abspath(os.path.join(_FILE_, '../../'))
 _CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
@@ -284,7 +285,7 @@ class OpenSSHClient(object):
 
 
 if __name__ == '__main__':
-    agt = SSHAgent('localhost', username='root', password='PASSWORD')
+    agt = SSHAgent('192.16.10.250', username='root', password='password')
 
     ssh = PySSHClient(agt)
     ssh.connect()

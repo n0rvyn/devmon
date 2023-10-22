@@ -50,9 +50,9 @@ class OID:
     table_index:      str = None
     related_symbol:   str = None  # an OID prefix which identifies the id's name or symbol
     exclude_index:    str = None  # OIDs' index excluded for some discontinuous OID table
-    label:            str = None  # the label of the OID, e.g. CPU, Memory, Fan...
+    label:            str = None  # the label of the OID, e.g., CPU, Memory, Fan...
     explanation:      str = None  # the meaning of OID
-    alert:            str = "异常请关注"  # the suffix of an alert
+    alert:            str = "异常，请持续关注"  # the suffix of an alert
     severity:    CaseServ = '1'
     reference:        str = None
     read_ref_from:    str = None  # read reference from another OID

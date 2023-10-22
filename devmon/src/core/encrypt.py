@@ -45,5 +45,9 @@ class HidePass(object):
 
 
 if __name__ == '__main__':
-    pass
+    hp = HidePass()
+    print(hp.encrypt('I love China', 5, 'loveShangHai%1998'))
+    print(hp.decrypt('I love China', 5, b'bG92ZVhJIGxvdmUgQ2hpbFJTiwNA5'))
+
+
 

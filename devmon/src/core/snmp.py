@@ -478,7 +478,7 @@ class SNMP(object):
 
 
 if __name__ == '__main__':
-    agent = SNMPAgent(address='localhost', community='public')
+    agent = SNMPAgent(address='192.16.10.250', community='public')
     snmp = SNMP(agent)
 
     # read single OID
