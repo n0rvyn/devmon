@@ -1,8 +1,8 @@
 ---
 # device address which runs SNMP agent
-address: SWITCH_MGMT_ADDR  # the address which been listened by SNMP Daemon
-region: A  # the region of device, e.g. DCA, DCB, DataCenterA...
-area: Prod  # the business area
+address: IBM_SWITCH_ADDR  # the address which been listened by SNMP Daemon
+region: DataCenterD  # the region of device, e.g. DCA, DCB, DataCenterA...
+area: Dev  # the business area
 addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
 snmp:
   version: '3'  # the SNMPD version
@@ -10,13 +10,13 @@ snmp:
   timeout: 2  # second(s) to timeout
   retries: 1  # time(s) to retry after failed
   oidbase: '1.3.6.1.4.1.1588.2.1.1.1'
-  username: 'USER1'
+  username: 'user1'
   context: '128'
   OIDs:
   - id: '1.6'
     label: Firmware
     explanation: '微码版本'
-    reference: 'v0.0.3'
+    reference: 'v7.2.1'
   - id: '1.7'
     label: SysStat
     explanation: '系统状态'

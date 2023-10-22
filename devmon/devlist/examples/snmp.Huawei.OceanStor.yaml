@@ -1,0 +1,17 @@
+---
+# device address which runs SNMP agent
+address: OceanStor_MGMT_ADDR # the address which been listened by SNMP Daemon
+region: DataCanter  # the region of device, e.g. DCA, DCB, DataCenterA...
+area: Test  # the business area
+addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
+snmp:
+  version: '2c'  # the SNMPD version
+  community: 'public'  # the SNMPD community
+  timeout: 2  # second(s) to timeout
+  retries: 1  # time(s) to retry after failed
+  OIDs:
+  - table: '1.3.6.1.4.1.34774.4.1.23.5.4'
+    table_index: ''
+    label: hwInfoFanTable
+    explanation: '微码版本'
+    reference: 'monitor'

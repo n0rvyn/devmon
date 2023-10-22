@@ -1,0 +1,44 @@
+---
+address: localhost
+region: DCC
+area: TBA
+addr_in_cmdb: 21.7.8.9
+snmp:
+  version: '2c'
+  community: 'public'
+  timeout: 3
+  retries: 1
+  OIDs:
+  - id: 'IP-MIB::ip.21.1.1.21.21.78.0'
+    type: 'IpAddress'
+    label: 'Address'
+    explanation: 'NIC gateway'
+    reference: '21.21.78.0'
+  - id_range:
+      start: 'HOST-RESOURCES-MIB::hrStorageIndex.1'
+      count: 4
+    type: ''
+    label: 'label'
+    explanation: 'exp'
+    watermark:
+      low: 5
+      high: 20
+  # OID table entry test
+  - id: 'UCD-SNMP-MIB::dskPercent'
+    type: 'INTEGER'
+    label: 'DISK'
+    explanation: 'disk usage percent'
+    watermark:
+      low: 0
+      high: 80
+  # OID(s) has related symbol
+  - id_range:
+      start: 'IF-MIB::ifOperStatus.6'
+      count: 31
+    type: 'INTEGER'
+    label: 'Interface Status'
+    explanation: 'if status'
+    related_symbol: 'IF-MIB::ifDescr'
+    exclude_index: 9, 18, 19, 32, 33, 34, 35, 36
+    reference: 'up(1)'
+

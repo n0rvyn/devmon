@@ -74,7 +74,7 @@ snmp:
       end: 'UCD-DISKIO-MIB::diskIOLA15.32'
     label: 'Disk I/O Load 15(min) Avg'
     explanation: '硬盘I/O负载15分钟平均值'
-    alert: '严重异常请务必关注'
+    alert: '严重异常，请管理员务必关注！'
     related_symbol: 'UCD-DISKIO-MIB::diskIODevice'
     severity: '3'
     watermark:
