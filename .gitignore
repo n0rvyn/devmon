@@ -9,6 +9,6 @@
 /dist
 __pycache__/
 *.py[cod]
-/log/*
+*.log
 /.venv/
 .idea
