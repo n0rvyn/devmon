@@ -1,8 +1,13 @@
 /devmon/crtrecords/
 /devmon/todo/
 /devmon/pymodules/
-/devmon/devlist/a-side/
-/devmon/devlist/b-side/
+/devmon/devlist/a-side/*
+/devmon/devlist/b-side/*
 /devmon/devlist/examples/example.IBM.TS3500.yaml
 /devmon/devlist/examples/example.ssh.linux.yaml
 /devmon/deprecated/
+/build
+/dist
+__pycache__/
+*.py[cod]
+/log/*
