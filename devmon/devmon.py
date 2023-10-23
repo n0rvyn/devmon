@@ -414,7 +414,7 @@ class DevMon(object):
 
     def update_case_attach(self, case_id: str = None, case: Case = None):
         """
-        Read the case created.
+        Read the case created
         update to the case which has the same fields (depends on method is_case_exit()) in the MongoDB (id=case_id)
         """
         attach = CaseUpdatePart()
@@ -520,7 +520,7 @@ class DevMon(object):
         else:
             for agent in agents:
                 # self._read_snmp_agent(agent)
-                read_agent(agent)  # result already append
+                read_agent(agent)  # result already appended
 
             # for agent, snmp, oid, l_voids, exclude_index in self.snmp_agents:
             for agent, oid, l_voids in snmp_agents:
@@ -606,7 +606,7 @@ class DevMon(object):
 
     def filter_alerts_not_published(self) -> list[dict]:
         """
-        Find out all 'dict'(s) in MongoDB those 'type' equal to '1' and alert not pushed to rsyslog server
+        Find out all dict(s) in MongoDB those 'type' equal to '1' and alert not pushed to rsyslog server
         """
         flt = {'type': '1', 'publish': 0}
         # flt = {'attach.type': '1', 'attach.publish': 0}
@@ -917,7 +917,6 @@ class DevMon(object):
     def pm_snmp(self):
         """
         Preventive maintenance for SNMP agents
-        :param side: [a | b]
         :return:
         """
         self.refresh_config()
