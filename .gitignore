@@ -12,3 +12,6 @@ __pycache__/
 *.log
 /.venv/
 .idea
+/devmon/devlist/maintaining/
+!/devmon/devlist/maintaining/.gitkeep
+
