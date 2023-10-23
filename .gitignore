@@ -1,3 +1,4 @@
+.vscode
 /devmon/crtrecords/
 /devmon/todo/
 /devmon/pymodules/
@@ -6,8 +7,11 @@
 /devmon/devlist/examples/example.IBM.TS3500.yaml
 /devmon/devlist/examples/example.ssh.linux.yaml
 /devmon/deprecated/
+<<<<<<< HEAD
 /build
 /dist
 __pycache__/
 *.py[cod]
 /log/*
+/.venv/
+.idea
