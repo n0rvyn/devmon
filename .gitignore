@@ -14,4 +14,5 @@ __pycache__/
 .idea
 /devmon/devlist/maintaining/
 !/devmon/devlist/maintaining/.gitkeep
-
+/devmon/devlist/a-side/
+!/devmon/devlist/a-side/.gitkeep
