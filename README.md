@@ -44,45 +44,44 @@ Python及其它语言也存在许多非常优秀的三方库，比如等等等�
 
 ## 文件结构
 
-├── CHANGELOG.md
-├── devmon
-│   ├── conf
-│   │   └── devmon.yaml
-│   ├── cre_service.sh
-│   ├── devlist
-│   │   └── examples
-│   │       ├── snmp.example.zh.yaml
-│   │       ├── snmp.general.linux.yaml
-│   │       ├── snmp.HillStone.Hxxxx.yaml
-│   │       ├── snmp.Huawei.OceanStor.yaml
-│   │       ├── snmp.Huawei.USG.yaml
-│   │       ├── snmp.IBM.SanSwitch.yaml
-│   │       ├── snmp.IBM.XIV.yaml
-│   │       ├── snmp.Juniper.Jxxxx.yaml
-│   │       └── snmp.TopSec.N4000.yaml
-│   ├── devmon.py
-│   └── src
-│       ├── core
-│       │   ├── cmdb.py
-│       │   ├── encrypt.py
-│       │   ├── __init__.py
-│       │   ├── log.py
-│       │   ├── mongo.py
-│       │   ├── pushmsg.py
-│       │   ├── readfile.py
-│       │   ├── snmp.py
-│       │   └── ssh.py
-│       ├── __init__.py
-│       └── type
-│           ├── case.py
-│           ├── __init__.py
-│           ├── oid.py
-│           ├── snmpagent.py
-│           ├── sshagent.py
-│           └── sshcmd.py
-├── README.md
-└── requirements.txt
-
+├── CHANGELOG.md  
+├── devmon  
+│   ├── conf  
+│   │   └── devmon.yaml  
+│   ├── cre_service.sh  
+│   ├── devlist  
+│   │   └── examples  
+│   │       ├── snmp.example.zh.yaml  
+│   │       ├── snmp.general.linux.yaml  
+│   │       ├── snmp.HillStone.Hxxxx.yaml  
+│   │       ├── snmp.Huawei.OceanStor.yaml  
+│   │       ├── snmp.Huawei.USG.yaml  
+│   │       ├── snmp.IBM.SanSwitch.yaml  
+│   │       ├── snmp.IBM.XIV.yaml  
+│   │       ├── snmp.Juniper.Jxxxx.yaml  
+│   │       └── snmp.TopSec.N4000.yaml  
+│   ├── devmon.py  
+│   └── src  
+│       ├── core  
+│       │   ├── cmdb.py  
+│       │   ├── encrypt.py  
+│       │   ├── __init__.py  
+│       │   ├── log.py  
+│       │   ├── mongo.py  
+│       │   ├── pushmsg.py  
+│       │   ├── readfile.py  
+│       │   ├── snmp.py  
+│       │   └── ssh.py  
+│       ├── __init__.py  
+│       └── type  
+│           ├── case.py  
+│           ├── __init__.py  
+│           ├── oid.py  
+│           ├── snmpagent.py  
+│           ├── sshagent.py  
+│           └── sshcmd.py  
+├── README.md  
+└── requirements.txt  
 
 ## 安装
 
