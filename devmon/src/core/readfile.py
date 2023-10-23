@@ -53,8 +53,8 @@ def ReadConfig():
     try:
         with open(_CONFIG_, 'r+') as f:
             config = safe_load(f)
-    except Exception as e:
-        print(e)
+    except Exception as err:
+        print(err)
 
     return config
 

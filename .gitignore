@@ -12,3 +12,4 @@ __pycache__/
 *.log
 /.venv/
 .idea
+/qodana.yaml
