@@ -21,6 +21,11 @@ snmp:
     label: SysStat
     explanation: '系统状态'
     reference: '1'  # '1': 'online', '2': 'offline', '3': 'testing', '4': 'faulty'
+    enum:
+      1: 'online'
+      2: 'offline'
+      3: 'testing'
+      4: 'faulty'
     severity: '3'
   - table: '1.22.1.3'
     table_index: '1.22.1.1'
@@ -28,5 +33,12 @@ snmp:
     label: SensorStat
     explanation: '传感器状态'
     reference: '4'  # 1: unknown, 2: faulty, 3: below-min, 4: nominal, 5: above-max, 6: absent
+    enum:
+      1: unknown
+      2: faulty
+      3: below-min
+      4: nominal
+      5: above-max
+      6: absent
 
 

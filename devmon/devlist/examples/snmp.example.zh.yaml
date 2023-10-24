@@ -11,6 +11,10 @@ addr_in_cmdb: SomeAddr
 rid: 'THis is resource ID'
 # 每个厂家有对应的OID，为缩短下属OID定义，可以将共有的部分添加为‘base’
 base: '1.a.b.c.d'
+# 参考值转义字典；单个OID中的定义会覆写全局定义。
+enum:
+  1: Online
+  2: Offline
 # SNMP客户端配置
 snmp:
   # SNMP版本，2c或者3，必选项
@@ -30,13 +34,20 @@ snmp:
   # OID关联配置
   OIDs:
   # 以单个OID定义，id, id_range, table三必选一
-  - id: 'SNMPv2-MIB::sysName.0'
+  - id: '1.22.1.3'
     # OID标签，用于巡检展示分类（建议字符不宜过长），必选项
-    label: System Name
+    label: SystemStat
     # OID解释，用于拼凑告警内容，必选项
-    explanation: '主机名'
+    explanation: '系统状态'
     # OID参考值，等于或包含OID读取值，则视为正常，否则触发告警，与watermark二必选一
-    reference: 'monitor'
+    reference: '1'
+    # 将 'reference' 中的值转义成目标字符串；
+    # 如网络设备参考值1代表 'online' ，则执行巡检（pm）功能时，将会显示online，如果定义了以下字典
+    # enum为固定值，‘参考值-显示值’组成key-value对。
+    enum:
+      1: 'Online'
+      2: 'Offline'
+      3: 'Unknown'
   # 以OID范围定义
   - id_range:
       # OID开始值，如果不以.1(为例)结尾，则默认起始索引为1，以id_range定义必选项

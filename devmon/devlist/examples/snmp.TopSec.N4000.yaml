@@ -1,7 +1,7 @@
 ---
 # device address which runs SNMP agent
-address: TopSec_MGMT_ADDR  # the address which been listened by SNMP Daemon
-region: DataCenter  # The region of device, e.g. DCA, DCB, DataCenterA...
+address: TopSec_MGMT_ADDR  # the address which been listened to by SNMP Daemon
+region: DataCenter  # The region of device, e.g., DCA, DCB, DataCenterA...
 area: TopSec_N4000  # the business area
 addr_in_cmdb: ADDRESS_IN_CMDB  # the address which related with Resource ID in CMDB
 rid: 'This is resource ID'
