@@ -43,7 +43,8 @@ snmp:
     reference: '1'
     # 将 'reference' 中的值转义成目标字符串；
     # 如网络设备参考值1代表 'online' ，则执行巡检（pm）功能时，将会显示online，如果定义了以下字典
-    # enum为固定值，‘参考值-显示值’组成key-value对。
+    # enum为固定值，‘参考值-显示值’组成key-value对
+    # OID私有字典优先于全局定义
     enum:
       1: 'Online'
       2: 'Offline'
