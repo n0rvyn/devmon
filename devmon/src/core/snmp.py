@@ -100,7 +100,7 @@ class SNMP(object):
                 return None
 
             val_type = output.split(':')[0]
-            if val_type == 'INTEGER':
+            if val_type in ['INTEGER', 'Counter64']:
                 val = output.split()[1].strip()
             else:
                 val = output.split(':')[-1].strip()
