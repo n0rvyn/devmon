@@ -88,7 +88,8 @@ class SNMP(object):
         if output.startswith('Timeout'):  # once the snmpd is not reachable, set the parameter to False --> line: 49
             self.snmpd_stat = False  # the SNMPD server is not respond
 
-        value = output.split('=')[-1].strip()
+        # value = output.split('=')[-1].strip()
+        value = output.split('=')[-1].strip().strip('"')  # for some values been surrounded by `"
         # return output if code == 0 and value != NO_VALUE_ERR else None
         return output if code == 0 and value not in NO_VALUE_ERR else None
 
@@ -101,9 +102,9 @@ class SNMP(object):
 
             val_type = output.split(':')[0]
             if val_type in ['INTEGER', 'Counter64']:
-                val = output.split()[1].strip()
+                val = output.split()[1].strip().strip('"')  # values include `"
             else:
-                val = output.split(':')[-1].strip()
+                val = output.split(':')[-1].strip().strip('"')  # values include `"
         else:
             val = None
 
@@ -153,7 +154,7 @@ class SNMP(object):
                     *_, index = oid.split('.')
 
                     void.index = index.strip()
-                    void.value = val.strip()
+                    void.value = val.strip().strip('"')  # for some values included `"
                 except ValueError:
                     void.index = void.value = None
                 voids.append(void)
@@ -386,7 +387,7 @@ class SNMP(object):
         output = self._read_oid(table, outopts='Q')
         l_oid_vals = output.split('\n') if output else []
         # l_oid_vals = self._read_oid(table, outopts='Q').split('\n')
-        return [o_v.split('=')[-1].strip() for o_v in l_oid_vals]
+        return [o_v.split('=')[-1].strip().strip('"') for o_v in l_oid_vals]  # add strip('"') for values `"value`"
 
     def _read_table(self,
                     table: str = None,
