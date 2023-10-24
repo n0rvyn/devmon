@@ -938,7 +938,7 @@ class DevMon(object):
                 name = '阈值区'
 
             if c.alert:
-                err = f'标签{c.oid.label:36s}{c.current_value:14s}{name}{c.threshold:10s}设备{obj:20s}'
+                err = f'标签{c.oid.label:30s}{c.current_value:20s}{name}{c.threshold:10s}设备{obj:20s}'
                 faulty = 1
             else:
                 err = ''
