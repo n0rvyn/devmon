@@ -59,7 +59,9 @@ class OID:
     watermark:  WaterMark = None
     arithmetic: ArithType = None
     arith_symbol:     str = None
-    arith_pos:   ArithPos = 2
+    arith_pos:   ArithPos = 2  # a / b; b takes the position of 2
+
+    # todo add support for OID values need to be combined
 
 
 @dataclass
