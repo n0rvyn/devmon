@@ -79,7 +79,7 @@ def ReadAgents():
             raise
 
         for fl in os.listdir(d):
-            if fl.startswith('example'):
+            if fl.startswith(('example', '.git')):  # ignore .gitignore
                 continue
             try:
                 p = os.path.join(d, fl)
