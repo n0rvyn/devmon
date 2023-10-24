@@ -275,7 +275,17 @@ class DevMon(object):
         else:
             obj = f'{oid.label}'
 
-        if oid.enum:  # transform int values to human-readable words
+        if snmp_agent.enum:  # transform int values to human-readable words
+            try:
+                void.value = snmp_agent.enum[void.value]
+            except KeyError:
+                pass
+            try:
+                threshold = snmp_agent.enum[threshold]
+            except KeyError:
+                pass
+
+        if oid.enum:  # 'enum' for single OID will rewrite the definition from SNMPAgent
             try:
                 void.value = oid.enum[void.value]
             except KeyError:
