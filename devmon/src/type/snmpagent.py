@@ -22,7 +22,9 @@ OutOpts = Literal[
 class SNMPAgent:
     address: str
     region: str = None  # Data Center, e.g. DCA, DCB...
-    area: str = None  # business area, e.g. CBP, MBA...
+    area: str = None  # Business area, e.g. CBP, MBA...
+    # description: str = 'Unknown'  # the device name or description
+    # todo add a name for device; the key already exist in Case(); file: devmon.py line: 288
     addr_in_cmdb: str = None  # an address related with CMDB resource ID
     rid: str = None  # the device resource ID in CMDB
     community: str = 'public'
