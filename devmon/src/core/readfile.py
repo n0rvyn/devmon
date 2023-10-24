@@ -84,7 +84,7 @@ def ReadAgents():
             try:
                 p = os.path.join(d, fl)
                 with open(p, 'r+') as f:
-                    dev_detail = safe_load(f)
+                    dev_detail: dict = safe_load(f)  # todo waiting for verify
             except Exception as err:
                 raise err
 
@@ -109,10 +109,15 @@ def ReadAgents():
             except KeyError:
                 addr_in_cmdb = address
 
+            # todo waiting for verify
+            snmp_agent = SNMPAgent()
+            for key, val in dev_detail.items():  # modify from line: 120 snmp_agent = ...
+                snmp_agent.__setattr__(key, val)
+
             try:
                 snmp_detail = dev_detail['snmp']
 
-                snmp_agent = SNMPAgent(address=address, region=region, area=area, addr_in_cmdb=addr_in_cmdb)
+                # snmp_agent = SNMPAgent(address=address, region=region, area=area, addr_in_cmdb=addr_in_cmdb)
                 d_snmp_agent = asdict(snmp_agent)
 
                 l_oids = []  # a list of all OIDs' details for a single snmp agent
