@@ -40,15 +40,16 @@ snmp:
       low: -1
       high: 80
   # OID configuration for Memory Usage Percent
-  - id: 'UCD-SNMP-MIB::memTotalFree.0'
+  - id: 'UCD-SNMP-MIB::memSysAvail.0'
     label: 'MemoryFreePercent'
     explanation: '内存使用率'
-    arith_symbol: 'UCD-SNMP-MIB::memTotalReal'
+    arith_symbol: 'memTotalRealX'
     arithmetic: '%'
     arith_pos: 2
     watermark:
-      low: 80
-      high: 100
+      low: 0
+      high: 20
+      restricted: True
   - id: 'UCD-SNMP-MIB::memAvailSwap.0'
     label: 'SWAPAvailablePercent'
     explanation: '交换空间使用率'
