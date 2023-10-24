@@ -275,6 +275,16 @@ class DevMon(object):
         else:
             obj = f'{oid.label}'
 
+        if oid.enum:  # transform int values to human-readable words
+            try:
+                void.value = oid.enum[void.value]
+            except KeyError:
+                pass
+            try:
+                threshold = oid.enum[threshold]
+            except KeyError:
+                pass
+
         if void.desc:
             content = f'{void.desc}{oid.explanation}{oid.alert} 阈值{threshold}'
         else:
