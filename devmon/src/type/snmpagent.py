@@ -32,5 +32,5 @@ class SNMPAgent:
     mib: str = None
     retries: int = 3
     timeout: int = 10
-    oidbase: str = None  # file: snmp.py line: 51
+    base: str = None  # file: snmp.py line: 59
     OIDs: [OID] = None

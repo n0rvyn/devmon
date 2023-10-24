@@ -62,6 +62,7 @@ class OID:
     arith_pos:   ArithPos = 2  # a / b; b takes the position of 2
 
     # todo add support for OID values need to be combined
+    # todo add support for OID values need to be arithmetic with more than 2 values.
 
 
 @dataclass

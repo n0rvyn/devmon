@@ -56,13 +56,13 @@ class SNMP(object):
         if not self.snmpd_stat or not oid:
             return None
 
-        if self.agent.oidbase:
-            if not self.agent.oidbase.endswith('.') and not oid.startswith('.'):
-                oid = f'{self.agent.oidbase}.{oid}'
-            elif self.agent.oidbase.endswith('.') and oid.startswith('.'):
-                oid = f'{self.agent.oidbase}.{oid}'
+        if self.agent.base:
+            if not self.agent.base.endswith('.') and not oid.startswith('.'):
+                oid = f'{self.agent.base}.{oid}'
+            elif self.agent.base.endswith('.') and oid.startswith('.'):
+                oid = f'{self.agent.base}.{oid}'
             else:
-                oid = f'{self.agent.oidbase}{oid}'
+                oid = f'{self.agent.base}{oid}'
 
         ver = f'-v {self.agent.version}'
         retries = f'-r {self.agent.retries}'
