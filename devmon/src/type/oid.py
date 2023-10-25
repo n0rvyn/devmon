@@ -49,7 +49,8 @@ class OID:
     table:            str = None
     table_index:      str = None
     related_symbol:   str = None  # an OID prefix which identifies the id's name or symbol
-    exclude_index:    str = None  # OIDs' index excluded for some discontinuous OID table
+    exclude_index:    str = None  # OIDs' index excluded for some discontinuous OID table; for oid -> snmp.py line: 214
+    exclude_value:    str = None  # exclude values from values' list; for table -> snmp.py line: 452
     label:            str = None  # the label of the OID, e.g., CPU, Memory, Fan...
     explanation:      str = None  # the meaning of OID
     alert:            str = "异常，请持续关注"  # the suffix of an alert

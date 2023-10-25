@@ -72,7 +72,9 @@ snmp:
     # 用于拼凑告警内容，可选，有默认值。
     alert: '严重异常，请管理员务必关注！'
     # 需排除读取的索引号，可选。
-    exclude_index: '35, 36, 44, 73'
+    exclude_index: '7, 8, 10, 11, 37, 38, 41'
+    # 需排除的读取值，可选。
+    exclude_value: '/mnt'
     # 同上，读取OID实际名称或者描述，可选。
     related_symbol: 'hrStorageDescr'
     # 取值需计算，例如存储百分比，可选。
