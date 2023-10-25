@@ -275,31 +275,44 @@ class DevMon(object):
         else:
             obj = f'{oid.label}'
 
-        # if snmp_agent.enum or oid.enum:  # transform int values to human-readable words
-        #     try:
-        #         void.value = snmp_agent.enum[void.value]
-        #     except KeyError:
-        #         pass
-        #     try:
-        #         threshold = snmp_agent.enum[threshold]
-        #     except KeyError:
-        #         pass
+        def _trans_enum(_agent: SNMPAgent = None, _oid: OID = None, _entry: str = None, delimiter: str = ','):
+            _lst_val = [v.strip() for v in _entry.split(delimiter)]
+            _rtn_val = []
+
+            for _val in _lst_val:
+                try:
+                    _rtn_val.append(_oid.enum[_val])
+                except (KeyError, TypeError):
+                    try:
+                        _rtn_val.append(_agent.enum[_val])
+                    except (KeyError, TypeError):
+                        pass
+            return f'{delimiter}'.join(_rtn_val)
 
         if oid.enum or snmp_agent.enum:  # 'enum' for single OID will rewrite the definition from SNMPAgent
-            try:
-                void.value = oid.enum[void.value]
-            except (KeyError, TypeError):
-                try:
-                    void.value = snmp_agent.enum[void.value]
-                except (KeyError, TypeError):
-                    pass
-            try:
-                threshold = oid.enum[threshold]
-            except (KeyError, TypeError):
-                try:
-                    threshold = snmp_agent.enum[threshold]
-                except (KeyError, TypeError):
-                    pass
+            val = _trans_enum(snmp_agent, oid, void.value)
+            thd = _trans_enum(snmp_agent, oid, threshold)
+        else:
+            val = void.value
+            thd = threshold
+
+            # try:
+            #     void.value = oid.enum[void.value]
+            # except (KeyError, TypeError):
+            #     try:
+            #         void.value = snmp_agent.enum[void.value]
+            #     except (KeyError, TypeError):
+            #         pass
+            # try:
+            #     threshold = oid.enum[threshold]
+            # except (KeyError, TypeError):
+            #     try:
+            #         threshold = snmp_agent.enum[threshold]
+            #     except (KeyError, TypeError):
+            #         pass
+
+        threshold = thd
+        void.value = val  # void of modifying rest of the code
 
         if void.desc:
             content = f'{void.desc}{oid.explanation}{oid.alert} 阈值{threshold}'
