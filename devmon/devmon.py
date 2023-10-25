@@ -950,7 +950,9 @@ class DevMon(object):
 
         all_stats = {}
         for c in cases:
-            if c.count == 0:
+            # if c.count == 0:
+            #     continue
+            if not c.void:
                 continue
 
             if c.void.desc:
