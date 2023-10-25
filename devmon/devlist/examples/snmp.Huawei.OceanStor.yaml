@@ -5,22 +5,22 @@ region: DataCanter  # the region of device, e.g. DCA, DCB, DataCenterA...
 area: Test  # the business area
 addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
 enum:
-  0: '---'
-  1: Normal
-  2: Fault
-  3: Pre-fail
-  4: Partially broken
-  5: Degraded
-  6: Bad sectors found
-  7: Bit errors found
-  8: Consistent
-  9: Inconsistent
-  10: Busy
-  11: No input
-  12: Low battery
-  13: Single link fault
-  14: Invalid
-  15: Write protect
+  '0': '---'
+  '1': Normal
+  '2': Fault
+  '3': Pre-fail
+  '4': Partially broken
+  '5': Degraded
+  '6': Bad sectors found
+  '7': Bit errors found
+  '8': Consistent
+  '9': Inconsistent
+  '10': Busy
+  '11': No input
+  '12': Low battery
+  '13': Single link fault
+  '14': Invalid
+  '15': Write protect
 snmp:
   version: '2c'  # the SNMPD version
   community: 'public'  # the SNMPD community

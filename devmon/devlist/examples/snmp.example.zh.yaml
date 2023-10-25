@@ -13,8 +13,8 @@ rid: 'THis is resource ID'
 base: '1.a.b.c.d'
 # 参考值转义字典；单个OID中的定义会覆写全局定义。
 enum:
-  1: Online
-  2: Offline
+  '1': Online
+  '2': Offline
 # SNMP客户端配置
 snmp:
   # SNMP版本，2c或者3，必选项
@@ -46,9 +46,9 @@ snmp:
     # enum为固定值，‘参考值-显示值’组成key-value对
     # OID私有字典优先于全局定义
     enum:
-      1: 'Online'
-      2: 'Offline'
-      3: 'Unknown'
+      '1': 'Online'
+      '2': 'Offline'
+      '3': 'Unknown'
   # 以OID范围定义
   - id_range:
       # OID开始值，如果不以.1(为例)结尾，则默认起始索引为1，以id_range定义必选项

@@ -40,10 +40,10 @@ snmp:
     severity: '1'
     reference: '2'  # notSupported (1)、hotStandby(2)、coldStandby(3)、providingService(4) 缺省值：notSupported(1)
     enum:
-      1: notSupported
-      2: hotStandby
-      3: coldStandby
-      4: providingService
+      '1': notSupported
+      '2': hotStandby
+      '3': coldStandby
+      '4': providingService
 # Trunk member status
   - table: '1.3.6.1.4.1.2011.5.25.41.1.4.1.1.6'
     label: 'hwTrunkOperstatus'
@@ -51,8 +51,8 @@ snmp:
     severity: '1'
     reference: '1'  # 1: up, 2: down
     enum:
-      1: up
-      2: down
+      '1': up
+      '2': down
 
 
 

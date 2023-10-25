@@ -13,7 +13,7 @@ snmp:
   OIDs:
   # Filled Disks
   - id: 'xivFailedDisks'
-    label: xivFailedDidks
+    label: xivFailedDisks
     explanation: '已故障硬盘'
     watermark:
       low: -1
@@ -30,14 +30,16 @@ snmp:
     severity: '3'
     watermark:
       low: 80
-      high: 100
+      high: 101
+      restricted: True
   - id: 'xivUtilizationHard'
     label: 'xivUtilizationHard'
     explanation: 'XIV硬使用率'
     severity: '3'
     watermark:
       low: 80
-      high: 100
+      high: 101
+      restricted: True
   # xivIfStatus
   - id: 'xivIfStatus'
     label: xivIfStatus
