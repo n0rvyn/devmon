@@ -47,10 +47,11 @@ OUTOPTS = Literal[
 
 
 class SNMP(object):
-    def __init__(self, snmp_agent: SNMPAgent = None, snmpwalk: str = '/usr/bin/snmpwalk'):
+    def __init__(self, snmp_agent: SNMPAgent = None, snmpwalk: str = '/usr/bin/snmpwalk', context: str = None):
         self.agent = snmp_agent
         self.snmpwalk = snmpwalk
         self.snmpd_stat = True
+        self.context = context
 
     def _read_oid(self, oid: str, outopts: OUTOPTS = 'U') -> Optional[str]:
         if not self.snmpd_stat or not oid:
@@ -70,7 +71,7 @@ class SNMP(object):
         comm = f"-c '{self.agent.community}'" if self.agent.version != '3' else ''
         user = f'-u {self.agent.username}'  # todo adding SanSwitch VF support
         mib = f'-m {self.agent.mib}' if self.agent.mib else ''
-        cont = f'-n VF:{self.agent.context}' if self.agent.context else ''
+        cont = f'-n VF:{self.context}' if self.context else ''
 
         if '!' in comm:
             self.snmpwalk = f'set +H; {self.snmpwalk}'
@@ -110,83 +111,83 @@ class SNMP(object):
 
         return val
 
-    def ____read_related_symbol(self, index: str = None, symbol: str = None) -> Optional[str]:
-        """
-        UCD-SNMP-MIB::dskDevice.31 = STRING: /dev/mapper/rootvg-lv_portage
+    # def ____read_related_symbol(self, index: str = None, symbol: str = None) -> Optional[str]:
+    #     """
+    #     UCD-SNMP-MIB::dskDevice.31 = STRING: /dev/mapper/rootvg-lv_portage
+    #
+    #     lookup OID's symbol by 'UCD-SNMP-MIB::dskPercent.31 = INTEGER: 89'
+    #     :return:
+    #     """
+    #     try:
+    #         int(index)
+    #         oid = f'{symbol}.{index}'
+    #         return self._read_oid_val(oid)
+    #     except ValueError:
+    #         return None
 
-        lookup OID's symbol by 'UCD-SNMP-MIB::dskPercent.31 = INTEGER: 89'
-        :return:
-        """
-        try:
-            int(index)
-            oid = f'{symbol}.{index}'
-            return self._read_oid_val(oid)
-        except ValueError:
-            return None
-
-    def ___read(self,
-                oid: str = None,
-                oid_end: str = None,
-                count: int = None) -> list[VOID]:
-        """
-        Notice:
-            'oid_from' ends with 'int' or not both are acceptable.
-            'oid_to' MUST ends with 'int' to count the number of loop
-            'oid_to' has high priority than 'count'
-        """
-        # type_ad_values = []
-        voids = []
-
-        if not oid_end and not count:  # oid specified can be single OID or table entry
-            try:
-                output_lines = self._read_oid(oid).split('\n')  # todo this is for reading a OID table
-            except AttributeError:
-                # return [(None, None)]
-                return [VOID()]
-
-            for ln in output_lines:
-                void = VOID()  # reset the VOID dataclass
-                try:
-                    # type_val, val = l.split(':')
-                    # HOST-RESOURCES-MIB::hrSWRunPerfMem.1199 = INTEGER: 8
-                    oid, value = ln.split('=')
-                    *_, val = value.split(':')
-                    *_, index = oid.split('.')
-
-                    void.index = index.strip()
-                    void.value = val.strip().strip('"')  # for some values included `"
-                except ValueError:
-                    void.index = void.value = None
-                voids.append(void)
-
-            return voids
-
-        index_to = None
-        try:
-            try:
-                index_from = int(oid.split('.')[-1])
-                oid_prefix = '.'.join(oid.split('.')[0:-1])
-            except ValueError:
-                index_from = 1
-                oid_prefix = oid
-
-            if oid_end:
-                try:
-                    index_to = int(oid_end.split('.')[-1]) + 1
-                except ValueError:
-                    raise 'OID format error!'
-
-            elif count:
-                index_to = index_from + count
-
-            for i in range(index_from, index_to):
-                # type_ad_values.append(self.read(f'{oid_prefix}.{str(i)}'))
-                voids.extend(self.read(f'{oid_prefix}.{str(i)}'))  # call the function itself???
-
-        except IndexError:
-            pass
-
-        return voids
+    # def ___read(self,
+    #             oid: str = None,
+    #             oid_end: str = None,
+    #             count: int = None) -> list[VOID]:
+    #     """
+    #     Notice:
+    #         'oid_from' ends with 'int' or not both are acceptable.
+    #         'oid_to' MUST ends with 'int' to count the number of loop
+    #         'oid_to' has high priority than 'count'
+    #     """
+    #     # type_ad_values = []
+    #     voids = []
+    #
+    #     if not oid_end and not count:  # oid specified can be single OID or table entry
+    #         try:
+    #             output_lines = self._read_oid(oid).split('\n')  # todo this is for reading a OID table
+    #         except AttributeError:
+    #             # return [(None, None)]
+    #             return [VOID()]
+    #
+    #         for ln in output_lines:
+    #             void = VOID()  # reset the VOID dataclass
+    #             try:
+    #                 # type_val, val = l.split(':')
+    #                 # HOST-RESOURCES-MIB::hrSWRunPerfMem.1199 = INTEGER: 8
+    #                 oid, value = ln.split('=')
+    #                 *_, val = value.split(':')
+    #                 *_, index = oid.split('.')
+    #
+    #                 void.index = index.strip()
+    #                 void.value = val.strip().strip('"')  # for some values included `"
+    #             except ValueError:
+    #                 void.index = void.value = None
+    #             voids.append(void)
+    #
+    #         return voids
+    #
+    #     index_to = None
+    #     try:
+    #         try:
+    #             index_from = int(oid.split('.')[-1])
+    #             oid_prefix = '.'.join(oid.split('.')[0:-1])
+    #         except ValueError:
+    #             index_from = 1
+    #             oid_prefix = oid
+    #
+    #         if oid_end:
+    #             try:
+    #                 index_to = int(oid_end.split('.')[-1]) + 1
+    #             except ValueError:
+    #                 raise 'OID format error!'
+    #
+    #         elif count:
+    #             index_to = index_from + count
+    #
+    #         for i in range(index_from, index_to):
+    #             # type_ad_values.append(self.read(f'{oid_prefix}.{str(i)}'))
+    #             voids.extend(self.___read(f'{oid_prefix}.{str(i)}'))  # call the function itself???
+    #
+    #     except IndexError:
+    #         pass
+    #
+    #     return voids
 
     def _read_id(self,
                  oid: str = None,
@@ -291,19 +292,19 @@ class SNMP(object):
 
         return voids
 
-    def ____read_by_index_ad_symbol(self, index: str = None, symbol: str = None) -> VOID:
-        """
-        UCD-SNMP-MIB::dskDevice.31 = STRING: /dev/mapper/rootvg-lv_portage
-
-        lookup OID's symbol by 'UCD-SNMP-MIB::dskPercent.31 = INTEGER: 89'
-        :return:
-        """
-        try:
-            int(index)
-            oid = f'{symbol}.{index}'
-            return self.read(oid=oid)[0]
-        except ValueError:
-            return VOID()
+    # def ____read_by_index_ad_symbol(self, index: str = None, symbol: str = None) -> VOID:
+    #     """
+    #     UCD-SNMP-MIB::dskDevice.31 = STRING: /dev/mapper/rootvg-lv_portage
+    #
+    #     lookup OID's symbol by 'UCD-SNMP-MIB::dskPercent.31 = INTEGER: 89'
+    #     :return:
+    #     """
+    #     try:
+    #         int(index)
+    #         oid = f'{symbol}.{index}'
+    #         return self.read(oid=oid)[0]
+    #     except ValueError:
+    #         return VOID()
 
     @staticmethod
     def _arith_value(arith: ArithType = None,
@@ -375,21 +376,21 @@ class SNMP(object):
 
         return val
 
-    def ____read_ref_from_value(self, index: str = None, symbol: str = None) -> str:
-        """
-        Read OID reference (if it has one) from another OID which has the same index
-        """
-        reference = None
-        try:
-            int(index)
-            oid = f'{symbol}.{index}'
-            reference = self._read_oid_val(oid)
-        except ValueError:
-            pass
-        except AttributeError:
-            pass
-
-        return reference
+    # def ____read_ref_from_value(self, index: str = None, symbol: str = None) -> str:
+    #     """
+    #     Read OID reference (if it has one) from another OID which has the same index
+    #     """
+    #     reference = None
+    #     try:
+    #         int(index)
+    #         oid = f'{symbol}.{index}'
+    #         reference = self._read_oid_val(oid)
+    #     except ValueError:
+    #         pass
+    #     except AttributeError:
+    #         pass
+    #
+    #     return reference
 
     def _read_table_vals(self, table: str = None):
         output = self._read_oid(table, outopts='Q')
@@ -401,7 +402,6 @@ class SNMP(object):
         output = self._read_oid(table, outopts='Q')
         l_oid_vals = output.split('\n') if output else []
         return [o_v.split('=')[0].strip().split('.')[-1] for o_v in l_oid_vals]
-
 
     def _read_table(self,
                     table: str = None,
@@ -499,6 +499,22 @@ class SNMP(object):
                                      reference_symbol_table=oid.read_ref_from,
                                      arith=oid.arithmetic,
                                      arith_pos=oid.arith_pos)
+
+        return voids
+
+
+class ContextSNMP(object):
+    def __init__(self, snmp_agent: SNMPAgent, snmpwalk: str = '/usr/bin/snmpwalk'):
+        context = snmp_agent.context
+        context = context if context else [None]  # [None] instead of [] because [None] has 1 loop, [] is nothing.
+
+        self.snmps = [SNMP(snmp_agent, snmpwalk, c) for c in context]
+
+    def read_oid_dc(self, oid: OID = None) -> list[VOID]:
+        voids = []
+        for s in self.snmps:
+            void = s.read_oid_dc(oid)
+            voids.extend(void) if void else []
 
         return voids
 

@@ -2,21 +2,14 @@
 # -*- coding: utf-8 -*-
 try:
     from readfile import ReadConfig, ReadAgents
-    from snmp import SNMP
+    from snmp import SNMP, ContextSNMP
     from log import ColorLogger
     from pushmsg import PushMsg
     from mongo import MongoDB
     from cmdb import CMDB
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     from .readfile import ReadConfig, ReadAgents
-    from .snmp import SNMP
-    from .log import ColorLogger
-    from .pushmsg import PushMsg
-    from .mongo import MongoDB
-    from .cmdb import CMDB
-except ImportError:
-    from .readfile import ReadConfig, ReadAgents
-    from .snmp import SNMP
+    from .snmp import SNMP, ContextSNMP
     from .log import ColorLogger
     from .pushmsg import PushMsg
     from .mongo import MongoDB
@@ -31,5 +24,6 @@ __all__ = [
     'ColorLogger',
     'PushMsg',
     'MongoDB',
-    'CMDB'
+    'CMDB',
+    'ContextSNMP'
 ]

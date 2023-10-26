@@ -25,8 +25,10 @@ snmp:
   username: 'user1'
   # SNMP MIB库，部分设备必选
   mib: 'ANY-MIB'
-  # 博科系光纤交换机上下文（虚拟光交）ID，配置了虚拟光交的必选
-  context: 128
+  # 博科系光纤交换机上下文（虚拟光交）IDs，配置了虚拟光交的必选
+  context:
+    - '1'
+    - '2'
   # snmpwalk读取OID超时时间，可选
   timeout: 2
   # snmpwalk读取OID失败后尝试次数，可选

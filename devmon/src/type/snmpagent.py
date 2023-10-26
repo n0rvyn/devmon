@@ -31,7 +31,7 @@ class SNMPAgent:
     community: str = 'public'
     version: Version = '2c'
     username: str = None
-    context: str = None
+    context: list = None
     mib: str = None
     retries: int = 3
     timeout: int = 10

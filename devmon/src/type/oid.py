@@ -66,6 +66,7 @@ class OID:
 
     # todo add support for OID values need to be combined
     # todo add support for OID values need to be arithmetic with more than 2 values.
+    # todo add support for OID values ONLY for showing
 
 
 @dataclass

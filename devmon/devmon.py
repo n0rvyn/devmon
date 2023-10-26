@@ -41,7 +41,7 @@ _CONF_ = os.path.abspath(os.path.join(_ROOT_, 'conf/devmon.yaml'))
 _LOG_ = os.path.abspath(os.path.join(_ROOT_, 'log/devmon.log'))
 
 sys.path.append(_SRC_)
-from core import ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB
+from core import ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP
 from type import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart
 
 Side = Literal[
@@ -154,8 +154,8 @@ class DevMon(object):
                              database=mongo_db, collection=mongo_col)
 
         self.cmdb_mongo = MongoDB(server=mongo_server, uri=mongo_uri,
-                             username=mongo_user, password=mongo_pass, port=mongo_port,
-                             database=mongo_db, collection=cmdb_col)
+                                  username=mongo_user, password=mongo_pass, port=mongo_port,
+                                  database=mongo_db, collection=cmdb_col)
         try:
             with timeout(2):
                 self.mongo.client.admin.command('ping')
@@ -256,18 +256,19 @@ class DevMon(object):
         pass
 
     def oid_to_case(self, snmp_agent: SNMPAgent = None,
-                               oid: OID = None,
-                               alert: bool = False,
-                               threshold: str = None,
-                               # case_desc: str = None,
-                               void: VOID = None) -> Case:
+                    oid: OID = None,
+                    alert: bool = False,
+                    threshold: str = None,
+                    # case_desc: str = None,
+                    void: VOID = None) -> Case:
         """
         Creating Case() object which based on SNMPAgent, OID and other information.
         # h = hashlib.shake_256(a.encode())
         # h.hexdigest(10)
         """
         if not void.value:
-            self._warn(f'Met None value VOID [{void}], agent [{snmp_agent.address}], OID [id: {oid.id}, id range: {oid.id_range}]')
+            self._warn(
+                f'Met None value VOID [{void}], agent [{snmp_agent.address}], OID [id: {oid.id}, id range: {oid.id_range}]')
             return Case()
 
         if void.desc and oid.label:
@@ -493,16 +494,17 @@ class DevMon(object):
 
         return case_exist
 
-    def ____read_snmp_agent(self, agent: SNMPAgent):
-        snmp = SNMP(agent, snmpwalk=self.snmpwalk)
-
-        # todo add support which OID no need index or else symbol
-        for oid in agent.OIDs:
-            l_voids = snmp.read_oid_dc(oid)
-            # self.snmp_agents.append((agent, oid, l_voids)) if l_voids else ''
+    # def ____read_snmp_agent(self, agent: SNMPAgent):
+    #     snmp = SNMP(agent, snmpwalk=self.snmpwalk)
+    #
+    #     # todo add support which OID no need index or else symbol
+    #     for oid in agent.OIDs:
+    #         l_voids = snmp.read_oid_dc(oid)
+    #         # self.snmp_agents.append((agent, oid, l_voids)) if l_voids else ''
 
     def _read_snmp_agent(self, agent: SNMPAgent) -> list[tuple[SNMPAgent, OID, list[VOID]]]:
-        snmp = SNMP(agent, snmpwalk=self.snmpwalk)
+        # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
+        snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
         agent_oid_voids = []
 
         # todo add support which OID no need index or else symbol
@@ -513,12 +515,23 @@ class DevMon(object):
 
         return agent_oid_voids
 
-    def create_snmp_cases(self, side: Side = None, multithread: bool = True) -> list[Case]:
+    def create_snmp_cases(self, side: Side = None, multithread: bool = True, device: str = None) -> list[Case]:
+        agents = None
+
         if side == 'a':
             agents = self.a_side_snmps
+
         elif side == 'b':
             agents = self.b_side_snmps
-        else:
+
+        elif device:
+            for agent in self.a_side_snmps + self.b_side_snmps:
+                if agent.address == device:
+                    agents = [agent]
+                    break
+
+        if not agents:
+            self._error(f'device [{device}] not found in the devlist, return None value case.')
             return [Case()]
 
         # self.snmp_agents = []
@@ -538,7 +551,7 @@ class DevMon(object):
 
         if multithread:
             # r_threads = [Thread(target=self._read_snmp_agent, args=(agent, )) for agent in agents]
-            r_threads = [Thread(target=read_agent, args=(agent, )) for agent in agents]
+            r_threads = [Thread(target=read_agent, args=(agent,)) for agent in agents]
             _ = [t.start() for t in r_threads]
             _ = [t.join() for t in r_threads]
 
@@ -548,7 +561,7 @@ class DevMon(object):
                     # todo if void.value == None but reference has a value ????
                     # v_threads.append(Thread(target=self._cre_snmp_case, args=(agent, snmp, oid, void, )))
                     # v_threads.append(Thread(target=self._cre_snmp_case, args=(agent, oid, void, )))
-                    v_threads.append(Thread(target=cre_cases, args=(agent, oid, void, )))
+                    v_threads.append(Thread(target=cre_cases, args=(agent, oid, void,)))
 
                 # v_threads = [Thread(target=self._cre_snmp_case, args=(agent, snmp, oid, void, exclude_index, )) for void in l_voids]
                 # missing some void in l_voids .... # todo ?????
@@ -633,10 +646,10 @@ class DevMon(object):
             self._info(msg)
 
         case = self.oid_to_case(snmp_agent=agent,
-                                           oid=oid,
-                                           alert=alert,
-                                           void=void,
-                                           threshold=threshold)
+                                oid=oid,
+                                alert=alert,
+                                void=void,
+                                threshold=threshold)
         # self.snmp_cases.append(case)
         return case
 
@@ -716,7 +729,8 @@ class DevMon(object):
 
             elif event_type == 'recovery':
                 r1 = self._update_attach_value_by_id(case_id=case_id, update_key='publish', to_value=2)
-                r2 = self._update_attach_value_by_id(case_id=case_id, update_key='type', to_value='2')  # todo verify !!!
+                r2 = self._update_attach_value_by_id(case_id=case_id, update_key='type',
+                                                     to_value='2')  # todo verify !!!
                 return True if r1 and r2 else False
 
         else:
@@ -953,13 +967,16 @@ class DevMon(object):
         flt = {'ip': addr}  # todo verifying 'ip_hostname' key
         return self.cmdb_mongo.find_one(flt)
 
-    def pm_snmp(self):
+    def pm_snmp(self, device: str = None):
         """
         Preventive maintenance for SNMP agents
         :return:
         """
         self.refresh_config()
-        cases = self.create_snmp_cases('a') + self.create_snmp_cases('b')
+        if device:
+            cases = self.create_snmp_cases(device=device)
+        else:
+            cases = self.create_snmp_cases('a') + self.create_snmp_cases('b')
 
         all_stats = {}
         for c in cases:
@@ -999,10 +1016,12 @@ class DevMon(object):
                     except KeyError:
                         all_stats.update({c.address: {label: {'alert': faulty, 'errors': [err]}}})
 
-        for host in all_stats.keys():
+        hosts = list(all_stats.keys())
+        hosts.sort()
+        for host in hosts:
             err = []
-            print('='*97)
-            print('-'*40, f'{host:^15s}', '-'*40)
+            print('=' * 97)
+            print('-' * 40, f'{host:^15s}', '-' * 40)
             label_detail = all_stats[host]
             for exp in label_detail.keys():
                 faulty = label_detail[exp]['alert']
@@ -1028,7 +1047,7 @@ class DevMon(object):
 if __name__ == '__main__':
     USAGE = f"Usage: \n" \
             f"  {sys.argv[0]} [run | service]  # run or run as a service \n" \
-            f"  {sys.argv[0]} pm \n" \
+            f"  {sys.argv[0]} pm [device]\n" \
             f"  {sys.argv[0]} query \n" \
             f"  {sys.argv[0]} sync  # syncing resources ID from CMDB to MongoDB \n" \
             f"  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n"
@@ -1040,7 +1059,11 @@ if __name__ == '__main__':
             devmon.run()  # add a sleep interval
 
         elif sys.argv[1] == 'pm':
-            devmon.pm_snmp()
+            try:
+                dev = sys.argv[2]
+            except IndexError:
+                dev = None
+            devmon.pm_snmp(device=dev)
 
         elif sys.argv[1] == 'query':
             devmon.show_all_alerts()
@@ -1057,6 +1080,7 @@ if __name__ == '__main__':
             _cur_val = sys.argv[4]
             # push a recovery message to syslog server
             devmon.close_case(case_id=_id, content=_content, current_value=_cur_val)
-
+        else:
+            print(USAGE)
     except IndexError:
         print(USAGE)
