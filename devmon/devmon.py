@@ -94,7 +94,7 @@ class DevMon(object):
         self.a_side_snmps = A_SIDE_SNMPs
         self.b_side_snmps = B_SIDE_SNMPs
 
-    def _load_config(self):
+    def _load_config(self, pm: bool = False):
         # read configuration from file 'ROOT/conf/devmon.yaml'
         config = readopts()
 
@@ -156,15 +156,17 @@ class DevMon(object):
         self.cmdb_mongo = MongoDB(server=mongo_server, uri=mongo_uri,
                                   username=mongo_user, password=mongo_pass, port=mongo_port,
                                   database=mongo_db, collection=cmdb_col)
-        try:
-            with timeout(2):
-                self.mongo.client.admin.command('ping')
-        except errors.ServerSelectionTimeoutError:
-            print('MongoDB connection timeout after 2 seconds.')
-            exit(1)
-        self._debug(f'Initiated MongoDB client finished.\n'
-                    f'Mongo Server {mongo_server}, uri {mongo_uri}, '
-                    f'user {mongo_user}, port {mongo_port}, db {mongo_db}, collection {mongo_col}')
+
+        if not pm:
+            try:
+                with timeout(2):
+                    self.mongo.client.admin.command('ping')
+            except errors.ServerSelectionTimeoutError:
+                print('MongoDB connection timeout after 2 seconds.')
+                exit(1)
+            self._debug(f'Initiated MongoDB client finished.\n'
+                        f'Mongo Server {mongo_server}, uri {mongo_uri}, '
+                        f'user {mongo_user}, port {mongo_port}, db {mongo_db}, collection {mongo_col}')
 
         try:
             self.event_keys = config['event_key']
@@ -218,9 +220,9 @@ class DevMon(object):
         except KeyError:
             self.cmdb_pass = input(f"Enter CMDB MySQL server's {self.cmdb_user} password: ")
 
-    def refresh_config(self):
+    def refresh_config(self, pm: bool = False):
         self._load_agents()
-        self._load_config()
+        self._load_config(pm=pm)
 
     def _debug(self, msg: str = None):
         f_info = currentframe()
@@ -313,7 +315,7 @@ class DevMon(object):
             #         pass
 
         threshold = thd
-        void.value = val  # void of modifying rest of the code
+        void.value = val  # void of modifying the rest of the code
 
         if void.desc:
             content = f'{void.desc}{oid.explanation}{oid.alert} 阈值{threshold}'
@@ -407,7 +409,7 @@ class DevMon(object):
 
                     self._debug(f'Alert case [{case_mongo.id}] recalled, set attach.type to 1, count++.')
 
-                else:  # alert case exist, but stat turn to normal, it's a recovery event
+                else:  # Alert case exists, but stat turns to normal. It's a recovery event.
                     case.type = '2'  # case is recovered
                     # case.attach.count = 1  # do not reset the count
                     case.publish = 1  # alert pushed, waiting for pushing recovery to rsyslog server
@@ -427,7 +429,7 @@ class DevMon(object):
                 else:  # normal case exists and remains normal
                     case.type = '3'
                     case.count += 1  # normal case count++
-                    case.publish = 0  # reset publish stat to 0
+                    case.publish = 0  # reset publishing stat to 0
 
                     self._debug(f'Normal case [{case_mongo.id}] exist, '
                                 f'set attach.type to 3, reset attach.count to 1.')
@@ -497,7 +499,6 @@ class DevMon(object):
     # def ____read_snmp_agent(self, agent: SNMPAgent):
     #     snmp = SNMP(agent, snmpwalk=self.snmpwalk)
     #
-    #     # todo add support which OID no need index or else symbol
     #     for oid in agent.OIDs:
     #         l_voids = snmp.read_oid_dc(oid)
     #         # self.snmp_agents.append((agent, oid, l_voids)) if l_voids else ''
@@ -507,7 +508,6 @@ class DevMon(object):
         snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
         agent_oid_voids = []
 
-        # todo add support which OID no need index or else symbol
         for oid in agent.OIDs:
             l_voids = snmp.read_oid_dc(oid)
             # self.snmp_agents.append((agent, oid, l_voids)) if l_voids else ''
@@ -558,7 +558,6 @@ class DevMon(object):
             # for agent, oid, l_voids in self.snmp_agents:
             for agent, oid, l_voids in snmp_agents:
                 for void in l_voids:
-                    # todo if void.value == None but reference has a value ????
                     # v_threads.append(Thread(target=self._cre_snmp_case, args=(agent, snmp, oid, void, )))
                     # v_threads.append(Thread(target=self._cre_snmp_case, args=(agent, oid, void, )))
                     v_threads.append(Thread(target=cre_cases, args=(agent, oid, void,)))
@@ -674,7 +673,7 @@ class DevMon(object):
 
     def filter_alerts_published(self) -> list[dict]:
         """
-        Find out all 'dict'(s) in MongoDB those 'type' equal to '1' and alert not pushed to rsyslog server
+        Find out all 'dict(s)' in MongoDB those 'type' equal to '1' and alert not pushed to rsyslog server
         """
         flt = {'type': '1', 'publish': 1}
         # flt = {'attach.type': '1', 'attach.publish': 1}
@@ -682,7 +681,7 @@ class DevMon(object):
 
     def filter_failed_recovery(self) -> list[dict]:
         """
-        find all 'dict'(s) in MongoDB those 'type' equal to '2', alert message pushed, recovery not pushed.
+        find all 'dict(s)' in MongoDB those 'type' equal to '2', alert message pushed, recovery not pushed.
         """
         # flt = {'type': '2', 'recovery_published': False, 'alert_published': True}
         # 1. attach.publish equals 0 --> alert not pushed
@@ -769,39 +768,60 @@ class DevMon(object):
         """
         count = 0
         print('-' * 50, f'{"Alert Published Cases":^25s}', '-' * 50)
-        # for alert in self.filter_alerts_all():
-        for alert in self.filter_alerts_published():
-            cid, event = self.create_event(alert)
-            count += 1
 
-            # al_pub = alert['attach']['publish']
-            al_pub = alert['publish']
-            if al_pub == 1:
-                pub_stat = 'Alerted'
-            elif al_pub == 2:
-                pub_stat = 'Recovered'
-            else:
-                pub_stat = 'Default'
+        def print_alert(_alerts: list[dict] = None):
+            _count = 0
+            for _alert in _alerts:
+                _cid, _event = self.create_event(_alert)
+                _count += 1
 
-            print(f'|{count:2d}. Case: {cid} Stat: {pub_stat:9s} Event: {event}')
+                # al_pub = alert['attach']['publish']
+                _al_pub = _alert['publish']
+                if _al_pub == 1:
+                    _pub_stat = 'Alerted'
+                elif _al_pub == 2:
+                    _pub_stat = 'Recovered'
+                else:
+                    _pub_stat = 'Default'
+
+                print(f'|{_count:2d}. Case: {_cid} Stat: {_pub_stat:9s} Event: {_event}')
+
+        print_alert(self.filter_alerts_published())
+
+        # # for alert in self.filter_alerts_all():
+        # for alert in self.filter_alerts_published():
+        #     cid, event = self.create_event(alert)
+        #     count += 1
+        #
+        #     # al_pub = alert['attach']['publish']
+        #     al_pub = alert['publish']
+        #     if al_pub == 1:
+        #         pub_stat = 'Alerted'
+        #     elif al_pub == 2:
+        #         pub_stat = 'Recovered'
+        #     else:
+        #         pub_stat = 'Default'
+        #
+        #     print(f'|{count:2d}. Case: {cid} Stat: {pub_stat:9s} Event: {event}')
         print('-' * 127)
 
         count = 0
         print('-' * 50, f'{"Alert not Published":^25s}', '-' * 50)
-        for alert in self.filter_alerts_not_published():
-            cid, event = self.create_event(alert)
-            count += 1
-
-            # al_pub = alert['attach']['publish']
-            al_pub = alert['publish']
-            if al_pub == 1:
-                pub_stat = 'Alerted'
-            elif al_pub == 2:
-                pub_stat = 'Recovered'
-            else:
-                pub_stat = 'Default'
-
-            print(f'|{count:2d}. Case: {cid} Stat: {pub_stat:9s} Event: {event}')
+        print_alert(self.filter_alerts_not_published())
+        # for alert in self.filter_alerts_not_published():
+        #     cid, event = self.create_event(alert)
+        #     count += 1
+        #
+        #     # al_pub = alert['attach']['publish']
+        #     al_pub = alert['publish']
+        #     if al_pub == 1:
+        #         pub_stat = 'Alerted'
+        #     elif al_pub == 2:
+        #         pub_stat = 'Recovered'
+        #     else:
+        #         pub_stat = 'Default'
+        #
+        #     print(f'|{count:2d}. Case: {cid} Stat: {pub_stat:9s} Event: {event}')
         print('-' * 127)
 
         count = 0
@@ -972,7 +992,7 @@ class DevMon(object):
         Preventive maintenance for SNMP agents
         :return:
         """
-        self.refresh_config()
+        self.refresh_config(pm=True)
         if device:
             cases = self.create_snmp_cases(device=device)
         else:
@@ -1053,8 +1073,11 @@ if __name__ == '__main__':
             f"  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n"
 
     devmon = DevMon()
-    devmon.refresh_config()  # todo should refresh config every run or just once????
+    # devmon.refresh_config()  # todo should refresh config every run or just once????
     try:
+        if sys.argv[1] in ['run', 'query', 'sync', 'close', 'service']:
+            devmon.refresh_config()
+
         if sys.argv[1] == 'run':
             devmon.run()  # add a sleep interval
 
@@ -1080,6 +1103,7 @@ if __name__ == '__main__':
             _cur_val = sys.argv[4]
             # push a recovery message to syslog server
             devmon.close_case(case_id=_id, content=_content, current_value=_cur_val)
+
         else:
             print(USAGE)
     except IndexError:

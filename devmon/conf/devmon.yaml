@@ -60,7 +60,7 @@ event_key:
   - addr_in_cmdb
 
 # the delimiter to connect parts of event as a whole string
-event_delimiter: '-'
+event_delimiter: '|'
 
 # the address of CMDB MySQL server
 cmdb_server: '192.168.1.1'
