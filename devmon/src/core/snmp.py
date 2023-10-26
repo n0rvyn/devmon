@@ -395,7 +395,13 @@ class SNMP(object):
         output = self._read_oid(table, outopts='Q')
         l_oid_vals = output.split('\n') if output else []
         # l_oid_vals = self._read_oid(table, outopts='Q').split('\n')
-        return [o_v.split('=')[-1].strip().strip('"') for o_v in l_oid_vals]  # add strip('"') for values `"value`"
+        return [o_v.split('=')[-1].strip().strip('"').strip() for o_v in l_oid_vals]  # add strip('"') for values `"value`"
+
+    def _read_table_index(self, table: str = None):
+        output = self._read_oid(table, outopts='Q')
+        l_oid_vals = output.split('\n') if output else []
+        return [o_v.split('=')[0].strip().split('.')[-1] for o_v in l_oid_vals]
+
 
     def _read_table(self,
                     table: str = None,
@@ -410,7 +416,7 @@ class SNMP(object):
         vals_table = self._read_table_vals(table)
         vals_related = self._read_table_vals(related_symbol_table)
         vals_arith = self._read_table_vals(arith_symbol_table)
-        vals_index = self._read_table_vals(index_table)
+        vals_index = self._read_table_vals(index_table) if index_table else self._read_table_index(table)
         vals_ref = self._read_table_vals(reference_symbol_table)
 
         voids = []
@@ -436,7 +442,7 @@ class SNMP(object):
                     except IndexError:
                         index = None  # todo read index from OID.1
                 else:
-                    index = None
+                    index = str(i)
 
                 if vals_related:
                     rel_val = vals_related[i]
