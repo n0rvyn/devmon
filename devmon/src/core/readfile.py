@@ -16,7 +16,7 @@
 
 """
 import os.path
-from yaml import safe_load
+from yaml import safe_load, parser
 import sys
 from dataclasses import asdict
 
@@ -84,8 +84,8 @@ def ReadAgents():
             try:
                 p = os.path.join(d, fl)
                 with open(p, 'r+') as f:
-                    dev_detail: dict = safe_load(f)  # todo waiting for verify
-            except Exception as err:
+                    dev_detail: dict = safe_load(f)
+            except parser.ParserError as err:
                 raise err
 
             try:

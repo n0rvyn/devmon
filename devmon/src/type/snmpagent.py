@@ -13,6 +13,7 @@ Version = Literal[
     '1', '2c', '3'
 ]
 
+
 OutOpts = Literal[
     'v', 'q', 'Q', 's', 'S'
 ]
