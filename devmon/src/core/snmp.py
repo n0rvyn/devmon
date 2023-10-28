@@ -162,7 +162,7 @@ class SNMP(object):
                            _arith_symbol: str = None,
                            _arith_pos: Position = None):
             voids.append(self._read_id(_oid, _related_symbol, _exclude_index,
-                                       _exclude_value,_read_ref_from, _arithmetic, _arith_symbol, _arith_pos))
+                                       _exclude_value, _read_ref_from, _arithmetic, _arith_symbol, _arith_pos))
 
         try:
             index_from = int(oid_start.split('.')[-1])

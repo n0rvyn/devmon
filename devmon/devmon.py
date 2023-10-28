@@ -1067,7 +1067,6 @@ if __name__ == '__main__':
             f"  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n"
 
     devmon = DevMon()
-    # devmon.refresh_config()  # todo should refresh config every run or just once????
     try:
         if sys.argv[1] in ['run', 'query', 'sync', 'close', 'service']:
             devmon.refresh_config()

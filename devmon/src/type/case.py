@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import os.path
-import sys
 from dataclasses import dataclass
 from typing import Literal
 from .oid import VOID, OID

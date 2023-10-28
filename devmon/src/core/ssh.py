@@ -99,7 +99,7 @@ class PySSHClient(object):
 
         return code, output
 
-    def formattable(self, sshcmd = None):
+    def formattable(self, sshcmd=None):
         cmd = sshcmd.command
         exitcode, output = self.getstatusoutput(cmd)
 
@@ -139,7 +139,7 @@ class PySSHClient(object):
                 delimiter = linecmd.delimiter
 
                 try:
-                    lst = [l.strip() for l in ln.split(delimiter)]
+                    lst = [li.strip() for li in ln.split(delimiter)]
                     ikey_from = int(ikey_from)
                     ival_from = int(ival_from)
 

@@ -16,7 +16,6 @@
 from subprocess import getoutput
 from subprocess import getstatusoutput
 from platform import system
-from os import path
 import socket
 
 

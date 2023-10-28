@@ -5,3 +5,4 @@ from typing import Literal
 EventType = Literal[
     'alert', 'recovery', 'message'
 ]
+

@@ -32,5 +32,8 @@ __all__ = [
     'CaseUpdatePart',
     'OID',
     'VOID',
-    'EventType'
+    'EventType',
+    'HidePass'
 ]
+
+
