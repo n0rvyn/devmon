@@ -4,6 +4,7 @@ from .sshagent import SSHAgent
 from .oid import OID, WaterMark, OIDType, ArithType, VOID, IDRange
 from .case import Case, CaseType, TheSameCasePart, CaseUpdatePart
 from .sshcmd import LineCmd, DelmtIndexType, KeyValuePair, LineFeature
+from .event import EventType
 
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     'LineCmd',
     'DelmtIndexType',
     'KeyValuePair',
-    'LineFeature'
+    'LineFeature',
+    'EventType'
 ]

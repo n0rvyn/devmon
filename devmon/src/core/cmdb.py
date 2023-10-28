@@ -12,7 +12,7 @@
 # Tools: PyCharm
 
 """
----Read resource IDs data from CMDB, then insert to target MongoDB---
+---Read resource IDs from the CMDB (if you have one), then insert those to target MongoDB---
 """
 import pymysql
 

@@ -33,8 +33,8 @@ class SNMPAgent:
     username: str = None
     context: list = None
     mib: str = None
-    retries: int = 3
-    timeout: int = 10
+    retries: int = 1
+    timeout: int = 1
     base: str = None  # file: snmp.py line: 59
     enum: dict = None  # the same as file: oid.py line: 63; file: devmon.py line: 278
     OIDs: [OID] = None

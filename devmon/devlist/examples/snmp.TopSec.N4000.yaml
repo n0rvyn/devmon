@@ -8,7 +8,7 @@ rid: 'This is resource ID'
 snmp:
   version: '2c'  # the SNMPD version
   community: 'public'  # the SNMPD community
-  timeout: 2  # second(s) to timeout
+  timeout: 1  # second(s) to timeout
   retries: 1  # time(s) to retry after failed
   base: '1.3.6.1.4.1.14331.5.5.1.'
   OIDs:

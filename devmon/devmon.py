@@ -19,7 +19,6 @@ import time
 from yaml import safe_load
 import os
 import sys
-import hashlib
 from typing import Literal
 from dataclasses import asdict
 # from random import choices
@@ -28,41 +27,42 @@ from threading import Thread
 from time import perf_counter
 from inspect import currentframe
 from pymongo import errors, timeout
+from src import oid_to_case, ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
+from src import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart, EventType
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
-_SRC_ = os.path.abspath(os.path.join(_ROOT_, 'src'))
-
-if _ROOT_.startswith('/tmp'):  # todo optimise --> src/core/readfile
-    _ROOT_ = '/etc/devmon'  # todo change config dir to etc/...
-
-_CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
-_TYPE_ = os.path.abspath(os.path.join(_SRC_, 'type'))
+_ROOT_ = '/etc/devmon' if _ROOT_.startswith('/tmp') else _ROOT_
 _CONF_ = os.path.abspath(os.path.join(_ROOT_, 'conf/devmon.yaml'))
 _LOG_ = os.path.abspath(os.path.join(_ROOT_, 'log/devmon.log'))
 
-sys.path.append(_SRC_)
-from core import ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP
-from type import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart
+# _SRC_ = os.path.abspath(os.path.join(_ROOT_, 'src'))
+# _CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
+# _TYPE_ = os.path.abspath(os.path.join(_SRC_, 'type'))
+
+# sys.path.append(_SRC_)
+# from core import ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP
+# from type import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart
+
 
 Side = Literal[
     'a', 'b'
 ]
 
-EventType = Literal[
-    'alert', 'recovery', 'message'
-]
+# EventType = Literal[
+#     'alert', 'recovery', 'message'
+# ]
 
 notify_start = notify_end = None
 
 
-def readopts(file: str = _CONF_):
-    try:
-        with open(file, 'r+') as f:
-            config = safe_load(f)
-    except FileNotFoundError as err:
-        raise err
-
-    return config
+# def read_config(file: str = _CONF_):
+#     try:
+#         with open(file, 'r+') as f:
+#             config = safe_load(f)
+#     except FileNotFoundError as err:
+#         raise err
+#
+#     return config
 
 
 class DevMon(object):
@@ -96,7 +96,12 @@ class DevMon(object):
 
     def _load_config(self, pm: bool = False):
         # read configuration from file 'ROOT/conf/devmon.yaml'
-        config = readopts()
+        # config = read_config()
+        try:
+            with open(_CONF_, 'r+') as f:
+                config = safe_load(f)
+        except FileNotFoundError as err:
+            raise err
 
         # read logger configuration
         name = f'devmon'
@@ -212,13 +217,9 @@ class DevMon(object):
             self.cmdb_server = config['cmdb_server']
             self.cmdb_user = config['cmdb_user']
             self.cmdb_db = config['cmdb_db']
-        except KeyError:
-            pass
-
-        try:
             self.cmdb_pass = config['cmdb_pass']
         except KeyError:
-            self.cmdb_pass = input(f"Enter CMDB MySQL server's {self.cmdb_user} password: ")
+            pass
 
     def refresh_config(self, pm: bool = False):
         self._load_agents()
@@ -258,105 +259,111 @@ class DevMon(object):
         pass
 
     def oid_to_case(self, snmp_agent: SNMPAgent = None,
-                    oid: OID = None,
-                    alert: bool = False,
-                    threshold: str = None,
-                    # case_desc: str = None,
-                    void: VOID = None) -> Case:
-        """
-        Creating Case() object which based on SNMPAgent, OID and other information.
-        # h = hashlib.shake_256(a.encode())
-        # h.hexdigest(10)
-        """
-        if not void.value:
-            self._warn(
-                f'Met None value VOID [{void}], agent [{snmp_agent.address}], OID [id: {oid.id}, id range: {oid.id_range}]')
-            return Case()
-
-        if void.desc and oid.label:
-            obj = f'{oid.label}-{void.desc}'
-        else:
-            obj = f'{oid.label}'
-
-        def _trans_enum(_agent: SNMPAgent = None, _oid: OID = None, _entry: str = None, delimiter: str = ','):
-            _lst_val = [v.strip() for v in _entry.split(delimiter)]
-            _rtn_val = []
-
-            for _val in _lst_val:
-                try:
-                    _rtn_val.append(_oid.enum[_val])
-                except (KeyError, TypeError):
-                    try:
-                        _rtn_val.append(_agent.enum[_val])
-                    except (KeyError, TypeError):
-                        pass
-            return f'{delimiter}'.join(_rtn_val)
-
-        if oid.enum or snmp_agent.enum:  # 'enum' for single OID will rewrite the definition from SNMPAgent
-            val = _trans_enum(snmp_agent, oid, void.value)
-            thd = _trans_enum(snmp_agent, oid, threshold)
-        else:
-            val = void.value
-            thd = threshold
-
-            # try:
-            #     void.value = oid.enum[void.value]
-            # except (KeyError, TypeError):
-            #     try:
-            #         void.value = snmp_agent.enum[void.value]
-            #     except (KeyError, TypeError):
-            #         pass
-            # try:
-            #     threshold = oid.enum[threshold]
-            # except (KeyError, TypeError):
-            #     try:
-            #         threshold = snmp_agent.enum[threshold]
-            #     except (KeyError, TypeError):
-            #         pass
-
-        threshold = thd
-        void.value = val  # void of modifying the rest of the code
-
-        if void.desc:
-            content = f'{void.desc}{oid.explanation}{oid.alert} 阈值{threshold}'
-        else:
-            content = f'{oid.explanation}{oid.alert} 阈值{threshold}'
-
-        current_val = f'当前值{void.value}'
-
+                     oid: OID = None,
+                     alert: bool = None,
+                     threshold: str = None,
+                     void: VOID = None) -> Case:
         rid = snmp_agent.rid if snmp_agent.rid else self.find_rid(snmp_agent.addr_in_cmdb)
         rid = rid if rid else 'Null_Resource_ID'
 
-        core = TheSameCasePart(rid=rid,
-                               region=snmp_agent.region,
-                               area=snmp_agent.area,
-                               addr_in_cmdb=snmp_agent.addr_in_cmdb,
-                               severity=oid.severity,
-                               object=obj,
-                               sources=self.source,
-                               description=oid.explanation,
-                               threshold=f'{threshold}',
-                               index=void.index,
-                               address=snmp_agent.address)
+        dbg = (f'Met snmp details waiting to be convert to case, agent: '
+               f'[{snmp_agent}], oid: [{oid}], '
+               f'alert [{alert}], threshold: [{threshold}],'
+               f'void: [{void}], rid: [{rid}, source: [{self.source}')
+        self._debug(f'{dbg}')
+        return oid_to_case(snmp_agent=snmp_agent,
+                           oid=oid,
+                           alert=alert,
+                           threshold=threshold,
+                           void=void,
+                           add_rid=rid,
+                           source=self.source)
 
-        try:
-            s_core = ''.join(asdict(core).values())
-        except TypeError:
-            s_core = ''
-
-        b_core = s_core.encode()
-        h = hashlib.shake_128(b_core)
-        cid = h.hexdigest(20)
-
-        attach = CaseUpdatePart(count=1, alert=alert, content=content, current_value=current_val)
-
-        case = Case(id=cid, oid=oid, void=void)
-        for key, value in asdict(core).items():
-            case.__setattr__(key, value)
-
-        for key, value in asdict(attach).items():
-            case.__setattr__(key, value)
-        return case
+    # def ______oid_to_case(self, snmp_agent: SNMPAgent = None,
+    #                 oid: OID = None,
+    #                 alert: bool = False,
+    #                 threshold: str = None,
+    #                 # case_desc: str = None,
+    #                 void: VOID = None) -> Case:
+    #     """
+    #     Creating Case() object which based on SNMPAgent, OID and other information.
+    #     # h = hashlib.shake_256(a.encode())
+    #     # h.hexdigest(10)
+    #     """
+    #     if not void.value:
+    #         self._warn(
+    #             f'Met None value VOID [{void}], agent [{snmp_agent.address}], OID [id: {oid.id}, id range: {oid.id_range}]')
+    #         return Case()
+    #
+    #     if void.desc and oid.label:
+    #         obj = f'{oid.label}-{void.desc}'
+    #     else:
+    #         obj = f'{oid.label}'
+    #
+    #     def _trans_enum(_agent: SNMPAgent = None, _oid: OID = None, _entry: str = None, delimiter: str = ','):
+    #         _lst_val = [v.strip() for v in _entry.split(delimiter)]
+    #         _rtn_val = []
+    #
+    #         for _val in _lst_val:
+    #             try:
+    #                 _rtn_val.append(_oid.enum[_val])
+    #             except (KeyError, TypeError):
+    #                 try:
+    #                     _rtn_val.append(_agent.enum[_val])
+    #                 except (KeyError, TypeError):
+    #                     pass
+    #         return f'{delimiter}'.join(_rtn_val)
+    #
+    #     if oid.enum or snmp_agent.enum:  # 'enum' for single OID will rewrite the definition from SNMPAgent
+    #         val = _trans_enum(snmp_agent, oid, void.value)
+    #         thd = _trans_enum(snmp_agent, oid, threshold)
+    #     else:
+    #         val = void.value
+    #         thd = threshold
+    #
+    #     threshold = thd
+    #     void.value = val  # void of modifying the rest of the code
+    #
+    #     if void.desc:
+    #         content = f'{void.desc}{oid.explanation}{oid.alert} 阈值{threshold}'
+    #     else:
+    #         content = f'{oid.explanation}{oid.alert} 阈值{threshold}'
+    #
+    #     current_val = f'当前值{void.value}'
+    #
+    #     rid = snmp_agent.rid if snmp_agent.rid else self.find_rid(snmp_agent.addr_in_cmdb)
+    #     rid = rid if rid else 'Null_Resource_ID'
+    #
+    #     core = TheSameCasePart(rid=rid,
+    #                            region=snmp_agent.region,
+    #                            area=snmp_agent.area,
+    #                            addr_in_cmdb=snmp_agent.addr_in_cmdb,
+    #                            severity=oid.severity,
+    #                            object=obj,
+    #                            sources=self.source,
+    #                            description=oid.explanation,
+    #                            threshold=f'{threshold}',
+    #                            index=void.index,
+    #                            address=snmp_agent.address)
+    #
+    #     try:
+    #         s_core = ''.join(asdict(core).values())
+    #     except TypeError:
+    #         s_core = ''
+    #
+    #     b_core = s_core.encode()
+    #     h = hashlib.shake_128(b_core)
+    #     cid = h.hexdigest(20)
+    #
+    #     attach = CaseUpdatePart(count=1, alert=alert, content=content, current_value=current_val)
+    #
+    #     case = Case(id=cid, oid=oid, void=void)
+    #     for key, value in asdict(core).items():
+    #         case.__setattr__(key, value)
+    #
+    #     for key, value in asdict(attach).items():
+    #         case.__setattr__(key, value)
+    #     return case
 
     def _insert_case(self, case: Case = None):
         # generate 20-digit-long string as the new case ID
@@ -369,11 +376,6 @@ class DevMon(object):
         # if the attribute 'count' of the returned case is equal to default value 0
         # the case 'c' not exists in MongoDB
         self._debug(f'Received case from method [is_case_exist] [{case_mongo}]')
-        # try:
-        #     _ = case_mongo.core
-        #     _ = case_mongo.attach
-        # except AttributeError:
-        #     return False
 
         # if case_mongo.attach.count == 0:  # default case has 0 value for count
         if case_mongo.count == 0:  # default case has a zero value for key 'count'
@@ -496,13 +498,6 @@ class DevMon(object):
 
         return case_exist
 
-    # def ____read_snmp_agent(self, agent: SNMPAgent):
-    #     snmp = SNMP(agent, snmpwalk=self.snmpwalk)
-    #
-    #     for oid in agent.OIDs:
-    #         l_voids = snmp.read_oid_dc(oid)
-    #         # self.snmp_agents.append((agent, oid, l_voids)) if l_voids else ''
-
     def _read_snmp_agent(self, agent: SNMPAgent) -> list[tuple[SNMPAgent, OID, list[VOID]]]:
         # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
         snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
@@ -525,9 +520,9 @@ class DevMon(object):
             agents = self.b_side_snmps
 
         elif device:
-            for agent in self.a_side_snmps + self.b_side_snmps:
-                if agent.address == device:
-                    agents = [agent]
+            for agt in self.a_side_snmps + self.b_side_snmps:
+                if agt.address == device:
+                    agents = [agt]
                     break
 
         if not agents:
@@ -558,7 +553,6 @@ class DevMon(object):
             # for agent, oid, l_voids in self.snmp_agents:
             for agent, oid, l_voids in snmp_agents:
                 for void in l_voids:
-                    # v_threads.append(Thread(target=self._cre_snmp_case, args=(agent, snmp, oid, void, )))
                     # v_threads.append(Thread(target=self._cre_snmp_case, args=(agent, oid, void, )))
                     v_threads.append(Thread(target=cre_cases, args=(agent, oid, void,)))
 

@@ -12,42 +12,51 @@
 # Tools: PyCharm
 
 """
----Encrypt password to codes---
+---Encrypt password to codes, for storing password(s) in 'devlist' files---
 """
 import base64
+import binascii
 
 
 class HidePass(object):
-    def __init__(self):
-        pass
+    def __init__(self, secret: str = None, position: int = 0):
+        self.secret = secret
+        self.position = position
 
-    @staticmethod
-    def encrypt(secret: str = None, position: int = 0, password: str = None) -> bytes:
+    def encrypt(self, password: str = None) -> bytes:
         l_pass = list(password)
-        try:
-            l_pass.insert(position, secret)
-        except IndexError:
-            l_pass.insert(0, secret)
+
+        if self.position >= len(password):
+            self.position = 0
+
+        l_pass.insert(self.position, self.secret)
+
+        # try:
+        #     l_pass.insert(self.position, self.secret)
+        # except IndexError:
+        #     l_pass.insert(0, self.secret)
 
         mixed_pass = ''.join(l_pass)
         return base64.b64encode(mixed_pass.encode())
 
-    @staticmethod
-    def decrypt(secret: str = None, position: int = 0, codes: bytes = None) -> str:
-        mixed_pass = base64.b64decode(codes).decode()
+    def decrypt(self, codes: bytes = None) -> str:
+        try:
+            mixed_pass = base64.b64decode(codes).decode()
+        except binascii.Error as err:
+            return ''
+
         l_mixed_pass = list(mixed_pass)
 
-        for i in range(0, len(secret)):
-            l_mixed_pass.pop(position)
-            print(l_mixed_pass)
+        for i in range(0, len(self.secret)):
+            l_mixed_pass.pop(self.position)
 
         return ''.join(l_mixed_pass)
 
 
 if __name__ == '__main__':
-    hp = HidePass()
-    print(hp.encrypt('I love China', 5, 'loveShangHai%1998'))
-    print(hp.decrypt('I love China', 5, b'bG92ZVhJIGxvdmUgQ2hpbFJTiwNA5'))
+    hp = HidePass(secret='I love China', position=1)
+    print(hp.encrypt('loveShangHai%1998'))
+    print(hp.decrypt(hp.encrypt('loveChina.com')))
 
 
 

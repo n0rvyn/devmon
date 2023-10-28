@@ -12,7 +12,7 @@
 # Tools: PyCharm
 
 """
----Short description of this Python module---
+---Operating MongoDB with 'pymongo'---
 
 """
 from pymongo.mongo_client import MongoClient

@@ -12,7 +12,7 @@
 # Tools: PyCharm
 
 """
----Short description of this Python module---
+---Reading files from 'devlist' to dataclass SNMPAgent---
 
 """
 import os.path
@@ -27,14 +27,13 @@ _ROOT_ = os.path.abspath(os.path.join(_FILE_, '../../../'))
 if _ROOT_.startswith('/tmp') or _ROOT_ == '/':
     _ROOT_ = '/etc/devmon'
 
-_CONFIG_DIR_ = os.path.join(_ROOT_, 'conf')
+# _CONFIG_DIR_ = os.path.join(_ROOT_, 'conf')
 _DEVLIST_DIR_ = os.path.join(_ROOT_, 'devlist')
 _A_SIDE_ = os.path.join(_DEVLIST_DIR_, 'a-side')
 _B_SIDE_ = os.path.join(_DEVLIST_DIR_, 'b-side')
 _M_ING_ = os.path.join(_DEVLIST_DIR_, 'maintaining')
 
-_CONFIG_ = os.path.join(_CONFIG_DIR_, 'devmon.yaml')
-
+# _CONFIG_ = os.path.join(_CONFIG_DIR_, 'devmon.yaml')
 _SRC_ = os.path.abspath(os.path.join(_FILE_, '../../'))
 _CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
 _TYPE_ = os.path.abspath(os.path.join(_SRC_, 'type'))
@@ -48,15 +47,15 @@ except Exception as e:
     raise e
 
 
-def ReadConfig():
-    config = {}
-    try:
-        with open(_CONFIG_, 'r+') as f:
-            config = safe_load(f)
-    except Exception as err:
-        print(err)
-
-    return config
+# def ReadConfig(file: str = None):
+#     config = {}
+#     try:
+#         with open(_CONFIG_, 'r+') as f:
+#             config = safe_load(f)
+#     except Exception as err:
+#         print(err)
+#
+#     return config
 
 
 def ReadAgents():
@@ -95,119 +94,12 @@ def ReadAgents():
             except TypeError:
                 continue
 
-            # region = area = None
-            # try:
-            #     region = dev_detail['region']
-            # except KeyError:
-            #     pass
-            # try:
-            #     area = dev_detail['area']
-            # except KeyError:
-            #     pass
             try:
-                addr_in_cmdb = dev_detail['addr_in_cmdb']
+                if not dev_detail['addr_in_cmdb']:
+                    dev_detail['addr_in_cmdb'] = address
             except KeyError:
-                addr_in_cmdb = address
+                dev_detail['addr_in_cmdb'] = address
 
-            # try:
-            #     vf_ids = dev_detail['fids']
-            # except KeyError:
-            #     vf_ids = [None]  # for None value of fids and context, e.g., non-SanSwitch device
-            #
-            # for vf in vf_ids:
-            #     # todo waiting for verify
-            #     dev_detail.update({'context': vf})
-            #     snmp_agent = SNMPAgent()
-            #     for key, val in dev_detail.items():  # modify from line: 120 snmp_agent = ...
-            #         snmp_agent.__setattr__(key, val)
-            #
-            #     try:
-            #         snmp_detail = dev_detail['snmp']
-            #
-            #         # snmp_agent = SNMPAgent(address=address, region=region, area=area, addr_in_cmdb=addr_in_cmdb)
-            #         d_snmp_agent = asdict(snmp_agent)
-            #
-            #         l_oids = []  # a list of all OIDs' details for a single snmp agent
-            #         for oid_detail in snmp_detail['OIDs']:
-            #             oid = OID()  # creating an OID dataclass 'oid'
-            #             d_oid = asdict(oid)  # creating a dict based on dataclass 'oid'
-            #
-            #             for key in oid_detail.keys():  # trying to assign exist 'value's to 'key's
-            #                 try:
-            #                     if key == 'watermark':
-            #                         try:
-            #                             low = oid_detail[key]['low']
-            #                             high = oid_detail[key]['high']
-            #                         except KeyError:
-            #                             continue  # a 'watermark' must have attributes: low & high
-            #
-            #                         try:
-            #                             restr = oid_detail[key]['restricted']
-            #                         except KeyError:
-            #                             restr = False  # but restricted is an option, the default value is 'False'
-            #
-            #                         watermark = WaterMark(low=low, high=high, restricted=restr)
-            #                         d_oid[key] = watermark
-            #
-            #                         continue
-            #                     if key == 'id_range':
-            #                         try:
-            #                             o_start = oid_detail[key]['start']
-            #                         except KeyError:
-            #                             continue
-            #
-            #                         try:
-            #                             o_end = oid_detail[key]['end']
-            #                         except KeyError:
-            #                             o_end = None
-            #                         try:
-            #                             o_count = oid_detail[key]['count']
-            #                         except KeyError:
-            #                             o_count = None
-            #
-            #                         id_range = IDRange(start=o_start,
-            #                                            end=o_end,
-            #                                            count=o_count)
-            #                         d_oid[key] = id_range
-            #                         continue
-            #
-            #                     d_oid[key] = oid_detail[key]
-            #                 except KeyError:
-            #                     continue
-            #
-            #             for key, value in d_oid.items():  # assigning values to attributes of dataclass 'oid'
-            #                 oid.__setattr__(key, value)
-            #
-            #             if not oid.read_ref_from and not oid.reference and not oid.watermark:
-            #                 continue  # todo no reference value, just for show???
-            #
-            #             l_oids.append(oid)  # appending the dataclass 'oid' to a list
-            #
-            #         for key in d_snmp_agent.keys():
-            #             try:
-            #                 d_snmp_agent[key] = snmp_detail[key]
-            #             except KeyError:
-            #                 continue
-            #
-            #         for key, value in d_snmp_agent.items():
-            #             snmp_agent.__setattr__(key, value)
-            #
-            #         snmp_agent.OIDs = l_oids
-            #
-            #         if d is _A_SIDE_:
-            #             a_side_snmp_agents.append(snmp_agent)
-            #         if d is _B_SIDE_:
-            #             b_side_snmp_agents.append(snmp_agent)
-            #
-            #     except KeyError:  # 'snmp' key not in dict, maybe this is an SSH agent detail
-            #         try:
-            #             ssh_detail = dev_detail['ssh']
-            #
-            #         except KeyError as ssh_key_err:
-            #             # raise f'{ssh_key_err}\nNeither SNMP nor SSH detail exist.'
-            #             raise ssh_key_err
-
-            # todo waiting for verify
             snmp_agent = SNMPAgent()
             for key, val in dev_detail.items():  # modify from line: 120 snmp_agent = ...
                 snmp_agent.__setattr__(key, val)
@@ -294,9 +186,8 @@ def ReadAgents():
                 try:
                     ssh_detail = dev_detail['ssh']
 
-                except KeyError as ssh_key_err:
-                    # raise f'{ssh_key_err}\nNeither SNMP nor SSH detail exist.'
-                    raise ssh_key_err
+                except KeyError as err:
+                    raise err
 
             if d in _M_ING_:
                 maintaining_devs.append(dev_detail)
@@ -306,7 +197,6 @@ def ReadAgents():
 
 
 if __name__ == '__main__':
-    print(ReadConfig())
     a_snmp, *_ = ReadAgents()
     [print(agt) for agt in a_snmp]
 

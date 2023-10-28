@@ -11,7 +11,7 @@
 # Tools: PyCharm
 
 """
----format log for module---
+---Log formatter---
 
 """
 import os

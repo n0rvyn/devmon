@@ -14,24 +14,11 @@
 """
 ---A client for reading OID from snmp agent---
 """
-import os
-import subprocess
-import sys
 from subprocess import getstatusoutput
 from typing import Literal, Optional
 from threading import Thread
+from type import SNMPAgent, OID, VOID, ArithType, IDRange
 
-_FILE_ = os.path.abspath(__file__)
-_SRC_ = os.path.abspath(os.path.join(_FILE_, '../../'))
-_CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
-_TYPE_ = os.path.abspath(os.path.join(_SRC_, 'type'))
-
-sys.path.append(_SRC_)
-
-try:
-    from type import SNMPAgent, OID, VOID, ArithType, IDRange
-except ImportError as e:
-    raise e
 
 Position = Literal[
     1, 2
@@ -40,10 +27,6 @@ Position = Literal[
 OUTOPTS = Literal[
     'a', 'b', 'e', 'E', 'f', 'F', 'n', 'p', 'q', 'Q', 's', 'S', 't', 'T', 'u', 'U', 'v', 'V', 'x', 'X'
 ]
-
-
-# class OIDIsTableError(Exception):
-#     print(f'OID is a table entry.')
 
 
 class SNMP(object):
@@ -69,7 +52,7 @@ class SNMP(object):
         retries = f'-r {self.agent.retries}'
         timeout = f'-t {self.agent.timeout}'
         comm = f"-c '{self.agent.community}'" if self.agent.version != '3' else ''
-        user = f'-u {self.agent.username}'  # todo adding SanSwitch VF support
+        user = f'-u {self.agent.username}' if self.agent.username else ''
         mib = f'-m {self.agent.mib}' if self.agent.mib else ''
         cont = f'-n VF:{self.context}' if self.context else ''
 
@@ -111,84 +94,6 @@ class SNMP(object):
 
         return val
 
-    # def ____read_related_symbol(self, index: str = None, symbol: str = None) -> Optional[str]:
-    #     """
-    #     UCD-SNMP-MIB::dskDevice.31 = STRING: /dev/mapper/rootvg-lv_portage
-    #
-    #     lookup OID's symbol by 'UCD-SNMP-MIB::dskPercent.31 = INTEGER: 89'
-    #     :return:
-    #     """
-    #     try:
-    #         int(index)
-    #         oid = f'{symbol}.{index}'
-    #         return self._read_oid_val(oid)
-    #     except ValueError:
-    #         return None
-
-    # def ___read(self,
-    #             oid: str = None,
-    #             oid_end: str = None,
-    #             count: int = None) -> list[VOID]:
-    #     """
-    #     Notice:
-    #         'oid_from' ends with 'int' or not both are acceptable.
-    #         'oid_to' MUST ends with 'int' to count the number of loop
-    #         'oid_to' has high priority than 'count'
-    #     """
-    #     # type_ad_values = []
-    #     voids = []
-    #
-    #     if not oid_end and not count:  # oid specified can be single OID or table entry
-    #         try:
-    #             output_lines = self._read_oid(oid).split('\n')  # todo this is for reading a OID table
-    #         except AttributeError:
-    #             # return [(None, None)]
-    #             return [VOID()]
-    #
-    #         for ln in output_lines:
-    #             void = VOID()  # reset the VOID dataclass
-    #             try:
-    #                 # type_val, val = l.split(':')
-    #                 # HOST-RESOURCES-MIB::hrSWRunPerfMem.1199 = INTEGER: 8
-    #                 oid, value = ln.split('=')
-    #                 *_, val = value.split(':')
-    #                 *_, index = oid.split('.')
-    #
-    #                 void.index = index.strip()
-    #                 void.value = val.strip().strip('"')  # for some values included `"
-    #             except ValueError:
-    #                 void.index = void.value = None
-    #             voids.append(void)
-    #
-    #         return voids
-    #
-    #     index_to = None
-    #     try:
-    #         try:
-    #             index_from = int(oid.split('.')[-1])
-    #             oid_prefix = '.'.join(oid.split('.')[0:-1])
-    #         except ValueError:
-    #             index_from = 1
-    #             oid_prefix = oid
-    #
-    #         if oid_end:
-    #             try:
-    #                 index_to = int(oid_end.split('.')[-1]) + 1
-    #             except ValueError:
-    #                 raise 'OID format error!'
-    #
-    #         elif count:
-    #             index_to = index_from + count
-    #
-    #         for i in range(index_from, index_to):
-    #             # type_ad_values.append(self.read(f'{oid_prefix}.{str(i)}'))
-    #             voids.extend(self.___read(f'{oid_prefix}.{str(i)}'))  # call the function itself???
-    #
-    #     except IndexError:
-    #         pass
-    #
-    #     return voids
-
     def _read_id(self,
                  oid: str = None,
                  related_symbol: str = None,
@@ -198,12 +103,6 @@ class SNMP(object):
                  arithmetic: ArithType = None,
                  arith_symbol: str = None,
                  arith_pos: Position = None) -> VOID:
-        """
-        Notice:
-            'oid_from' ends with 'int' or not both are acceptable.
-            'oid_to' MUST ends with 'int' to count the number of loop
-            'oid_to' has high priority than 'count'
-        """
         void = VOID()
 
         index = oid.split('.')[-1]
@@ -262,10 +161,8 @@ class SNMP(object):
                            _arithmetic: ArithType = None,
                            _arith_symbol: str = None,
                            _arith_pos: Position = None):
-            voids.append(
-                self._read_id(_oid, _related_symbol, _exclude_index, _exclude_value,
-                              _read_ref_from, _arithmetic, _arith_symbol,
-                              _arith_pos))
+            voids.append(self._read_id(_oid, _related_symbol, _exclude_index,
+                                       _exclude_value,_read_ref_from, _arithmetic, _arith_symbol, _arith_pos))
 
         try:
             index_from = int(oid_start.split('.')[-1])
@@ -284,27 +181,14 @@ class SNMP(object):
         for i in range(index_from, index_to):
             oid = f'{oid_prefix}.{i}'
             threads.append(Thread(target=read_id_target,
-                                  args=(oid, related_symbol, exclude_index, exclude_value, read_ref_from,
+                                  args=(oid, related_symbol, exclude_index,
+                                        exclude_value, read_ref_from,
                                         arithmetic, arith_symbol, arith_pos,)))
 
         _ = [t.start() for t in threads]
         _ = [t.join() for t in threads]
 
         return voids
-
-    # def ____read_by_index_ad_symbol(self, index: str = None, symbol: str = None) -> VOID:
-    #     """
-    #     UCD-SNMP-MIB::dskDevice.31 = STRING: /dev/mapper/rootvg-lv_portage
-    #
-    #     lookup OID's symbol by 'UCD-SNMP-MIB::dskPercent.31 = INTEGER: 89'
-    #     :return:
-    #     """
-    #     try:
-    #         int(index)
-    #         oid = f'{symbol}.{index}'
-    #         return self.read(oid=oid)[0]
-    #     except ValueError:
-    #         return VOID()
 
     @staticmethod
     def _arith_value(arith: ArithType = None,

@@ -12,7 +12,7 @@
 # Tools: PyCharm
 
 """
----A SSH Client based on 'paramiko' and OpenSSH
+---An SSH Client based on 'paramiko' and OpenSSH
 """
 import paramiko
 import subprocess

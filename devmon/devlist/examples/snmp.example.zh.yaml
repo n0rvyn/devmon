@@ -1,3 +1,8 @@
+# the most simple configuration for Linux SNMPD.
+# exposing all the OIDs to the agent.
+
+# view	all		included		.1
+# rocommunity 	public			default
 ---
 # 设备IP，SNMP Daemon接口地址，必选项
 address: SomeAddress
@@ -30,7 +35,7 @@ snmp:
     - '1'
     - '2'
   # snmpwalk读取OID超时时间，可选
-  timeout: 2
+  timeout: 1
   # snmpwalk读取OID失败后尝试次数，可选
   retries: 1
   # OID关联配置

@@ -11,7 +11,7 @@
 # Tools: PyCharm
 
 """
-Pushing messages to remote log server
+---Pushing messages to remote log server---
 """
 from subprocess import getoutput
 from subprocess import getstatusoutput
@@ -30,7 +30,7 @@ class PushMsg(object):
         # if not path.exists(self.nc):
         #     raise FileNotFoundError
 
-    def __push(self, msg: str):
+    def ____push(self, msg: str):
         # for macOS, '-w1' means different with different nc versions.
         if system() == 'Darwin':
             print("""\n# Warning: for macOS, 'nc' from 'brew' is not supported! Specified the 'nc' path to '/usr/bin/nc' before run this tool.\n""")

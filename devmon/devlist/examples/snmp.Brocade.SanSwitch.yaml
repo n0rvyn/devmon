@@ -7,7 +7,7 @@ addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
 snmp:
   version: '3'  # the SNMPD version
   community: 'public'  # the SNMPD community
-  timeout: 2  # second(s) to timeout
+  timeout: 1  # second(s) to timeout
   retries: 1  # time(s) to retry after failed
   base: '1.3.6.1.4.1.1588.2.1.1.1'
   username: 'user1'

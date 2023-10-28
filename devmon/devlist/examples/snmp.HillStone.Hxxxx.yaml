@@ -8,7 +8,7 @@ rid: 'Resource ID'
 snmp:
   version: '2c'  # the SNMPD version
   community: 'public'  # the SNMPD community
-  timeout: 2  # second(s) to timeout
+  timeout: 1  # second(s) to timeout
   retries: 1  # time(s) to retry after failed
   OIDs:
     # 1. HA stat
