@@ -55,13 +55,14 @@ class OID:
     explanation:      str = None  # the meaning of OID
     alert:            str = "异常，请持续关注"  # the suffix of an alert
     severity:    CaseServ = '1'
-    reference:        str = None
+    reference:        str = None  # -oe no symbol label for enum values  # todo
     read_ref_from:    str = None  # read reference from another OID
     watermark:  WaterMark = None
     arithmetic: ArithType = None
     arith_symbol:     str = None
     arith_pos:   ArithPos = 2  # a / b; b takes the position of 2
     enum:            dict = None  # transform int values to human-readable iterm
+    perf:            bool = False  # set to True to calculate performance of OID
     # file: devmon.py line: 258
 
     # todo add support for OID values need to be combined
@@ -76,9 +77,3 @@ class VOID:
     value: str = None
     reference: str = None
 
-#
-# @dataclass
-# class ROID:
-#     index: str = None
-#     reference: str = None
-#

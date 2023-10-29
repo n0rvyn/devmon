@@ -29,6 +29,8 @@ from inspect import currentframe
 from pymongo import errors, timeout
 from src import oid_to_case, ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
 from src import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart, EventType
+from src import Point, PointMeta, MongoTS, oid_to_point
+
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
 _ROOT_ = '/etc/devmon' if _ROOT_.startswith('/tmp') else _ROOT_
@@ -154,6 +156,13 @@ class DevMon(object):
         except KeyError:
             cmdb_col = 'cmdb'
 
+        try:
+            ts_db = config['mongo_ts_db']
+            ts_col = config['mongo_ts_col']
+        except KeyError:
+            ts_db = 'perfmon'
+            ts_col = 'test'  # todo should the different metadata be stored at the different collection or all-in-one???
+
         self.mongo = MongoDB(server=mongo_server, uri=mongo_uri,
                              username=mongo_user, password=mongo_pass, port=mongo_port,
                              database=mongo_db, collection=mongo_col)
@@ -162,6 +171,9 @@ class DevMon(object):
                                   username=mongo_user, password=mongo_pass, port=mongo_port,
                                   database=mongo_db, collection=cmdb_col)
 
+        self.mongots = MongoDB(server=mongo_server, uri=mongo_uri,
+                                  username=mongo_user, password=mongo_pass, port=mongo_port,
+                                  database=ts_db, collection=ts_col)
         if not pm:
             try:
                 with timeout(2):
@@ -498,15 +510,25 @@ class DevMon(object):
 
         return case_exist
 
-    def _read_snmp_agent(self, agent: SNMPAgent) -> list[tuple[SNMPAgent, OID, list[VOID]]]:
+    def _read_snmp_agent(self, agent: SNMPAgent, perf: bool = False) -> list[tuple[SNMPAgent, OID, list[VOID]]]:
         # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
         snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
         agent_oid_voids = []
 
-        for oid in agent.OIDs:
-            l_voids = snmp.read_oid_dc(oid)
-            # self.snmp_agents.append((agent, oid, l_voids)) if l_voids else ''
-            agent_oid_voids.append((agent, oid, l_voids)) if l_voids else ''
+        # for oid in agent.OIDs:
+        #     l_voids = snmp.read_oid_dc(oid)
+        #     # self.snmp_agents.append((agent, oid, l_voids)) if l_voids else ''
+        #     agent_oid_voids.append((agent, oid, l_voids)) if l_voids else ''
+
+        def __read_oid(_oid: OID = None):
+            if perf and not _oid.perf:
+                return None
+            _l_voids = snmp.read_oid_dc(_oid)
+            agent_oid_voids.append((agent, _oid, _l_voids)) if _l_voids else ''
+
+        threads = [Thread(target=__read_oid, args=(oid, )) for oid in agent.OIDs]
+        _ = [t.start() for t in threads]
+        _ = [t.join() for t in threads]
 
         return agent_oid_voids
 
@@ -981,6 +1003,21 @@ class DevMon(object):
         flt = {'ip': addr}  # todo verifying 'ip_hostname' key
         return self.cmdb_mongo.find_one(flt)
 
+    def perf(self):
+        agents: list[SNMPAgent] = self.a_side_snmps + self.b_side_snmps
+        points: list[Point] = []
+
+        for agent in agents:
+            for (_, oid, l_void) in self._read_snmp_agent(agent, perf=True):
+                points.append(oid_to_point(agent, oid, l_void))
+
+        mg = MongoTS('mongodb://localhost:27017', database='test', collection='test_0031')
+        for p in points:
+            if p.data:
+                mg.coll.insert_one(asdict(p))
+
+        mg.pd_all()
+
     def pm_snmp(self, device: str = None):
         """
         Preventive maintenance for SNMP agents
@@ -1060,15 +1097,16 @@ class DevMon(object):
 
 if __name__ == '__main__':
     USAGE = f"Usage: \n" \
-            f"  {sys.argv[0]} [run | service]  # run or run as a service \n" \
-            f"  {sys.argv[0]} pm [device]\n" \
+            f"  {sys.argv[0]} [run | service]  # one-time run or as a service \n" \
+            f"  {sys.argv[0]} pm [device] \n" \
             f"  {sys.argv[0]} query \n" \
+            f"  {sys.argv[0]} perf  # run performance checking\n" \
             f"  {sys.argv[0]} sync  # syncing resources ID from CMDB to MongoDB \n" \
             f"  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n"
 
     devmon = DevMon()
     try:
-        if sys.argv[1] in ['run', 'query', 'sync', 'close', 'service']:
+        if sys.argv[1] in ['run', 'query', 'sync', 'close', 'service', 'perf']:
             devmon.refresh_config()
 
         if sys.argv[1] == 'run':
@@ -1080,6 +1118,9 @@ if __name__ == '__main__':
             except IndexError:
                 dev = None
             devmon.pm_snmp(device=dev)
+
+        elif sys.argv[1] == 'perf':
+            devmon.perf()
 
         elif sys.argv[1] == 'query':
             devmon.show_all_alerts()

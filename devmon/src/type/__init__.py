@@ -5,6 +5,7 @@ from .oid import OID, WaterMark, OIDType, ArithType, VOID, IDRange
 from .case import Case, CaseType, TheSameCasePart, CaseUpdatePart
 from .sshcmd import LineCmd, DelmtIndexType, KeyValuePair, LineFeature
 from .event import EventType
+from .point import PointMeta, Point
 
 
 __all__ = [
@@ -26,6 +27,8 @@ __all__ = [
     'DelmtIndexType',
     'KeyValuePair',
     'LineFeature',
-    'EventType'
+    'EventType',
+    'Point',
+    'PointMeta'
 ]
 

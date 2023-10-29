@@ -161,7 +161,8 @@ def ReadAgents():
                     for key, value in d_oid.items():  # assigning values to attributes of dataclass 'oid'
                         oid.__setattr__(key, value)
 
-                    if not oid.read_ref_from and not oid.reference and not oid.watermark:
+                    if not oid.perf and (not oid.read_ref_from and not oid.reference and not oid.watermark):
+                        # oid.perf does not need 'read_ref_from' or 'reference' or 'watermark'
                         continue  # todo no reference value, just for show???
 
                     l_oids.append(oid)  # appending the dataclass 'oid' to a list

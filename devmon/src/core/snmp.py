@@ -36,17 +36,31 @@ class SNMP(object):
         self.snmpd_stat = True
         self.context = context
 
-    def _read_oid(self, oid: str, outopts: OUTOPTS = 'U') -> Optional[str]:
+    def _read_oid(self, oid: str, *outopts) -> str:
+        """
+        return string like:
+        HOST-RESOURCES-MIB::hrSWRunPerfCPU.28464 = 113
+        """
+        output = ''
+
         if not self.snmpd_stat or not oid:
-            return None
+            return output
+
+        # if self.agent.base:
+        #     if not self.agent.base.endswith('.') and not oid.startswith('.'):
+        #         oid = f'{self.agent.base}.{oid}'
+        #     elif self.agent.base.endswith('.') and oid.startswith('.'):
+        #         oid = f'{self.agent.base}.{oid}'
+        #     else:
+        #         oid = f'{self.agent.base}{oid}'
 
         if self.agent.base:
-            if not self.agent.base.endswith('.') and not oid.startswith('.'):
-                oid = f'{self.agent.base}.{oid}'
-            elif self.agent.base.endswith('.') and oid.startswith('.'):
-                oid = f'{self.agent.base}.{oid}'
-            else:
-                oid = f'{self.agent.base}{oid}'
+            l_base = self.agent.base.rstrip('.').split('.')
+            l_oid = oid.lstrip('.').split('.')
+            l_base.extend(l_oid)
+            oid = '.'.join(l_base)
+
+        opt = ' '.join([f'-O{o}' for o in outopts]) if outopts else '-vQ -vU'
 
         ver = f'-v {self.agent.version}'
         retries = f'-r {self.agent.retries}'
@@ -56,29 +70,38 @@ class SNMP(object):
         mib = f'-m {self.agent.mib}' if self.agent.mib else ''
         cont = f'-n VF:{self.context}' if self.context else ''
 
-        if '!' in comm:
-            self.snmpwalk = f'set +H; {self.snmpwalk}'
+        self.snmpwalk = f'set +H; {self.snmpwalk}' if '!' in comm else self.snmpwalk
 
         cmd = f"{self.snmpwalk} {ver} {comm} {mib} " \
               f"{user} {cont} " \
               f"{retries} {timeout} " \
-              f"-O{outopts} " \
+              f"{opt} " \
               f"{self.agent.address} {oid}"
+
         NO_VALUE_ERR = ['No Such Instance currently exists at this OID',
-                        'No Such Object available on this agent at this OID']
+                        'No Such Object available on this agent at this OID',
+                        'No log handling enabled']
+
+        NO_VALUE_SUFFIX = ('Unknown Object Identifier')
 
         code, output = getstatusoutput(cmd)
+        code = 1 if output in NO_VALUE_ERR or output.endswith(NO_VALUE_SUFFIX) else code
 
-        if output.startswith('Timeout'):  # once the snmpd is not reachable, set the parameter to False --> line: 49
+        # once the snmpd is not reachable, set the parameter to False --> line: 49
+        if output.startswith('Timeout'):
             self.snmpd_stat = False  # the SNMPD server is not respond
 
-        # value = output.split('=')[-1].strip()
-        value = output.split('=')[-1].strip().strip('"')  # for some values been surrounded by `"
-        # return output if code == 0 and value != NO_VALUE_ERR else None
-        return output if code == 0 and value not in NO_VALUE_ERR else None
+        # return output if code == 0 and value not in NO_VALUE_ERR else None
+        return output if code == 0 else ''
 
-    def _read_oid_val(self, oid: str, outopts: OUTOPTS = 'v') -> Optional[str]:
-        output = self._read_oid(oid, outopts)
+    def ____read_oid_val(self, oid: str) -> Optional[str]:
+        """
+        return only the value of the OID.
+        """
+        # output = self._read_oid(oid, outopts)
+        output = self._read_oid(oid, 'v')
+        # display the value only (with the type and the unit)
+        # like: INTEGER: 0 KBytes
 
         if output:
             if output.count('\n') > 1:
@@ -93,6 +116,13 @@ class SNMP(object):
             val = None
 
         return val
+
+    def _read_oid_val(self, oid: str) -> str:
+        return '\n'.join([ln.strip().strip('"') for ln in self._read_oid(oid, 'U', 'v', 'Q').split('\n')])
+
+    def _read_oid_index(self, oid: str) -> str:
+        return '\n'.join(ln.split('=')[0].split('.')[-1].strip()
+                         for ln in self._read_oid(oid, 'U', 's', 'Q').split('\n'))
 
     def _read_id(self,
                  oid: str = None,
@@ -255,7 +285,7 @@ class SNMP(object):
             ari_value = float(self._read_oid_val(oid))
             val = self._arith_value(arith=arith, ori_value=ori_value, ari_value=ari_value, position=position)
 
-        except TypeError:
+        except (TypeError, ValueError):
             return val
 
         return val
@@ -276,16 +306,23 @@ class SNMP(object):
     #
     #     return reference
 
-    def _read_table_vals(self, table: str = None):
-        output = self._read_oid(table, outopts='Q')
+    def _____read_table_vals(self, table: str = None):
+        # output = self._read_oid(table, outopts='Q')
+        output = self._read_oid_val(table)
         l_oid_vals = output.split('\n') if output else []
         # l_oid_vals = self._read_oid(table, outopts='Q').split('\n')
         return [o_v.split('=')[-1].strip().strip('"').strip() for o_v in l_oid_vals]  # add strip('"') for values `"value`"
 
-    def _read_table_index(self, table: str = None):
+    def _____read_table_index(self, table: str = None):
         output = self._read_oid(table, outopts='Q')
         l_oid_vals = output.split('\n') if output else []
         return [o_v.split('=')[0].strip().split('.')[-1] for o_v in l_oid_vals]
+
+    def _read_table_vals(self, table: str = None) -> list[str]:
+        return self._read_oid_val(table).split('\n')
+
+    def _read_table_indexes(self, table: str = None) -> list[str]:
+        return self._read_oid_index(table).split('\n')
 
     def _read_table(self,
                     table: str = None,
@@ -300,50 +337,49 @@ class SNMP(object):
         vals_table = self._read_table_vals(table)
         vals_related = self._read_table_vals(related_symbol_table)
         vals_arith = self._read_table_vals(arith_symbol_table)
-        vals_index = self._read_table_vals(index_table) if index_table else self._read_table_index(table)
+        vals_index = self._read_table_vals(index_table) if index_table else self._read_table_indexes(table)
         vals_ref = self._read_table_vals(reference_symbol_table)
 
         voids = []
 
-        if not vals_table:
-            return None
-        else:
-            for i in range(len(vals_table)):
-                if vals_arith:
-                    try:
-                        ori_value = float(vals_table[i])
-                        ari_value = float(vals_arith[i])
-                    except TypeError:
-                        continue
-                    val = self._arith_value(arith=arith, ori_value=ori_value, ari_value=ari_value,
-                                            position=arith_pos)
-                else:
-                    val = vals_table[i]
+        for n in range(1, len(vals_table)+1):
+            i = n - 1
+            if not vals_table[i]:
+                continue
 
-                if vals_index:
-                    try:
-                        index = vals_index[i]  # todo index out of range error!!!!!!
-                    except IndexError:
-                        index = None  # todo read index from OID.1
-                else:
-                    index = str(i)
-
-                if vals_related:
-                    rel_val = vals_related[i]
-                else:
-                    rel_val = None
-
-                if vals_ref:
-                    ref = vals_ref[i]
-                else:
-                    ref = None
-
-                if exclude_index and str(index) in exclude_index:
-                    continue
-                if exclude_value and (str(rel_val) in exclude_value or str(val) in exclude_value):
+            if vals_arith != ['']:  # modify from >>if vals_arith<<
+                try:
+                    ori_value = float(vals_table[i])
+                    ari_value = float(vals_arith[i])
+                except (TypeError, ValueError, IndexError):
                     continue
 
-                voids.append(VOID(index=index, desc=rel_val, value=val, reference=ref))
+                val = self._arith_value(arith=arith, ori_value=ori_value, ari_value=ari_value,
+                                        position=arith_pos)
+            else:
+                val = vals_table[i]
+
+            try:
+                index = vals_index[i]
+            except IndexError:
+                index = str(i)
+
+            try:
+                rel_val = vals_related[i]
+            except IndexError:
+                rel_val = None
+
+            try:
+                ref = vals_ref[i]
+            except IndexError:
+                ref = None
+
+            if exclude_index and str(index) in exclude_index:
+                continue
+            if exclude_value and (str(rel_val) in exclude_value or str(val) in exclude_value):
+                continue
+
+            voids.append(VOID(index=index, desc=rel_val, value=val, reference=ref))
 
         return voids
 
@@ -369,8 +405,7 @@ class SNMP(object):
                                         read_ref_from=oid.read_ref_from,
                                         arithmetic=oid.arithmetic,
                                         arith_symbol=oid.arith_symbol,
-                                        arith_pos=oid.arith_pos
-                                        )
+                                        arith_pos=oid.arith_pos)
             return voids
 
         if oid.table:
@@ -404,7 +439,7 @@ class ContextSNMP(object):
 
 
 if __name__ == '__main__':
-    agent = SNMPAgent(address='192.16.10.250', community='public')
+    agent = SNMPAgent(address='172.16.10.250', community='public')
     snmp = SNMP(agent)
 
     # read single OID
