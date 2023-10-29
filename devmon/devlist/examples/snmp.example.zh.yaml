@@ -99,3 +99,14 @@ snmp:
       # False则该水位为阈值区间，取值在low与high之间则正常，反之则告警；
       # 可选值
       # restricted: False
+# performance data collection
+  - table: 'hrSWRunPerfCPU'
+    table_index: 'hrSWRunIndex'
+    label: 'SW Running CPU Stat'
+    related_symbol: 'hrSWRunName'
+    perf: True
+  - table: 'hrSWRunPerfMem'
+    table_index: 'hrSWRunIndex'
+    label: 'SW Running Mem Stat'
+    related_symbol: 'hrSWRunName'
+    perf: True
