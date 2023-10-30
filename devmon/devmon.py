@@ -29,7 +29,7 @@ from inspect import currentframe
 from pymongo import errors, timeout
 from src import oid_to_case, ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
 from src import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart, EventType
-from src import Point, PointMeta, MongoTS, oid_to_point
+from src import Point, PointMeta, MongoTS, oid_to_point, InfluxDB
 
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
@@ -1010,6 +1010,10 @@ class DevMon(object):
         for agent in agents:
             for (_, oid, l_void) in self._read_snmp_agent(agent, perf=True):
                 points.append(oid_to_point(agent, oid, l_void))
+                idb = InfluxDB()
+                point = idb.oid_to_point(agent, oid, l_void)
+                idb.insert(point)
+                idb.select()
 
         mg = MongoTS('mongodb://localhost:27017', database='test', collection='test_0031')
         for p in points:

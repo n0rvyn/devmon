@@ -11,6 +11,7 @@ try:
     from encrypt import HidePass
     from cre_point import oid_to_point
     from mongots import MongoTS
+    from influx import InfluxDB
 except (ModuleNotFoundError, ImportError):
     from .read_devlist import ReadAgents
     from .snmp import SNMP, ContextSNMP
@@ -22,6 +23,7 @@ except (ModuleNotFoundError, ImportError):
     from .encrypt import HidePass
     from .cre_point import oid_to_point
     from .mongots import MongoTS
+    from .influx import InfluxDB
 
 
 __all__ = [
@@ -35,6 +37,7 @@ __all__ = [
     'oid_to_case',
     'HidePass',
     'oid_to_point',
-    'MongoTS'
+    'MongoTS',
+    'InfluxDB'
 ]
 
