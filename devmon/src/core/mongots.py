@@ -59,10 +59,11 @@ class MongoTS(object):
             collMod: "weather24h",
             expireAfterSeconds: "off"})
             """
-        except pymongo.errors.CollectionInvalid:
+        except (pymongo.errors.CollectionInvalid, pymongo.errors.OperationFailure):
             pass
 
         self.coll = client[database][collection]
+        self.coll = client.test.test_0031
 
     def write_df(self, dataframe: pd.DataFrame = None):
         write('test_coll', dataframe)
@@ -94,8 +95,8 @@ class MongoTS(object):
             if i > 10:
                 break
 
-            df.plot(y='value', x='timestamp', label=name)
-        plt.show()
+            # df.plot(y='value', x='timestamp', label=name)
+        # plt.show()
         # df['daily_pct_change'] = df['data'].sshd.pct_change() * 100
 
 

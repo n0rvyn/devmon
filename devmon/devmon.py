@@ -15,6 +15,7 @@
 ---Short description of this Python module---
 
 """
+import datetime
 import time
 from yaml import safe_load
 import os
@@ -1010,19 +1011,14 @@ class DevMon(object):
         for agent in agents:
             for (_, oid, l_void) in self._read_snmp_agent(agent, perf=True):
                 points.append(oid_to_point(agent, oid, l_void))
-                """
-                idb = InfluxDB()
-                point = idb.oid_to_point(agent, oid, l_void)
-                idb.insert(point)
-                idb.select()
-                """
 
-        mg = MongoTS('mongodb+srv://n0rvyn:zeur0607@online.svytn1p.mongodb.net/?retryWrites=true&w=majority', database='test', collection='test_0031')
+        mg = MongoTS(uri='mongodb+srv://zeur913:zeur0607@online.svytn1p.mongodb.net/', username='zeur913', password='zeur0607',
+                     database='test', collection='test_0031')
         for p in points:
             if p.data:
                 mg.coll.insert_one(asdict(p))
-
-        mg.pd_all()
+        print(datetime.datetime.utcnow())
+        # mg.pd_all()
 
     def pm_snmp(self, device: str = None):
         """
