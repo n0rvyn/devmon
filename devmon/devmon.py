@@ -1010,12 +1010,14 @@ class DevMon(object):
         for agent in agents:
             for (_, oid, l_void) in self._read_snmp_agent(agent, perf=True):
                 points.append(oid_to_point(agent, oid, l_void))
+                """
                 idb = InfluxDB()
                 point = idb.oid_to_point(agent, oid, l_void)
                 idb.insert(point)
                 idb.select()
+                """
 
-        mg = MongoTS('mongodb://localhost:27017', database='test', collection='test_0031')
+        mg = MongoTS('mongodb+srv://n0rvyn:zeur0607@online.svytn1p.mongodb.net/?retryWrites=true&w=majority', database='test', collection='test_0031')
         for p in points:
             if p.data:
                 mg.coll.insert_one(asdict(p))

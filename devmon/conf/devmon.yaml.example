@@ -6,8 +6,7 @@ snmpwalk: '/usr/bin/snmpwalk'
 source: 'SNMP Console'
 
 # MongoDB URI, username, password, port
-# mongo_uri: 'mongodb://localhost:27017'
-mongo_uri: 'mongodb+srv://n0rvyn:zeur0607@online.svytn1p.mongodb.net/?retryWrites=true&w=majority'
+mongo_uri: 'mongodb://localhost:27017'
 mongo_server: None
 mongo_user: None
 mongo_pass: None

@@ -13,3 +13,4 @@ __pycache__/
 /.venv/
 .idea
 /qodana.yaml
+/conf/devmon.yaml
