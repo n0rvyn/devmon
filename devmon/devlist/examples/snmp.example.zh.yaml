@@ -110,3 +110,10 @@ snmp:
     label: 'SW Running Mem Stat'
     related_symbol: 'hrSWRunName'
     perf: True
+# System Available Memory
+  - id: 'memSysAvail'
+    label: 'MemoryAvail'
+    perf: True
+  - id: 'ssCpuIdle'
+    label: 'CPU IDLE'
+    perf: True

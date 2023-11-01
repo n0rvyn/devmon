@@ -30,7 +30,7 @@ from inspect import currentframe
 from pymongo import errors, timeout
 from src import oid_to_case, ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
 from src import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart, EventType
-from src import Point, PointMeta, MongoTS, oid_to_point, InfluxDB
+from src import Point, PointMeta, oid_to_point, InfluxDB
 
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
@@ -1004,21 +1004,40 @@ class DevMon(object):
         flt = {'ip': addr}  # todo verifying 'ip_hostname' key
         return self.cmdb_mongo.find_one(flt)
 
-    def perf(self):
+    def perf(self, device: str = None):
         agents: list[SNMPAgent] = self.a_side_snmps + self.b_side_snmps
         points: list[Point] = []
 
-        for agent in agents:
-            for (_, oid, l_void) in self._read_snmp_agent(agent, perf=True):
-                points.append(oid_to_point(agent, oid, l_void))
+        def _gather_points(_agent: SNMPAgent = None):
+            if device and _agent.address != device:
+                return None
+            for (_, _oid, _l_void) in self._read_snmp_agent(_agent, perf=True):
+                points.append(oid_to_point(_agent, _oid, _l_void))
 
-        mg = MongoTS(uri='mongodb+srv://zeur913:zeur0607@online.svytn1p.mongodb.net/', username='zeur913', password='zeur0607',
-                     database='test', collection='test_0031')
-        for p in points:
-            if p.data:
-                mg.coll.insert_one(asdict(p))
-        print(datetime.datetime.utcnow())
-        # mg.pd_all()
+        threads = [Thread(target=_gather_points, args=(agent, )) for agent in agents]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+        # for agent in agents:
+        #     if device and agent.address != device:
+        #         continue
+        #
+        #     for (_, oid, l_void) in self._read_snmp_agent(agent, perf=True):
+        #         points.append(oid_to_point(agent, oid, l_void))
+
+        def _insert_points(_point: Point):
+            if _point.data:
+                print(_point.timestamp)
+                self.mongots.collection.insert_one(asdict(_point))
+
+        p_threads = [Thread(target=_insert_points, args=(p, )) for p in points]
+        [t.start() for t in p_threads]
+        [t.join() for t in p_threads]
+
+        # for p in points:
+        #     if p.data:
+        #         print(p.timestamp)
+        #         self.mongots.collection.insert_one(asdict(p))
 
     def pm_snmp(self, device: str = None):
         """

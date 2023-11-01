@@ -17,6 +17,7 @@
 """
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from pymongo import errors
 
 
 class MongoDB(object):
@@ -25,19 +26,40 @@ class MongoDB(object):
                  uri: str = None,
                  server_api=ServerApi('1'),
                  database: str = None,
-                 collection: str = None):
+                 collection: str = None,
+                 timeseries: bool = False):
 
         if not (database and collection):
             raise 'Both Database & Collection must be specified!'
 
-        if uri:
-            self.client = MongoClient(uri, server_api=server_api)
-        else:
-            self.client = MongoClient(host=server, port=port,
-                                      username=username, password=password,
+        host = uri if uri else server
+        # if uri:
+        #     self.client = MongoClient(uri, server_api=server_api)
+        # else:
+
+        self.client = MongoClient(host=host,
+                                      port=port,
+                                      username=username,
+                                      password=password,
                                       server_api=server_api)
 
-        self.collection = self.client[database][collection]
+        db = self.client[database]
+
+        if timeseries:
+            try:
+                db.create_collection(collection, timeseries={'timeField': 'timestamp',
+                                                             'metaField': 'metadata',
+                                                             'granularity': "seconds"})
+
+                """
+                db.runCommand({
+                collMod: "weather24h",
+                expireAfterSeconds: "off"})
+                """
+            except (errors.CollectionInvalid, errors.OperationFailure):
+                pass  # the collection already exists.
+
+        self.collection = db[collection]
         # BSON type Date
         # datetime.today().replace(microsecond=0)
 

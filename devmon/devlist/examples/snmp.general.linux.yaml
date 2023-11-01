@@ -91,3 +91,37 @@ snmp:
       low: 0
       high: 60
       restricted: True  # Alert when CPU IDLE is between 0-60
+  - table: 'hrSWRunPerfCPU'
+    table_index: 'hrSWRunIndex'
+    label: 'SW Running CPU Stat'
+    related_symbol: 'hrSWRunName'
+    perf: True
+  - table: 'hrSWRunPerfMem'
+    table_index: 'hrSWRunIndex'
+    label: 'SW Running Mem Stat'
+    related_symbol: 'hrSWRunName'
+    perf: True
+  - id: 'memSysAvail'
+    label: 'MemoryAvail'
+    perf: True
+  - id: 'ssCpuIdle'
+    label: 'CPU IDLE'
+    perf: True
+  - table: 'hrProcessorLoad'
+    label: 'ProcessorLoad'
+    perf: True
+  - table: 'diskIONRead'
+    table_index: 'diskIOIndex'
+    label: 'diskIoRead'
+    related_symbol: 'diskIODevice'
+    perf: True
+  - table: 'diskIONWritten'
+    table_index: 'diskIOIndex'
+    label: 'diskIoWritten'
+    related_symbol: 'diskIODevice'
+    perf: True
+  - table: 'ifHCInUcastPkts'
+    table_index: 'ifIndex'
+    label: 'NIC'
+    related_symbol: 'ifName'
+    perf: True

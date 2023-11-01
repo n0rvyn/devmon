@@ -16,7 +16,8 @@
 """
 
 from type import PointMeta, Point, SNMPAgent, VOID, OID
-from datetime import datetime
+from datetime import datetime, timezone
+import pytz
 
 
 def oid_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None):
@@ -35,8 +36,15 @@ def oid_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOI
         if lv.desc:
             data.update({lv.desc: float(lv.value)})
 
+        elif oid.label:
+            data.update({oid.label: float(lv.value)})
+
+    now = datetime.now()
+    local_now = pytz.timezone('Asia/Shanghai').localize(now)
+
     point = Point(metadata=point_meta,
-                  timestamp=datetime.now(),
+                  # timestamp=datetime.now(),
+                  timestamp=local_now,
                   data=data)
 
     return point

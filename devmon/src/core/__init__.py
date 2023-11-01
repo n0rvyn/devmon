@@ -10,7 +10,6 @@ try:
     from cre_case import oid_to_case
     from encrypt import HidePass
     from cre_point import oid_to_point
-    from mongots import MongoTS
     from influx import InfluxDB
 except (ModuleNotFoundError, ImportError):
     from .read_devlist import ReadAgents
@@ -22,7 +21,6 @@ except (ModuleNotFoundError, ImportError):
     from .cre_case import oid_to_case
     from .encrypt import HidePass
     from .cre_point import oid_to_point
-    from .mongots import MongoTS
     from .influx import InfluxDB
 
 
@@ -37,7 +35,6 @@ __all__ = [
     'oid_to_case',
     'HidePass',
     'oid_to_point',
-    'MongoTS',
     'InfluxDB'
 ]
 

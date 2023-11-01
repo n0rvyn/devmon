@@ -60,10 +60,9 @@ class MongoTS(object):
             expireAfterSeconds: "off"})
             """
         except (pymongo.errors.CollectionInvalid, pymongo.errors.OperationFailure):
-            pass
+            pass  # collection already exist.
 
         self.coll = client[database][collection]
-        self.coll = client.test.test_0031
 
     def write_df(self, dataframe: pd.DataFrame = None):
         write('test_coll', dataframe)

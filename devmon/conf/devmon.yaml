@@ -7,15 +7,17 @@ source: 'SNMP Console'
 
 # MongoDB URI, username, password, port
 # mongo_uri: 'mongodb://localhost:27017'
-mongo_uri: 'mongodb+srv://n0rvyn:zeur0607@online.svytn1p.mongodb.net/?retryWrites=true&w=majority'
-mongo_server: None
-mongo_user: None
-mongo_pass: None
+mongo_server: mongodb+srv://online.svytn1p.mongodb.net/
+mongo_user: xibber
+mongo_pass: 09xCM2MGGTWHQvMe
 mongo_port: 27017
 
 # Default MongoDB database & collection name
 mongo_db: devmon
 mongo_col: devmon
+
+mongo_ts_db: test
+mongo_ts_col: test_0031
 
 # Remote log server (str) and port (int)
 rlog_server: 'localhost'
