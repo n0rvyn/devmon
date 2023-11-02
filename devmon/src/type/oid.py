@@ -47,7 +47,7 @@ class OID:
     id:               str = None  # both single OID and OID table entry is allowed.
     id_range:     IDRange = None
     table:            str = None
-    group:            str = None  # a set of OIDs, when collecting perf data, insert these values in one document. # todo
+    group:            str = None  # A set of OIDs; when collecting perf data, insert these values in one document. # todo
     table_index:      str = None
     related_symbol:   str = None  # an OID prefix which identifies the id's name or symbol
     exclude_index:    str = None  # OIDs' index excluded for some discontinuous OID table; for oid -> snmp.py line: 214
