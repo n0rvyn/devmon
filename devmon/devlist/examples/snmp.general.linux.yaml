@@ -125,3 +125,42 @@ snmp:
     label: 'NIC'
     related_symbol: 'ifName'
     perf: True
+  - id: 'ssSwapIn'
+    label: 'systemSwapIn'
+    perf: True
+  - id: 'ssSwapOut'
+    label: 'systemSwapOut'
+    perf: True
+
+
+#UCD-SNMP-MIB::ssIndex.0 = INTEGER: 1
+#UCD-SNMP-MIB::ssErrorName.0 = STRING: systemStats
+#UCD-SNMP-MIB::ssSwapIn.0 = INTEGER: 0 kB
+#UCD-SNMP-MIB::ssSwapOut.0 = INTEGER: 0 kB
+#UCD-SNMP-MIB::ssIOSent.0 = INTEGER: 124 blocks/s
+#UCD-SNMP-MIB::ssIOReceive.0 = INTEGER: 0 blocks/s
+#UCD-SNMP-MIB::ssSysInterrupts.0 = INTEGER: 1646 interrupts/s
+#UCD-SNMP-MIB::ssSysContext.0 = INTEGER: 8172 switches/s
+#UCD-SNMP-MIB::ssCpuUser.0 = INTEGER: 6
+#UCD-SNMP-MIB::ssCpuSystem.0 = INTEGER: 3
+#UCD-SNMP-MIB::ssCpuIdle.0 = INTEGER: 89
+#UCD-SNMP-MIB::ssCpuRawUser.0 = Counter32: 21844709
+#UCD-SNMP-MIB::ssCpuRawNice.0 = Counter32: 110270
+#UCD-SNMP-MIB::ssCpuRawSystem.0 = Counter32: 12388959
+#UCD-SNMP-MIB::ssCpuRawIdle.0 = Counter32: 557879365
+#UCD-SNMP-MIB::ssCpuRawWait.0 = Counter32: 321451
+#UCD-SNMP-MIB::ssCpuRawKernel.0 = Counter32: 0
+#UCD-SNMP-MIB::ssCpuRawInterrupt.0 = Counter32: 0
+#UCD-SNMP-MIB::ssIORawSent.0 = Counter32: 251480036
+#UCD-SNMP-MIB::ssIORawReceived.0 = Counter32: 121093182
+#UCD-SNMP-MIB::ssRawInterrupts.0 = Counter32: 114853064
+#UCD-SNMP-MIB::ssRawContexts.0 = Counter32: 3195413835
+#UCD-SNMP-MIB::ssCpuRawSoftIRQ.0 = Counter32: 50944
+#UCD-SNMP-MIB::ssRawSwapIn.0 = Counter32: 1125957
+#UCD-SNMP-MIB::ssRawSwapOut.0 = Counter32: 2158334
+#UCD-SNMP-MIB::ssCpuRawSteal.0 = Counter32: 0
+#UCD-SNMP-MIB::ssCpuRawGuest.0 = Counter32: 3742
+#UCD-SNMP-MIB::ssCpuRawGuestNice.0 = Counter32: 0
+#UCD-SNMP-MIB::ssCpuNumCpus.0 = INTEGER: 4
+
+# https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/sect-system_monitoring_tools-net-snmp-retrieving
