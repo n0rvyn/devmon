@@ -1074,6 +1074,10 @@ class DevMon(object):
                 err = ''
                 faulty = 0
 
+            if c.oid.show:  # the value is for show  # todo verify the parameter when without a pm method!!!!
+                faulty = -1
+                err = c.void.value
+
             label = c.oid.label
 
             try:
@@ -1091,26 +1095,35 @@ class DevMon(object):
         hosts = list(all_stats.keys())
         hosts.sort()
         for host in hosts:
-            err = []
+            all_errors = []
+
             print('=' * 97)
             print('-' * 40, f'{host:^15s}', '-' * 40)
             label_detail = all_stats[host]
             for exp in label_detail.keys():
                 faulty = label_detail[exp]['alert']
-                err.extend(label_detail[exp]['errors'])
+                err = label_detail[exp]['errors']
+
+                if faulty < 0:  # the value is just for showing
+                    val_to_show = ''.join(err)
+                    p_len = 96 - len(val_to_show)
+                    print(f'{exp:.<{p_len}s} \033[0;37m{val_to_show}\033[0m')
+                    continue
 
                 if faulty > 0:
                     print(f'{exp:.<90s} \033[0;31mFAILED\033[0m')
-                else:
+                elif faulty == 0:
                     print(f'{exp:.<90s} \033[0;37mPASSED\033[0m')
 
-            err = list(set(err))
+                all_errors.extend(err)
+
+            all_errors = list(set(all_errors))  # deduplicate the error strings
             try:
-                err.remove('')
+                all_errors.remove('')  # remove the empty string
             except ValueError:
                 pass
-            err.sort()
-            print('\n'.join(err))
+            all_errors.sort()
+            print('\n'.join(all_errors))
 
     def pm_ssh(self):
         pass

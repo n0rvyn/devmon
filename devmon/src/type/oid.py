@@ -64,11 +64,11 @@ class OID:
     arith_pos:   ArithPos = 2  # a / b; b takes the position of 2
     enum:            dict = None  # transform int values to human-readable iterm
     perf:            bool = False  # set to True to calculate performance of OID
+    show:            bool = False  # set to True to show the value ONLY
     # file: devmon.py line: 258
 
     # todo add support for OID values need to be combined
     # todo add support for OID values need to be arithmetic with more than 2 values.
-    # todo add support for OID values ONLY for showing
     # todo add support for showing multiple values in one window
 
 

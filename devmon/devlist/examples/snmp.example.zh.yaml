@@ -44,6 +44,8 @@ snmp:
   - id: '1.22.1.3'
     # OID标签，用于巡检展示分类（建议字符不宜过长），必选项
     label: SystemStat
+    # 可选项；设置show为True，该OID值将仅作为PM时展示用（默认False)。
+    show: True
     # OID解释，用于拼凑告警内容，必选项
     explanation: '系统状态'
     # OID参考值，等于或包含OID读取值，则视为正常，否则触发告警，与watermark二必选一
