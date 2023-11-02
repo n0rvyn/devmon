@@ -80,9 +80,11 @@ def ReadAgents():
         for fl in os.listdir(d):
             if fl.startswith(('example', '.git')):  # ignore .gitignore
                 continue
+            if not fl.endswith('yaml'):
+                continue
             try:
                 p = os.path.join(d, fl)
-                with open(p, 'r+') as f:
+                with open(p, 'r+', encoding='utf8') as f:
                     dev_detail: dict = safe_load(f)
             except parser.ParserError as err:
                 raise err
