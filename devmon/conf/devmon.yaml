@@ -7,9 +7,9 @@ source: 'SNMP Console'
 
 # MongoDB URI, username, password, port
 # mongo_uri: 'mongodb://localhost:27017'
-mongo_server: mongodb+srv://online.svytn1p.mongodb.net/
+mongo_server: "mongodb+srv://cluster0.oaaftz3.mongodb.net/?retryWrites=true&w=majority"
 mongo_user: xibber
-mongo_pass: 09xCM2MGGTWHQvMe
+mongo_pass: JUMZKDQZYMRk1qpo
 mongo_port: 27017
 
 # Default MongoDB database & collection name

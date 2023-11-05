@@ -30,7 +30,7 @@ from inspect import currentframe
 from pymongo import errors, timeout
 from src import oid_to_case, ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
 from src import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart, EventType
-from src import Point, PointMeta, oid_to_point, InfluxDB
+from src import Point, PointMeta, oid_to_point
 
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))

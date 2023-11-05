@@ -136,20 +136,21 @@ snmp:
       - 'ssSwapOut'
     label: 'SystemSwapStat'
     perf: True
+  - group:
+      - 'ssCpuUser'
+      - 'ssCpuSystem'
+      - 'ssCpuIdle'
+      - 'ssCpuRawUser'
+    label: 'SysCpuStat'
+    perf: True
 
 
-#UCD-SNMP-MIB::ssIndex.0 = INTEGER: 1
-#UCD-SNMP-MIB::ssErrorName.0 = STRING: systemStats
-#UCD-SNMP-MIB::ssSwapIn.0 = INTEGER: 0 kB
-#UCD-SNMP-MIB::ssSwapOut.0 = INTEGER: 0 kB
+
 #UCD-SNMP-MIB::ssIOSent.0 = INTEGER: 124 blocks/s
 #UCD-SNMP-MIB::ssIOReceive.0 = INTEGER: 0 blocks/s
 #UCD-SNMP-MIB::ssSysInterrupts.0 = INTEGER: 1646 interrupts/s
 #UCD-SNMP-MIB::ssSysContext.0 = INTEGER: 8172 switches/s
-#UCD-SNMP-MIB::ssCpuUser.0 = INTEGER: 6
-#UCD-SNMP-MIB::ssCpuSystem.0 = INTEGER: 3
-#UCD-SNMP-MIB::ssCpuIdle.0 = INTEGER: 89
-#UCD-SNMP-MIB::ssCpuRawUser.0 = Counter32: 21844709
+
 #UCD-SNMP-MIB::ssCpuRawNice.0 = Counter32: 110270
 #UCD-SNMP-MIB::ssCpuRawSystem.0 = Counter32: 12388959
 #UCD-SNMP-MIB::ssCpuRawIdle.0 = Counter32: 557879365
