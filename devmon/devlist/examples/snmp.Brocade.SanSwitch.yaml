@@ -1,0 +1,123 @@
+---
+# device address which runs SNMP agent
+address: IBM_SWITCH_ADDR  # the address which been listened to by SNMP Daemon
+region: DataCenterD  # The region of device, e.g., DCA, DCB, DataCenterA...
+area: Dev  # the business area
+addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
+snmp:
+  version: '3'  # the SNMPD version
+  community: 'public'  # the SNMPD community
+  timeout: 1  # second(s) to timeout
+  retries: 1  # time(s) to retry after failed
+  base: '1.3.6.1.4.1.1588.2.1.1.1'
+  username: 'user1'
+  context:
+    - '128'
+    - '16'
+  OIDs:
+  - id: '1.6'
+    label: Firmware
+    explanation: '微码版本'
+    reference: 'v7.2.1'
+  - id: '1.7'
+    label: 'System Stat'
+    explanation: '系统状态'
+    reference: '1'  # '1': 'online', '2': 'offline', '3': 'testing', '4': 'faulty'
+    enum:
+      '1': 'online'
+      '2': 'offline'
+      '3': 'testing'
+      '4': 'faulty'
+    severity: '3'
+  - table: '1.22.1.3'
+    table_index: '1.22.1.1'
+    related_symbol: '1.22.1.5'
+    label: 'Sensor Stat'
+    explanation: '传感器状态'
+    reference: '4'  # 1: unknown, 2: faulty, 3: below-min, 4: nominal, 5: above-max, 6: absent
+    enum:
+      '1': unknown
+      '2': faulty
+      '3': below-min
+      '4': nominal
+      '5': above-max
+      '6': absent
+  # port PHY stat
+  - table: '6.2.1.3'
+    table_index: '6.2.1.1'
+    label: 'Port Physical Stat'
+    explanation: '交换机端口物理状态'
+    related_symbol: '6.2.1.36'
+    reference: '6, 2'
+    enum:
+      '1': 'noCard'
+      '2': 'noTransceiver'  # No transceiver module in this port
+      '3': 'laserFault'  # The module is signaling a laser fault
+      '4': 'noLight'  # The module is not receiving light
+      '5': 'noSync'  # The module is receiving light but is out of sync
+      '6': 'inSync'  # The module is receiving light and is in sync
+      '7': 'portFault'  # The port is marked faulty (GBIC, cable, or device)
+      '8': 'diagFault'
+      '9': 'lockRef'
+      '10': 'validating'
+      '11': 'invalidModule'
+      '14': 'noSigDet'
+      '255': 'unknown'
+  - table: '6.2.1.6'
+    table_index: '6.2.1.1'
+    label: 'Port Link Stat'
+    explanation: '交换机端口连接状态'
+    related_symbol: '6.2.1.36'
+    reference: '1'
+    enum:
+      '1': 'enable'
+      '2': 'disable'
+  - table: '6.2.1.4'
+    table_index: '6.2.1.1'
+    label: 'Port Operate Stat'
+    explanation: '交换机端口操作状态'
+    related_symbol: '6.2.1.36'
+    read_ref_from: '6.2.1.5'
+    enum:
+      '0': 'unknown'
+      '1': 'online'
+      '2': 'offline'
+      '3': 'testing'
+      '4': 'faulty'
+  - table: '28.1.1.1'
+    label: 'Port Temp'
+    related_symbol: '6.2.1.36'
+    explanation: '交换机端口温度'
+    watermark:
+      low: -5
+      high: 85
+  - table: '28.1.1.2'
+    label: 'Port Voltage'
+    related_symbol: '6.2.1.36'
+    explanation: '交换机端口电压(mV)'
+    watermark:
+      low: 3000
+      high: 3600
+  - table: '28.1.1.3'
+    label: 'Port Current'
+    related_symbol: '6.2.1.36'
+    explanation: '交换机端口电流(mAmps)'
+    watermark:
+      low: 2.5
+      high: 12
+  - table: '28.1.1.4'
+    label: 'Port RX Power'
+    related_symbol: '6.2.1.36'
+    explanation: '交换机端口接收功率'
+    watermark:
+      low: -15
+      high: 60
+  - table: '28.1.1.5'  # .6 --> power hours table
+    label: 'Port TX Power'
+    related_symbol: '6.2.1.36'
+    explanation: '交换机端口发送功率'
+    watermark:
+      low: -15
+      high: 60
+
+
