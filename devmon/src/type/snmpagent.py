@@ -21,7 +21,7 @@ OutOpts = Literal[
 
 @dataclass
 class SNMPAgent:
-    address: str = None  # the address of device
+    address: str = None  # the address of the device
     region: str = None  # Data Center, e.g. DCA, DCB...
     area: str = None  # Business area, e.g. CBP, MBA...
     # description: str = 'Unknown'  # the device name or description

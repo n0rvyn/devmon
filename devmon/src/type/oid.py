@@ -22,7 +22,7 @@ CaseServ = Literal[
 class WaterMark:
     low:  float = None
     high: float = None
-    restricted: bool = False  # todo ....!
+    restricted: bool = False
 
 
 @dataclass
