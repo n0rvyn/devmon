@@ -119,3 +119,9 @@ snmp:
   - id: 'ssCpuIdle'
     label: 'CPU IDLE'
     perf: True
+# a set of IDs share the same 'label', 'related_symbol' ...
+  - group:
+      - 'memSysAvail'
+      - 'memSysTotal'
+    label: 'MemoryUsage'
+    perf: True

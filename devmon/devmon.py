@@ -511,7 +511,10 @@ class DevMon(object):
 
         return case_exist
 
-    def _read_snmp_agent(self, agent: SNMPAgent, perf: bool = False) -> list[tuple[SNMPAgent, OID, list[VOID]]]:
+    def _read_snmp_agent(self, agent: SNMPAgent,
+                         perf: bool = False,
+                         pm: bool = False,
+                         health: bool = False) -> list[tuple[SNMPAgent, OID, list[VOID]]]:
         # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
         snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
         agent_oid_voids = []
@@ -524,6 +527,13 @@ class DevMon(object):
         def __read_oid(_oid: OID = None):
             if perf and not _oid.perf:
                 return None
+
+            if pm and _oid.perf:
+                return None
+
+            if health and (_oid.perf or _oid.show):
+                return None
+
             _l_voids = snmp.read_oid_dc(_oid)
             agent_oid_voids.append((agent, _oid, _l_voids)) if _l_voids else ''
 
@@ -533,7 +543,12 @@ class DevMon(object):
 
         return agent_oid_voids
 
-    def create_snmp_cases(self, side: Side = None, multithread: bool = True, device: str = None) -> list[Case]:
+    def create_snmp_cases(self, side: Side = None,
+                          multithread: bool = True,
+                          device: str = None,
+                          perf: bool = False,
+                          pm: bool = False,
+                          health: bool = False) -> list[Case]:
         agents = None
 
         if side == 'a':
@@ -560,7 +575,7 @@ class DevMon(object):
         snmp_cases = []
 
         def read_agent(agent: SNMPAgent):
-            snmp_agents.extend(self._read_snmp_agent(agent))
+            snmp_agents.extend(self._read_snmp_agent(agent, perf, pm, health))
             # The method already returns a list, so snmp_agents should extend rather than append.
             # The snmp_agent is a list of tuple, not a list of list.
 
@@ -1046,9 +1061,9 @@ class DevMon(object):
         """
         self.refresh_config(pm=True)
         if device:
-            cases = self.create_snmp_cases(device=device)
+            cases = self.create_snmp_cases(device=device, pm=True)
         else:
-            cases = self.create_snmp_cases('a') + self.create_snmp_cases('b')
+            cases = self.create_snmp_cases('a', pm=True) + self.create_snmp_cases('b', pm=True)
 
         all_stats = {}
         for c in cases:
@@ -1139,6 +1154,7 @@ if __name__ == '__main__':
             f"  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n"
 
     devmon = DevMon()
+
     try:
         if sys.argv[1] in ['run', 'query', 'sync', 'close', 'service', 'perf']:
             devmon.refresh_config()

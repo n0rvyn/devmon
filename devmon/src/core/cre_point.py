@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 import pytz
 
 
-def oid_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None):
+def oid_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None) -> Point:
     if not oid.perf:
         return Point()
 
@@ -43,7 +43,6 @@ def oid_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOI
     local_now = pytz.timezone('Asia/Shanghai').localize(now)
 
     point = Point(metadata=point_meta,
-                  # timestamp=datetime.now(),
                   timestamp=local_now,
                   data=data)
 

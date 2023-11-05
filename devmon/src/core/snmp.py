@@ -19,7 +19,6 @@ from typing import Literal, Optional
 from threading import Thread
 from type import SNMPAgent, OID, VOID, ArithType, IDRange
 
-
 Position = Literal[
     1, 2
 ]
@@ -45,14 +44,6 @@ class SNMP(object):
 
         if not self.snmpd_stat or not oid:
             return output
-
-        # if self.agent.base:
-        #     if not self.agent.base.endswith('.') and not oid.startswith('.'):
-        #         oid = f'{self.agent.base}.{oid}'
-        #     elif self.agent.base.endswith('.') and oid.startswith('.'):
-        #         oid = f'{self.agent.base}.{oid}'
-        #     else:
-        #         oid = f'{self.agent.base}{oid}'
 
         if self.agent.base:
             l_base = self.agent.base.rstrip('.').split('.')
@@ -82,7 +73,7 @@ class SNMP(object):
                         'No Such Object available on this agent at this OID',
                         'No log handling enabled']
 
-        NO_VALUE_SUFFIX = ('Unknown Object Identifier')
+        NO_VALUE_SUFFIX = ('Unknown Object Identifier',)
 
         code, output = getstatusoutput(cmd)
         code = 1 if output in NO_VALUE_ERR or output.endswith(NO_VALUE_SUFFIX) else code
@@ -129,7 +120,7 @@ class SNMP(object):
                  related_symbol: str = None,
                  exclude_index: str = None,
                  exclude_value: str = None,
-                 read_ref_from: str = None,  # todo add support when symbol is ends with '.1'
+                 read_ref_from: str = None,
                  arithmetic: ArithType = None,
                  arith_symbol: str = None,
                  arith_pos: Position = None) -> VOID:
@@ -147,9 +138,12 @@ class SNMP(object):
         value = self._read_oid_val(oid)
 
         if related_symbol:
-            desc = self._read_oid_val(f'{related_symbol}.{index}')
+            if len(related_symbol.split('.')) > 1:
+                desc = self._read_oid_val(related_symbol)
+            else:
+                desc = self._read_oid_val(f'{related_symbol}.{index}')
         else:
-            desc = None
+            desc = self._read_oid_desc(oid)
 
         if read_ref_from:
             ref = self._read_oid_val(f'{read_ref_from}.{index}')
@@ -311,7 +305,8 @@ class SNMP(object):
         output = self._read_oid_val(table)
         l_oid_vals = output.split('\n') if output else []
         # l_oid_vals = self._read_oid(table, outopts='Q').split('\n')
-        return [o_v.split('=')[-1].strip().strip('"').strip() for o_v in l_oid_vals]  # add strip('"') for values `"value`"
+        return [o_v.split('=')[-1].strip().strip('"').strip() for o_v in
+                l_oid_vals]  # add strip('"') for values `"value`"
 
     def _____read_table_index(self, table: str = None):
         output = self._read_oid(table, outopts='Q')
@@ -342,7 +337,7 @@ class SNMP(object):
 
         voids = []
 
-        for n in range(1, len(vals_table)+1):
+        for n in range(1, len(vals_table) + 1):
             i = n - 1
             if not vals_table[i]:
                 continue
@@ -383,7 +378,29 @@ class SNMP(object):
 
         return voids
 
+    def _read_group(self,
+                    oids: list[str] = None,
+                    related_symbol: str = None,
+                    exclude_index: str = None,
+                    exclude_value: str = None,
+                    read_ref_from: str = None,
+                    arithmetic: ArithType = None,
+                    arith_symbol: str = None,
+                    arith_pos: Position = None) -> list[VOID]:
+        return [self._read_id(oid=oid,
+                              related_symbol=related_symbol,
+                              exclude_index=exclude_index,
+                              exclude_value=exclude_value,
+                              read_ref_from=read_ref_from,
+                              arithmetic=arithmetic,
+                              arith_symbol=arith_symbol,
+                              arith_pos=arith_pos)
+                for oid in oids]
+
     def read_oid_dc(self, oid: OID = None) -> list[VOID]:
+        """
+        Read OID dataclass: OID
+        """
         voids = [VOID()]
         if oid.id:
             void = self._read_id(oid=oid.id, related_symbol=oid.related_symbol,
@@ -419,7 +436,35 @@ class SNMP(object):
                                      arith=oid.arithmetic,
                                      arith_pos=oid.arith_pos)
 
+        if oid.group:
+            voids = self._read_group(oids=oid.group,
+                                     related_symbol=oid.related_symbol,
+                                     exclude_value=oid.exclude_value,
+                                     exclude_index=oid.exclude_index,
+                                     read_ref_from=oid.read_ref_from,
+                                     arithmetic=oid.arithmetic,
+                                     arith_symbol=oid.arith_symbol,
+                                     arith_pos=oid.arith_pos)
+
         return voids
+
+    @staticmethod
+    def _read_oid_desc(oid: str = None):
+        """
+        Read description from OID
+        From:
+            1. GPFS-MIB::gpfsFileSystemStatCacheHit."gpfs_data"
+            2. UCD-SNMP-MIB::ssSwapIn.0
+        To:
+            1. gpfs_data
+            2. ssSwapIn
+        """
+        oid_parts = oid.split('.')
+        while True:
+            if oid_parts[-1].isnumeric():
+                oid_parts.pop(-1)
+            else:
+                return oid_parts[-1]
 
 
 class ContextSNMP(object):
@@ -430,6 +475,9 @@ class ContextSNMP(object):
         self.snmps = [SNMP(snmp_agent, snmpwalk, c) for c in context]
 
     def read_oid_dc(self, oid: OID = None) -> list[VOID]:
+        """
+        Read OID dataclass: OID
+        """
         voids = []
         for s in self.snmps:
             void = s.read_oid_dc(oid)
