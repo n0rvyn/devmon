@@ -31,10 +31,12 @@ Python及其它语言也存在许多非常优秀的三方库，比如等等等�
 - [背景](#背景)
 - [文件结构](#文件结构)
 - [安装](#安装)
+- [配置说明](#配置说明)
 - [使用说明](#使用说明)
-- [示例](#示例)
 - [维护者](#维护者)
+- [如何贡献](#如何贡献)
 - [使用许可](#使用许可)
+- [打包示例](#打包示例)
 
 ## 背景
 
@@ -115,33 +117,35 @@ Python及其它语言也存在许多非常优秀的三方库，比如等等等�
 
 > 若RHEL7版本需安装Python3.11, 自行谷歌或者参考下一篇文章（如何在RHEL7上升级Python3.11）
 
-### 2. 必要的Python模块  
-
-试着运行`python3 devmon.py`, 提示缺什么装什么即可。通常来讲，要安装以下模块：
-
+### 2. 必要的Python模块
 ```bash
-python3 -m pip install PyYAML PyMySQL pymongo
+python3 -m venv /path/to/your/own/venv
+source /path/to/your/own/venv/bin/activate
+python3 -m pip install -r requirements.txt
 ```
 
 ### 3. 需安装的Linux组件（以RHEL7为例）
 ```bash
 rpm -ivh mongodb-org-server-x.y.z-el7.x86_64.rpm
-
 yum install -y net-snmp
 ```
 
-## 使用说明
+## 配置说明
 
 ### 1. 主体配置
 > 文件：conf/devmon.conf
 
-### 2. 定义主机及OID列表
+### 2. Grafana Linux主机性能数据看板（beta）
+> 文件: grafana/JsonModel.json
 
-> 目录：devlist/a-side, devlist/b-side  # 有效的设备列表  
-> 目录：examples  # 已验证的某类设备SNMP定义模板  
+### 3. 定义主机及OID列表
+
+> 目录：devlist/a-side, devlist/b-side  # 有效的设备列表，A/B列区分定义，读取SNMP数据时间隔了指定的时间
+> 目录：examples  # 已验证的某类设备（型号）SNMP定义模板
 > 目录：maintaining  # 对维护中的设备屏蔽事件读取（将设备文件mv到该目录即可）
 
-### 3. 对已定义的SNMP主机及OID推送事件
+## 使用说明
+### 1. 对已定义的SNMP主机及OID推送事件
 ```bash
 python3 devmon.py run  # 读取设备列表的SNMP事件，并入库、存档rsyslog
 python3 devmon.py service  # 以定义的间隔时间持续读取
