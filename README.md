@@ -1,4 +1,4 @@
-# DevMon - Devices Monitor with SNMP
+# DevMon - Devices Monitor (Preventive Maintenance or Performance Observability) with SNMP
 
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
@@ -6,7 +6,7 @@ SNMP(Simple Network Management Protocol)大家都懂，不再缀述。
 Python及其它语言也存在许多非常优秀的三方库，比如等等等（只知道pysnmp😂，感兴趣的谷歌下）。
 既然现成的车都有了，那为什么还要造这个轮子，说句符合时代特征的话就是，不自己上嘴咋知道这肉好不好吃。
 可能还是闲得吧。那么既然写都写了，也就照模照样大概介绍下。  
-话说，训过狗的都知道，要想把毛娃教会了，其实首先需要规范的是自己的切入点。
+话说，训过狗的都知道，要想把毛娃教会了，其实首先需要规范的是自己的行为动作。
 就拿SNMP来说，难点是怎么抓数据，怎么trap吗？
 非也，难点是规范SNMP的入口（maybe，也许，possible，就当是），
 由此入口编排一套通用的模板，才能方便以后名正言顺地（提问：此处为什么要用土也地？‘地’，‘的’，‘得’怎么用还记得不？）摸鱼。
@@ -17,6 +17,9 @@ Python及其它语言也存在许多非常优秀的三方库，比如等等等�
 1. SNMP客户端及事件定义
 2. SNMP事件读取与入库（MongoDB）
 3. 事件编排及发送日志服务器存档
+[update]
+4. SNMP性能数据点定义
+5. SNMP巡检项定义
 
 ## To Do
 1. 格式化SSH远程命令（行式和列式）的输出
@@ -44,22 +47,23 @@ Python及其它语言也存在许多非常优秀的三方库，比如等等等�
 
 ## 文件结构
 
+```raw
 ├── CHANGELOG.md  
-├── devmon  
-│   ├── conf  
-│   │   └── devmon.yaml  
-│   ├── cre_service.sh  
-│   ├── devlist  
-│   │   └── examples  
-│   │       ├── snmp.example.zh.yaml  
-│   │       ├── snmp.general.linux.yaml  
-│   │       ├── snmp.HillStone.Hxxxx.yaml  
-│   │       ├── snmp.Huawei.OceanStor.yaml  
-│   │       ├── snmp.Huawei.USG.yaml  
-│   │       ├── snmp.IBM.SanSwitch.yaml  
-│   │       ├── snmp.IBM.XIV.yaml  
-│   │       ├── snmp.Juniper.Jxxxx.yaml  
-│   │       └── snmp.TopSec.N4000.yaml  
+├── devmon
+│         ├── conf
+│         │         └── devmon.yaml
+│         ├── cre_service.sh
+│         ├── devlist
+│         │         └── examples
+│         │             ├── snmp.example.zh.yaml
+│         │             ├── snmp.general.linux.yaml
+│         │             ├── snmp.HillStone.Hxxxx.yaml
+│         │             ├── snmp.Huawei.OceanStor.yaml
+│         │             ├── snmp.Huawei.USG.yaml
+│   │             ├── snmp.IBM.SanSwitch.yaml
+│   │             ├── snmp.IBM.XIV.yaml
+│   │             ├── snmp.Juniper.Jxxxx.yaml
+│   │             └── snmp.TopSec.N4000.yaml
 │   ├── devmon.py  
 │   └── src  
 │       ├── core  
@@ -82,6 +86,7 @@ Python及其它语言也存在许多非常优秀的三方库，比如等等等�
 │           └── sshcmd.py  
 ├── README.md  
 └── requirements.txt  
+```
 
 ## 安装
 
