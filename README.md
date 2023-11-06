@@ -48,44 +48,63 @@ Python及其它语言也存在许多非常优秀的三方库，比如等等等�
 ## 文件结构
 
 ```raw
-├── CHANGELOG.md  
-├── devmon
-│         ├── conf
-│         │         └── devmon.yaml
-│         ├── cre_service.sh
-│         ├── devlist
-│         │         └── examples
-│         │             ├── snmp.example.zh.yaml
-│         │             ├── snmp.general.linux.yaml
-│         │             ├── snmp.HillStone.Hxxxx.yaml
-│         │             ├── snmp.Huawei.OceanStor.yaml
-│         │             ├── snmp.Huawei.USG.yaml
-│   │             ├── snmp.IBM.SanSwitch.yaml
-│   │             ├── snmp.IBM.XIV.yaml
-│   │             ├── snmp.Juniper.Jxxxx.yaml
-│   │             └── snmp.TopSec.N4000.yaml
-│   ├── devmon.py  
-│   └── src  
-│       ├── core  
-│       │   ├── cmdb.py  
-│       │   ├── encrypt.py  
-│       │   ├── __init__.py  
-│       │   ├── log.py  
-│       │   ├── mongo.py  
-│       │   ├── pushmsg.py  
-│       │   ├── readfile.py  
-│       │   ├── snmp.py  
-│       │   └── ssh.py  
-│       ├── __init__.py  
-│       └── type  
-│           ├── case.py  
-│           ├── __init__.py  
-│           ├── oid.py  
-│           ├── snmpagent.py  
-│           ├── sshagent.py  
-│           └── sshcmd.py  
-├── README.md  
-└── requirements.txt  
+[4.0K]  .
+├── [1.0K]  CHANGELOG.md
+├── [4.0K]  devmon
+│   ├── [4.0K]  conf
+│   │   └── [1.8K]  devmon.yaml
+│   ├── [2.1K]  cre_service.sh
+│   ├── [4.0K]  devlist
+│   │   ├── [4.0K]  a-side
+│   │   ├── [4.0K]  b-side
+│   │   ├── [4.0K]  examples
+│   │   │   ├── [1.6K]  HW_OceanStor_RUNNING_STATUS_E.txt
+│   │   │   ├── [3.4K]  snmp.Brocade.SanSwitch.yaml
+│   │   │   ├── [   0]  snmp.example.GPFS.yaml
+│   │   │   ├── [4.9K]  snmp.example.zh.yaml
+│   │   │   ├── [6.4K]  snmp.general.linux.yaml
+│   │   │   ├── [2.2K]  snmp.HillStone.Hxxxx.yaml
+│   │   │   ├── [3.4K]  snmp.Huawei.OceanStor.yaml
+│   │   │   ├── [1.7K]  snmp.Huawei.USG.yaml
+│   │   │   ├── [1.3K]  snmp.IBM.XIV.yaml
+│   │   │   ├── [3.6K]  snmp.Juniper.Jxxxx.yaml
+│   │   │   └── [ 865]  snmp.TopSec.N4000.yaml
+│   │   └── [4.0K]  maintaining
+│   ├── [ 44K]  devmon.py
+│   ├── [4.0K]  log
+│   ├── [4.0K]  pic
+│   │   └── [645K]  grafana_devmon.png
+│   └── [4.0K]  src
+│       ├── [4.0K]  core
+│       │   ├── [1.4K]  cmdb.py
+│       │   ├── [3.3K]  cre_case.py
+│       │   ├── [1.2K]  cre_point.py
+│       │   ├── [1.5K]  encrypt.py
+│       │   ├── [ 901]  __init__.py
+│       │   ├── [2.8K]  log.py
+│       │   ├── [4.0K]  mongo.py
+│       │   ├── [1.9K]  pushmsg.py
+│       │   ├── [4.0K]  __pycache__
+│       │   ├── [7.0K]  read_devlist.py
+│       │   ├── [ 18K]  snmp.py
+│       │   └── [9.6K]  ssh.py
+│       ├── [1.2K]  __init__.py
+│       ├── [4.0K]  __pycache__
+│       └── [4.0K]  type
+│           ├── [1.7K]  case.py
+│           ├── [ 112]  event.py
+│           ├── [ 737]  __init__.py
+│           ├── [2.5K]  oid.py
+│           ├── [ 343]  point.py
+│           ├── [4.0K]  __pycache__
+│           ├── [1.1K]  snmpagent.py
+│           ├── [ 322]  sshagent.py
+│           └── [ 854]  sshcmd.py
+├── [ 34K]  LICENSE
+├── [ 14K]  README.md
+└── [ 105]  requirements.txt
+
+16 directories, 39 files
 ```
 
 ## 安装
