@@ -22,6 +22,7 @@ import os
 import sys
 from typing import Literal
 from dataclasses import asdict
+from getpass import getpass
 # from random import choices
 # from string import ascii_letters, digits
 from threading import Thread
@@ -86,6 +87,7 @@ class DevMon(object):
         self.patrol = None
         self.notify_window = None
         self.cmdb_server = self.cmdb_user = self.cmdb_pass = self.cmdb_db = None
+        self.hp = None
 
     def _load_agents(self):
         try:
@@ -100,6 +102,17 @@ class DevMon(object):
     def _load_config(self, pm: bool = False):
         # read configuration from file 'ROOT/conf/devmon.yaml'
         # config = read_config()
+
+        # _secret_ = getpass('Please enter your secret code '
+        #                    'to encrypt and decrypt the password strings '
+        #                    'in the config file: ')
+        # try:
+        #     _pos_code_ = getpass('Please enter another position code for this function: ')
+        #     _pos_code_ = int(_pos_code_)
+        # except ValueError:
+        #     _pos_code_ = 0
+        self.read_secret()
+
         try:
             with open(_CONF_, 'r+') as f:
                 config = safe_load(f)
@@ -139,7 +152,8 @@ class DevMon(object):
         try:
             mongo_server = config['mongo_server']
             mongo_user = config['mongo_user']
-            mongo_pass = config['mongo_pass']
+            # mongo_pass = config['mongo_pass']
+            mongo_pass = self.decode_password(config['mongo_pass'])
         except KeyError:
             mongo_user = mongo_pass = mongo_server = None
         try:
@@ -233,6 +247,26 @@ class DevMon(object):
             self.cmdb_pass = config['cmdb_pass']
         except KeyError:
             pass
+
+        # self.hp = HidePass(secret=_secret_, position=_pos_code_)
+
+    def read_secret(self):
+        _secret_ = getpass('Please enter your secret code '
+                           'to encrypt and decrypt the password strings '
+                           'in the config file: ')
+        try:
+            _pos_code_ = getpass('Please enter another position code for this function: ')
+            _pos_code_ = int(_pos_code_)
+        except ValueError:
+            _pos_code_ = 0
+
+        self.hp = HidePass(_secret_, _pos_code_)
+
+    def hide_password(self, password: str = None) -> bytes:
+        return self.hp.encrypt(password)
+
+    def decode_password(self, password_hide: str = None) -> str:
+        return self.hp.decrypt(password_hide.encode())
 
     def refresh_config(self, pm: bool = False):
         self._load_agents()
@@ -1151,6 +1185,7 @@ if __name__ == '__main__':
             f"  {sys.argv[0]} query \n" \
             f"  {sys.argv[0]} perf  # run performance checking\n" \
             f"  {sys.argv[0]} sync  # syncing resources ID from CMDB to MongoDB \n" \
+            f"  {sys.argv[0]} hide PASSWORD  # converting password to strings \n" \
             f"  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n"
 
     devmon = DevMon()
@@ -1187,6 +1222,11 @@ if __name__ == '__main__':
             _cur_val = sys.argv[4]
             # push a recovery message to syslog server
             devmon.close_case(case_id=_id, content=_content, current_value=_cur_val)
+
+        elif sys.argv[1] == 'hide':
+            devmon.read_secret()
+            _password_ = sys.argv[2]
+            print(devmon.hp.encrypt(_password_))
 
         else:
             print(USAGE)
