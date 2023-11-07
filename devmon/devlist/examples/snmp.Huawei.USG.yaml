@@ -11,13 +11,13 @@ snmp:
   timeout: 1  # second(s) to timeout
   retries: 1  # time(s) to retry after failed
   OIDs:
-# 1. HA stat
+  # 1. HA stat
   - id: '1.3.6.1.4.1.2011.6.122.51.1.3'
     label: hwHrpState
     explanation: '设备HA状态'
     severity: '1'
     reference: 'abnormal(active)'  # abnormal(standby)
-# Hrp Switch Over Times
+  # Hrp Switch Over Times
   - id: '1.3.6.1.4.1.2011.6.122.51.1.3'
     label: 'hwHrpSwitchOverTimes'
     explanation: '双机切换次数'
@@ -26,25 +26,25 @@ snmp:
       low: 2
       high: 999
       restricted: True
-# Online Power Supply number
+  # Online Power Supply number
   - id: '1.3.6.1.4.1.2011.6.122.'
     label: 'hwEntityNomalPwrNum'
     explanation: '在线电源数量'
     severity: '3'
     read_ref_from: '1.3.6.1.4.1.2011.5.25.31.1.1.1.1.40'
-# Standby Status
+  # Standby Status
   - table: '1.3.6.1.4.1.2011.5.25.31.1.1.1.1.3'
     table_index: ''
     label: 'hwEntityStandbyStatus'
     explanation: '热备状态'
     severity: '1'
-    reference: '2'  # notSupported (1)、hotStandby(2)、coldStandby(3)、providingService(4) 缺省值：notSupported(1)
+    reference: '2'
     enum:
       '1': notSupported
       '2': hotStandby
       '3': coldStandby
       '4': providingService
-# Trunk member status
+  # Trunk member status
   - table: '1.3.6.1.4.1.2011.5.25.41.1.4.1.1.6'
     label: 'hwTrunkOperstatus'
     explanation: 'Trunk成员端口的状态'

@@ -72,7 +72,7 @@ snmp:
       '11': blinkingBlue
       '12': blinkingAmber
     related_symbol: '1.3.6.1.4.1.2636.3.1.10.1.7'
-# Fru Stat
+  # Fru Stat
   - table: '1.3.6.1.4.1.2636.3.1.15.1.8'
     table_index: '1.3.6.1.4.1.2636.3.1.15.1.2'
     label: 'jnxFruState'
@@ -93,7 +93,7 @@ snmp:
       '9': diagnostic
       '10': standby
     related_symbol: '1.3.6.1.4.1.2636.3.1.15.1.5'
-# Fru Temperature
+  # Fru Temperature
   - table: '1.3.6.1.4.1.2636.3.1.15.1.9'
     table_index: '1.3.6.1.4.1.2636.3.1.15.1.4'
     label: 'jnxFruTemperature'
@@ -103,7 +103,7 @@ snmp:
     watermark:
       low: -1
       high: 50
-# Ha Status
+  # Ha Status
   - table: '1.3.6.1.4.1.2636.3.1.14.1.7'
     table_index: '1.3.6.1.4.1.2636.3.1.14.1.2'
     label: 'jnxRedundancyState'
