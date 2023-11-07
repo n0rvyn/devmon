@@ -20,7 +20,7 @@ import binascii
 
 class HidePass(object):
     def __init__(self, secret: str = None, position: int = 0):
-        self.secret = secret
+        self.secret = secret if secret else 'I love China & Chinese.'
         self.position = position
 
     def encrypt(self, password: str = None) -> bytes:

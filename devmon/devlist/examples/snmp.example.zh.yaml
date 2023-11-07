@@ -101,27 +101,26 @@ snmp:
       # False则该水位为阈值区间，取值在low与high之间则正常，反之则告警；
       # 可选值
       # restricted: False
-# performance data collection
-  - table: 'hrSWRunPerfCPU'
+  # snmp可读的性能数据收集
+  - table: 'hrSWRunPerfCPU'  # OID为table入口
     table_index: 'hrSWRunIndex'
-    label: 'SW Running CPU Stat'
-    related_symbol: 'hrSWRunName'
-    perf: True
-  - table: 'hrSWRunPerfMem'
-    table_index: 'hrSWRunIndex'
-    label: 'SW Running Mem Stat'
-    related_symbol: 'hrSWRunName'
-    perf: True
-# System Available Memory
-  - id: 'memSysAvail'
+    label: 'SW Running CPU Stat'  # OID标签，用来在MongoDB中查询字段db.collection.find({"metadata.label": "标签内容"})
+    related_symbol: 'hrSWRunName'  # 用来提取每个OID对应的名称，不定义则默认从OID中读取最后一个非数字的字符串
+    perf: True  # 标识该OID定义为性能收集
+  # System Available Memory
+  - id: 'memSysAvail'  # 单个OID定义
     label: 'MemoryAvail'
     perf: True
   - id: 'ssCpuIdle'
     label: 'CPU IDLE'
     perf: True
-# a set of IDs share the same 'label', 'related_symbol' ...
-  - group:
+  # a set of IDs share the same 'label', 'related_symbol' ...
+  - group:  # 相关的单个OID以组收集（共享同一个标签，方便在MongoDB查询时以组绘制看板）
       - 'memSysAvail'
       - 'memSysTotal'
     label: 'MemoryUsage'
     perf: True
+  - id: 'sysName.0'
+    label: SystemName
+    explanation: '主机名'
+    show: True  # 为True，则该OID定义仅作为PM时展示用

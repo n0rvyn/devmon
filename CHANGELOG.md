@@ -8,6 +8,7 @@ and this project adheres to [https://norvyn.com](https://norvyn.com).
 ### [0.0.8] - 2023-11-06
 - Add support for OID group (a set of OIDs related by name or value)
 - Add support for MongoDB Time Series collection reading and writing
+- Add support for OID's value only need to show
 
 ### [0.0.4] - 2023-10-14
 #### Fixed

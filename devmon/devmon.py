@@ -99,19 +99,10 @@ class DevMon(object):
         self.a_side_snmps = A_SIDE_SNMPs
         self.b_side_snmps = B_SIDE_SNMPs
 
-    def _load_config(self, pm: bool = False):
+    def _load_config(self, pm: bool = False, service: bool = False):
         # read configuration from file 'ROOT/conf/devmon.yaml'
         # config = read_config()
-
-        # _secret_ = getpass('Please enter your secret code '
-        #                    'to encrypt and decrypt the password strings '
-        #                    'in the config file: ')
-        # try:
-        #     _pos_code_ = getpass('Please enter another position code for this function: ')
-        #     _pos_code_ = int(_pos_code_)
-        # except ValueError:
-        #     _pos_code_ = 0
-        self.read_secret()
+        self.read_secret(service=service)
 
         try:
             with open(_CONF_, 'r+') as f:
@@ -250,12 +241,23 @@ class DevMon(object):
 
         # self.hp = HidePass(secret=_secret_, position=_pos_code_)
 
-    def read_secret(self):
-        _secret_ = getpass('Please enter your secret code '
-                           'to encrypt and decrypt the password strings '
-                           'in the config file: ')
-        try:
+    def read_secret(self, service: bool = False):
+        _secret_ = None
+        _pos_code_ = 0
+        if service:
+            try:
+                _secret_ = os.environ['DEVMON_SECRET']
+                _pos_code_ = os.environ['DEVMON_POS_CODE']
+            except KeyError:
+                pass
+
+        else:
+            _secret_ = getpass('Please enter your secret code '
+                               'to encrypt and decrypt the password strings '
+                               'in the config file: ')
             _pos_code_ = getpass('Please enter another position code for this function: ')
+
+        try:
             _pos_code_ = int(_pos_code_)
         except ValueError:
             _pos_code_ = 0
@@ -268,9 +270,9 @@ class DevMon(object):
     def decode_password(self, password_hide: str = None) -> str:
         return self.hp.decrypt(password_hide.encode())
 
-    def refresh_config(self, pm: bool = False):
+    def refresh_config(self, pm: bool = False, service: bool = False):
         self._load_agents()
-        self._load_config(pm=pm)
+        self._load_config(pm=pm, service=service)
 
     def _debug(self, msg: str = None):
         f_info = currentframe()
@@ -1179,19 +1181,20 @@ class DevMon(object):
 
 
 if __name__ == '__main__':
-    USAGE = f"Usage: \n" \
-            f"  {sys.argv[0]} [run | service]  # one-time run or as a service \n" \
-            f"  {sys.argv[0]} pm [device] \n" \
-            f"  {sys.argv[0]} query \n" \
-            f"  {sys.argv[0]} perf  # run performance checking\n" \
-            f"  {sys.argv[0]} sync  # syncing resources ID from CMDB to MongoDB \n" \
-            f"  {sys.argv[0]} hide PASSWORD  # converting password to strings \n" \
-            f"  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n"
+    USAGE = (f'Usage: \n'
+             f'  {sys.argv[0]} [run | service]  # one-time run or as a service \n'
+             f'  {sys.argv[0]} pm [device] \n'
+             f'  {sys.argv[0]} query \n'
+             f'  {sys.argv[0]} perf  # run performance checking\n'
+             f'  {sys.argv[0]} sync  # syncing resources ID from CMDB to MongoDB \n'
+             f'  {sys.argv[0]} hide PASSWORD  # converting password to strings \n'
+             f'  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n'
+             f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.')
 
     devmon = DevMon()
 
     try:
-        if sys.argv[1] in ['run', 'query', 'sync', 'close', 'service', 'perf']:
+        if sys.argv[1] in ['run', 'query', 'sync', 'close', 'perf']:
             devmon.refresh_config()
 
         if sys.argv[1] == 'run':
@@ -1214,6 +1217,7 @@ if __name__ == '__main__':
             devmon.sync_rid()
 
         elif sys.argv[1] == 'service':
+            devmon.refresh_config(service=True)
             devmon.service_run()
 
         elif sys.argv[1] == 'close':
