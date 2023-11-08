@@ -143,14 +143,15 @@ class DevMon(object):
         try:
             mongo_server = config['mongo_server']
             mongo_user = config['mongo_user']
-            # mongo_pass = config['mongo_pass']
+            # mongo_pass = config['mongo_pass']  # todo !!!!!!!!!
+            # mongo_pass = self.decode_password(config['mongo_pass']) if config['mongo_pass'] else None
             mongo_pass = self.decode_password(config['mongo_pass'])
         except KeyError:
             mongo_user = mongo_pass = mongo_server = None
         try:
             mongo_port = config['mongo_port']
         except KeyError:
-            mongo_port = '27017'
+            mongo_port = 27017
         try:
             mongo_db = config['mongo_db']
             mongo_col = config['mongo_col']
@@ -173,13 +174,16 @@ class DevMon(object):
                              username=mongo_user, password=mongo_pass, port=mongo_port,
                              database=mongo_db, collection=mongo_col)
 
-        self.cmdb_mongo = MongoDB(server=mongo_server, uri=mongo_uri,
-                                  username=mongo_user, password=mongo_pass, port=mongo_port,
-                                  database=mongo_db, collection=cmdb_col)
+        self.cmdb_mongo = self.mongo.client[mongo_db][cmdb_col]
 
-        self.mongots = MongoDB(server=mongo_server, uri=mongo_uri,
-                                  username=mongo_user, password=mongo_pass, port=mongo_port,
-                                  database=ts_db, collection=ts_col)
+        # self.cmdb_mongo = MongoDB(server=mongo_server, uri=mongo_uri,
+        #                           username=mongo_user, password=mongo_pass, port=mongo_port,
+        #                           database=mongo_db, collection=cmdb_col)
+
+        # self.mongots = MongoDB(server=mongo_server, uri=mongo_uri,
+        #                           username=mongo_user, password=mongo_pass, port=mongo_port,
+        #                           database=ts_db, collection=ts_col)
+        self.mongots = self.mongo.client[ts_db][ts_col]
         if not pm:
             try:
                 with timeout(2):
@@ -675,7 +679,7 @@ class DevMon(object):
         if oid.watermark:  # the value of OID has a watermark
             try:
                 val = float(val)
-            except TypeError:
+            except (TypeError, ValueError):
                 # oid.watermark is specified, but the value fetched is not countable.
                 err = f"The OID has a watermark [{oid.watermark}], " \
                       f"but the value fetched [{val}] is not float-able." \

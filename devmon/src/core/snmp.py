@@ -61,7 +61,7 @@ class SNMP(object):
         mib = f'-m {self.agent.mib}' if self.agent.mib else ''
         cont = f'-n VF:{self.context}' if self.context else ''
 
-        self.snmpwalk = f'set +H; {self.snmpwalk}' if '!' in comm else self.snmpwalk
+        self.snmpwalk = f'set -H; {self.snmpwalk}' if '!' in comm else self.snmpwalk  # todo -H or +H????
 
         cmd = f"{self.snmpwalk} {ver} {comm} {mib} " \
               f"{user} {cont} " \
@@ -461,10 +461,13 @@ class SNMP(object):
         """
         oid_parts = oid.split('.')
         while True:
-            if oid_parts[-1].isnumeric():
-                oid_parts.pop(-1)
-            else:
-                return oid_parts[-1]
+            try:
+                if oid_parts[-1].isnumeric():
+                    oid_parts.pop(-1)
+                else:
+                    return oid_parts[-1]
+            except IndexError:
+                return None
 
 
 class ContextSNMP(object):

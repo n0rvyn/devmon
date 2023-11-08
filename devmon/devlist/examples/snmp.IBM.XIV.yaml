@@ -41,8 +41,8 @@ snmp:
       high: 101
       restricted: True
   # xivIfStatus
-  - id: 'xivIfStatus'
+  - table: 'xivIfStatus'
     label: xivIfStatus
     explanation: 'XIV接口状态'
-    reference: 'ok, ready'
+    reference: 'OK, Ready'
     severity: '1'

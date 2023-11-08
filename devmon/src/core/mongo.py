@@ -36,7 +36,6 @@ class MongoDB(object):
         # if uri:
         #     self.client = MongoClient(uri, server_api=server_api)
         # else:
-
         self.client = MongoClient(host=host,
                                       port=port,
                                       username=username,
