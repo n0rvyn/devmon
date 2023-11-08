@@ -24,7 +24,8 @@ snmp:
       count: 31  # the number of the OID range
     label: 'NetworkInterface'
     explanation: '网卡状态'
-    related_symbol: 'IF-MIB::ifDescr'  # OID symbol to fetch a related name
+    related_symbol: 'ifDescr'  # OID symbol to fetch a related name
+    exclude_value: 'br0, virbr0'
     reference: 'up(1)'  # a reference value which been considered as normal stat
   - table: 'hrStorageUsed'
     table_index: 'hrStorageIndex'

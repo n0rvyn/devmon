@@ -8,15 +8,33 @@ if [ "$platform" != "6" ] -a [ "$platform" != '7' ]; then
   exit 1
 fi
 
-
-if [ "$platform" == '7' ]; then
-
-# !!!!!!! modify before apply this file.
-source /home/scripts/venv/bin/activate
+if ! grep 'devmon' /etc/passwd &>/dev/null || ! grep 'devmon' /etc/group &>/dev/null; then
+  echo "User & group 'devmon' should be created first."
+  exit 1
+fi
 
 PyPATH='/home/scripts/venv/bin/python3'
-ToolPATH='/home/scripts/40-Python/devmon-0.0.3/devmon/devmon.py service'  # todo modify this line
+ToolPATH='/home/scripts/40-Python/devmon-0.0.3/devmon/devmon.py'
 
+function exist() {
+  if ls $1 >/dev/null 2>&1; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+if ! exist $PyPATH; then
+  echo "Python path not exist."
+  exit 1
+fi
+
+if ! exist $ToolPATH; then
+  echo "DevMon path not exist."
+  exit 1
+fi
+
+if [ "$platform" == '7' ]; then
 
 # for RHEL7
 cat > /etc/systemd/system/devmon.service << EOF
@@ -26,8 +44,10 @@ DefaultDependencies=no
 After=sysinit.target local-fs.target network.target
 
 [Service]
+User=devmon
+Group=devmon
 Type=simple
-ExecStart=$PyPATH $ToolPATH &
+ExecStart=$PyPATH $ToolPATH service
 ExecStop=/bin/kill -HUP \$MAINPID
 KillMode=process
 Restart=on-failure
@@ -108,3 +128,5 @@ EOF
 chmod +x /etc/init.d/devmon
 
 fi
+
+exit 0

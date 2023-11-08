@@ -88,6 +88,7 @@ class DevMon(object):
         self.notify_window = None
         self.cmdb_server = self.cmdb_user = self.cmdb_pass = self.cmdb_db = None
         self.hp = None
+        # self.influx_token = self.influx_org = self.influx_url
 
     def _load_agents(self):
         try:
@@ -244,6 +245,13 @@ class DevMon(object):
             pass
 
         # self.hp = HidePass(secret=_secret_, position=_pos_code_)
+
+        # try:
+        #     self.influx_url = config['influx_url']
+        #     self.influx_token = config['influx_token']
+        #     self.influx_org = config['influx_org']
+        # except KeyError:
+        #     pass
 
     def read_secret(self, service: bool = False):
         _secret_ = None

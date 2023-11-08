@@ -19,9 +19,20 @@ from influxdb_client_3 import InfluxDBClient3, Point
 import time
 
 
+import influxdb_client, os, time
+from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
+
+token = os.environ.get("INFLUXDB_TOKEN")
+org = "project"
+url = "http://172.16.10.250:8086"
+
+write_client = influxdb_client.InfluxDBClient(url=url, token=token, org=org)
+
+
 ORG = "project"
 HOST = "http://172.16.10:8086"
-TOKEN = '7YKL5M9MrrjOxdNQ9DfJmj90qvMaMMCDzuh1BdviEChzsPiXoP8NTPXeFdvcK7gmLCB_DQ_oSASqTH-uFZA7Kw=='
+TOKEN = '1KlzGnddGlNpsTUdQgRDYGGE8xQNriUTOKGAlQTMs0Xl0M6S7ubV9ZFbCXiXJEkT-S8tdgDkz6y2Rk6CDbXFNQ=='
 
 
 class InfluxDB(object):
@@ -42,7 +53,7 @@ class InfluxDB(object):
         self.client.write(database=self.database, record=point)
 
     def select(self):
-        query = ("SELECT * FROM 'census' WHERE time >= now() - interval '24 hours' "
+        query = ("SELECT *FROM 'census' WHERE time >= now() - interval '24 hours' "
                  "AND ('bees' IS NOT NULL OR 'ants' IS NOT NULL)")
 
         # Execute the query
@@ -61,6 +72,19 @@ class InfluxDB(object):
         # Convert to dataframe
         df = table.to_pandas().sort_values(by="time")
         print(df)
+        
+        query_api = client.query_api()
+
+        query = from(bucket: "<BUCKET>")
+        |> range(start: -10m)
+        |> filter(fn: (r) => r._measurement == "measurement1")
+        
+        
+        tables = query_api.query(query, org="project")
+
+        for table in tables:
+        for record in table.records:
+        print(record)
         """
 
 
@@ -72,6 +96,7 @@ if __name__ == '__main__':
     """
     idb = InfluxDB()
     idb.insert(idb.oid_to_point('172.16.104'))
+
 
 
 
