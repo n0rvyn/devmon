@@ -20,9 +20,9 @@ mongo_ts_db: test
 mongo_ts_col: test_0031
 
 ## Definition for InfluxDB
-#influx_url: "http://172.16.10.250:8086"
-#influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS4xS2x6R25kZEdsTnBzVFVkUWdSRFlHR0U4eFFOcmlVVE9LR0FsUVRNczBYbDBNNlM3dWJWOVpGYkNYaVhKRWtULVM4dGRnRGt6NnkyUms2Q0RiWEZOUT09'
-#influx_org: 'project'
+influx_url: "http://172.16.10.250:8086"
+influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5tVGRmY3V0LVJwT3hBeEQtbnoyT1BUTHdiYUh5UjhmSTJ5MmstUFZ5R0tKUzRPOU1NRmNqY0lNWTdGM043Z0p6eDlCaUdsTmlKYS1aRzNBdHpSSWNidz09'
+influx_org: 'orgs'
 
 
 # Remote log server (str) and port (int)

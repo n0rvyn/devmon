@@ -337,6 +337,12 @@ class SNMP(object):
 
         voids = []
 
+        # vals_table = vals_table if vals_table != [''] else None
+        vals_related = None if vals_related == [''] else vals_related
+        # vals_arith = None if vals_arith == [''] else vals_arith
+        vals_index = None if vals_index == [''] else vals_index
+        vals_ref = None if vals_ref == [''] else vals_ref  # todo verity None type or [''] value
+
         for n in range(1, len(vals_table) + 1):
             i = n - 1
             if not vals_table[i]:
@@ -356,17 +362,18 @@ class SNMP(object):
 
             try:
                 index = vals_index[i]
-            except IndexError:
+            except (IndexError, TypeError):
                 index = str(i)
 
             try:
                 rel_val = vals_related[i]
-            except IndexError:
-                rel_val = None
+            except (IndexError, TypeError):
+                # rel_val = None
+                rel_val = f'{self._read_oid_desc(table)}-{index}'
 
             try:
                 ref = vals_ref[i]
-            except IndexError:
+            except (IndexError, TypeError):
                 ref = None
 
             if exclude_index and str(index) in exclude_index:

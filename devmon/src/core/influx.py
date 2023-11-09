@@ -40,9 +40,12 @@ HOST = "https://us-east-1-1.aws.cloud2.influxdata.com/"
 
 class InfluxDB(object):
     def __init__(self, host: str = None, token: str = None, org: str = None):
-        self._host = HOST
-        self._token = TOKEN
-        self._org = ORG
+        # self._host = HOST
+        # self._token = TOKEN
+        # self._org = ORG
+        self._host = host
+        self._token = token
+        self._org = org
         self.client = None
 
         # Define callbacks for writing responses
@@ -76,12 +79,17 @@ class InfluxDB(object):
                  .tag('region', snmp_agent.region)
                  .tag('area', snmp_agent.area)
                  .tag('label', oid.label))
+
         for void in l_void:
             k = void.desc if void.desc else oid.label
-            v = void.value
+
+            try:
+                v = float(void.value)
+            except ValueError:
+                continue
+
             point.field(k, v)
 
-        print(point)
         return self.client.write(database=self.database, record=point)
 
     def select(self):

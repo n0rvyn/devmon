@@ -89,7 +89,7 @@ class DevMon(object):
         self.notify_window = None
         self.cmdb_server = self.cmdb_user = self.cmdb_pass = self.cmdb_db = None
         self.hp = None
-        # self.influx_token = self.influx_org = self.influx_url
+        self.influx_token = self.influx_org = self.influx_url = None
 
     def _load_agents(self):
         try:
@@ -247,12 +247,12 @@ class DevMon(object):
 
         # self.hp = HidePass(secret=_secret_, position=_pos_code_)
 
-        # try:
-        #     self.influx_url = config['influx_url']
-        #     self.influx_token = config['influx_token']
-        #     self.influx_org = config['influx_org']
-        # except KeyError:
-        #     pass
+        try:
+            self.influx_url = config['influx_url']
+            self.influx_token = self.decode_password(config['influx_token'])
+            self.influx_org = config['influx_org']
+        except KeyError:
+            pass
 
     def read_secret(self, service: bool = False):
         _secret_ = None
@@ -1075,16 +1075,13 @@ class DevMon(object):
         '''
         test
         '''
-        idb = InfluxDB()
+        idb = InfluxDB(host=self.influx_url, token=self.influx_token, org=self.influx_org)
         for agt in agents:
             for (_, _oid, _l_void) in self._read_snmp_agent(agt, perf=True):
+                print(_l_void) if _oid.label == 'ProcessorLoad' else ''
                 idb.insert_void(snmp_agent=agt, oid=_oid, l_void=_l_void)
 
-        return True
-
-        '''
-        end of test
-        '''
+        # end of test
 
         def _gather_points(_agent: SNMPAgent = None):
             if device and _agent.address != device:

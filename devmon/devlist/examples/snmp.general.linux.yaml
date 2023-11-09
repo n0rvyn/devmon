@@ -107,7 +107,7 @@ snmp:
   - id: 'ssCpuIdle'
     label: 'CPU IDLE'
     perf: True
-  - table: 'hrProcessorLoad'
+  - table: 'hrProcessorLoad'  # todo table does not has a name, key-value will be overwritten.
     label: 'ProcessorLoad'
     perf: True
   - table: 'diskIONRead'
