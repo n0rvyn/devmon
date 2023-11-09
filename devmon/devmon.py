@@ -32,6 +32,7 @@ from pymongo import errors, timeout
 from src import oid_to_case, ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
 from src import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart, EventType
 from src import Point, PointMeta, oid_to_point
+from src import InfluxDB
 
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
@@ -1070,6 +1071,20 @@ class DevMon(object):
     def perf(self, device: str = None):
         agents: list[SNMPAgent] = self.a_side_snmps + self.b_side_snmps
         points: list[Point] = []
+
+        '''
+        test
+        '''
+        idb = InfluxDB()
+        for agt in agents:
+            for (_, _oid, _l_void) in self._read_snmp_agent(agt, perf=True):
+                idb.insert_void(snmp_agent=agt, oid=_oid, l_void=_l_void)
+
+        return True
+
+        '''
+        end of test
+        '''
 
         def _gather_points(_agent: SNMPAgent = None):
             if device and _agent.address != device:

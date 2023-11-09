@@ -15,42 +15,74 @@
 ---Short description of this Python module---
 
 """
-from influxdb_client_3 import InfluxDBClient3, Point
+from influxdb_client_3 import InfluxDBClient3, Point, InfluxDBError, write_client_options, WriteOptions
 import time
+import os
+import sys
+
+_PWD_ = os.path.abspath(os.path.dirname(__file__))
+_SRC_ = os.path.abspath(os.path.join(_PWD_, '../'))
+_TYPE_ = os.path.abspath(os.path.join(_SRC_, 'type'))
+_CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
+sys.path.append(_SRC_)
+from type import SNMPAgent, OID, VOID
+
+TOKEN = os.environ.get("INFLUXDB_TOKEN")
+ORG = "orgs"
+HOST = "https://us-east-1-1.aws.cloud2.influxdata.com/"
 
 
-import influxdb_client, os, time
-from influxdb_client import InfluxDBClient, Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS
-
-token = os.environ.get("INFLUXDB_TOKEN")
-org = "project"
-url = "http://172.16.10.250:8086"
-
-write_client = influxdb_client.InfluxDBClient(url=url, token=token, org=org)
-
-
-ORG = "project"
-HOST = "http://172.16.10:8086"
-TOKEN = '1KlzGnddGlNpsTUdQgRDYGGE8xQNriUTOKGAlQTMs0Xl0M6S7ubV9ZFbCXiXJEkT-S8tdgDkz6y2Rk6CDbXFNQ=='
+# ORG = "project"
+# HOST = "http://172.16.10:8086"
+# TOKEN = '1KlzGnddGlNpsTUdQgRDYGGE8xQNriUTOKGAlQTMs0Xl0M6S7ubV9ZFbCXiXJEkT-S8tdgDkz6y2Rk6CDbXFNQ=='
+# LocI0WvYIBM690fYYg0i-X1msNsRAbKi9wU_4xyBXiWvv2VgEXz-x5gGT1dsCRE7-7MmLSKGW2ZvAlHSm__DHg==
 
 
 class InfluxDB(object):
     def __init__(self, host: str = None, token: str = None, org: str = None):
-        host = HOST
-        token = TOKEN
-        org = ORG
-        self.client = InfluxDBClient3(host=host, token=token, org=org)
+        self._host = HOST
+        self._token = TOKEN
+        self._org = ORG
+        self.client = None
+
+        # Define callbacks for writing responses
+        def success(self, data: str):
+            print(f"Successfully wrote batch: data: {data}")
+
+        def error(self, data: str, exception: InfluxDBError):
+            print(f"Failed writing batch: config: {self}, data: {data}, error: {exception}")
+
+        def retry(self, data: str, exception: InfluxDBError):
+            print(f"Failed retry writing batch: config: {self}, data: {data}, error: {exception}")
+
+        write_options = WriteOptions()
+        wco = write_client_options(success_callback=success,
+                                   error_callback=error,
+                                   retry_callback=retry,
+                                   WriteOptions=write_options)
+
+        self.client = InfluxDBClient3(host=self._host,
+                                      token=self._token,
+                                      org=self._org,
+                                      write_client_options=wco)
         self.database = "devmon"
 
-    # def oid_to_point(self, snmp_agent: SNMPAgent, oid: OID = None, l_void: list[VOID] = None):
-    def oid_to_point(self, address: str = None):
-        point = (Point('Perf').tag('title1', 1995).tag('title2', 1996))
+    def insert_void(self, snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None):
+        if not l_void:
+            return False
 
-        return point
+        point = (Point(oid.label)
+                 .tag('address', snmp_agent.address)
+                 .tag('region', snmp_agent.region)
+                 .tag('area', snmp_agent.area)
+                 .tag('label', oid.label))
+        for void in l_void:
+            k = void.desc if void.desc else oid.label
+            v = void.value
+            point.field(k, v)
 
-    def insert(self, point: Point = None):
-        self.client.write(database=self.database, record=point)
+        print(point)
+        return self.client.write(database=self.database, record=point)
 
     def select(self):
         query = ("SELECT *FROM 'census' WHERE time >= now() - interval '24 hours' "
@@ -94,10 +126,3 @@ if __name__ == '__main__':
     """
     influx delete --host "https://us-east-1.com" --token {NbL5jpRcgmIblHsFun1K-rm-7P20pPtseXHaSl2NGGZu4SfD0EQ==} --org {OPS}  --bucket {devmon}  --start 1970-01-01T00:00:00Z   --stop $(date +"%Y-%m-%dT%H:%M:%SZ")
     """
-    idb = InfluxDB()
-    idb.insert(idb.oid_to_point('172.16.104'))
-
-
-
-
-
