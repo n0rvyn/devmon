@@ -1228,7 +1228,7 @@ if __name__ == '__main__':
     elif act == 'perf':
         try:
             if sys.argv[2] in ['-s', '--service']:
-                devmon.refresh_config(service=True)
+                devmon.refresh_config(service=True, init_influx=True)
                 devmon.perf_service(influx=True)
         except IndexError:
             devmon.refresh_config()
