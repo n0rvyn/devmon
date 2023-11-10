@@ -16,13 +16,28 @@ mongo_uri: 'mongodb://localhost:27017'
 mongo_db: devmon
 mongo_col: devmon
 
+# Configuration for Time Series Objects for Devices' Performance Observability
+
+
 mongo_ts_db: test
 mongo_ts_col: test_0031
 
-## Definition for InfluxDB
-influx_url: "http://172.16.10.250:8086"
-influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5tVGRmY3V0LVJwT3hBeEQtbnoyT1BUTHdiYUh5UjhmSTJ5MmstUFZ5R0tKUzRPOU1NRmNqY0lNWTdGM043Z0p6eDlCaUdsTmlKYS1aRzNBdHpSSWNidz09'
+# Definition for InfluxDB
+# token for hm
+# influx_url: "http://172.16.10.250:8086"
+# influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5tVGRmY3V0LVJwT3hBeEQtbnoyT1BUTHdiYUh5UjhmSTJ5MmstUFZ5R0tKUzRPOU1NRmNqY0lNWTdGM043Z0p6eDlCaUdsTmlKYS1aRzNBdHpSSWNidz09'
+
+# token for cloud
+#influx_url: "https://us-east-2-1.aws.cloud2.influxdata.com/"
+#influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5pV3R6dVVMMmdhSTRsQlZWdXRRU2hLT2ZBZktBWk40RXdCOV9lOG5jVEYyeElLN1AwYUN4WGdYenJxYWY5XzhLNmlPTEs5NnBKNTZreUhOR1Fjc081dz09'
+#influx_org: 'orgs'
+
+# token for of
+influx_url: "http://localhost:8086"
+influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5NUVJ4YTF0MUpCb2xNWFZteUZlZC1oVWRJRlBFWmtuMkl6eTJRZk4teU1lWF9MbTlhZ2g5b0J0UG5zUWg3YkpOeWo4ODFjeHdyT1FndnpSQmJ3YklLZz09'
 influx_org: 'orgs'
+
+influx_database: 'devmon'
 
 
 # Remote log server (str) and port (int)

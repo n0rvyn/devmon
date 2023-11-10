@@ -254,6 +254,11 @@ class DevMon(object):
         except KeyError:
             pass
 
+        try:
+            self.influx_db = config['influx_database']
+        except KeyError:
+            self.influx_db = 'devmon'
+
     def read_secret(self, service: bool = False):
         _secret_ = None
         _pos_code_ = 0
@@ -1068,51 +1073,46 @@ class DevMon(object):
         flt = {'ip': addr}  # todo verifying 'ip_hostname' key
         return self.cmdb_mongo.find_one(flt)
 
-    def perf(self, device: str = None):
+    def perf(self, device: str = None, mongo: bool = False, influx: bool = True):
         agents: list[SNMPAgent] = self.a_side_snmps + self.b_side_snmps
+
         points: list[Point] = []
-
-        '''
-        test
-        '''
-        idb = InfluxDB(host=self.influx_url, token=self.influx_token, org=self.influx_org)
-        for agt in agents:
-            for (_, _oid, _l_void) in self._read_snmp_agent(agt, perf=True):
-                print(_l_void) if _oid.label == 'ProcessorLoad' else ''
-                idb.insert_void(snmp_agent=agt, oid=_oid, l_void=_l_void)
-
-        # end of test
+        idb_points = []
+        idb = InfluxDB(host=self.influx_url,
+                       token=self.influx_token,
+                       org=self.influx_org,
+                       database=self.influx_db) if influx else None
 
         def _gather_points(_agent: SNMPAgent = None):
             if device and _agent.address != device:
                 return None
-            for (_, _oid, _l_void) in self._read_snmp_agent(_agent, perf=True):
-                points.append(oid_to_point(_agent, _oid, _l_void))
 
+            for (_, _oid, _l_void) in self._read_snmp_agent(_agent, perf=True):
+                points.append(oid_to_point(_agent, _oid, _l_void)) if mongo else None
+                idb_points.append(idb.void_to_point(_agent, _oid, _l_void)) if influx else None
+
+        # Gather time series points with multiple threading
         threads = [Thread(target=_gather_points, args=(agent, )) for agent in agents]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
-        # for agent in agents:
-        #     if device and agent.address != device:
-        #         continue
-        #
-        #     for (_, oid, l_void) in self._read_snmp_agent(agent, perf=True):
-        #         points.append(oid_to_point(agent, oid, l_void))
+        # Insert InfluxDB points into database
+        idb.insert_points(idb_points) if influx else None
 
         def _insert_points(_point: Point):
-            if _point.data:
-                print(_point.timestamp)
-                self.mongots.collection.insert_one(asdict(_point))
+            self.mongots.collection.insert_one(asdict(_point)) if mongo and _point.data else ''  # todo add insert_many
 
         p_threads = [Thread(target=_insert_points, args=(p, )) for p in points]
         [t.start() for t in p_threads]
         [t.join() for t in p_threads]
 
-        # for p in points:
-        #     if p.data:
-        #         print(p.timestamp)
-        #         self.mongots.collection.insert_one(asdict(p))
+    def perf_service(self, device: str = None,
+                     mongo: bool = False,
+                     influx: bool = False,
+                     perf_interval_sec: int = 5):
+        while True:
+            self.perf(device=device, mongo=mongo, influx=influx)
+            time.sleep(perf_interval_sec)
 
     def pm_snmp(self, device: str = None):
         """
@@ -1218,7 +1218,7 @@ if __name__ == '__main__':
     devmon = DevMon()
 
     try:
-        if sys.argv[1] in ['run', 'query', 'sync', 'close', 'perf']:
+        if sys.argv[1] in ['run', 'query', 'sync', 'close']:
             devmon.refresh_config()
 
         if sys.argv[1] == 'run':
@@ -1232,7 +1232,13 @@ if __name__ == '__main__':
             devmon.pm_snmp(device=dev)
 
         elif sys.argv[1] == 'perf':
-            devmon.perf()
+            try:
+                if sys.argv[2] in ['-s', '--service']:
+                    devmon.refresh_config(service=True)
+                    devmon.perf_service(influx=True)
+            except IndexError:
+                devmon.refresh_config()
+                devmon.perf()
 
         elif sys.argv[1] == 'query':
             devmon.show_all_alerts()

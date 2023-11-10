@@ -93,21 +93,15 @@ snmp:
       restricted: True  # Alert when CPU IDLE is between 0-60
   - table: 'hrSWRunPerfCPU'
     table_index: 'hrSWRunIndex'
-    label: 'SW Running CPU Stat'
+    label: 'swRunningCpuStat'
     related_symbol: 'hrSWRunName'
     perf: True
   - table: 'hrSWRunPerfMem'
     table_index: 'hrSWRunIndex'
-    label: 'SW Running Mem Stat'
+    label: 'swRunningMemStat'
     related_symbol: 'hrSWRunName'
     perf: True
-  - id: 'memAvailReal'
-    label: 'MemoryAvail'
-    perf: True
-  - id: 'ssCpuIdle'
-    label: 'CPU IDLE'
-    perf: True
-  - table: 'hrProcessorLoad'  # todo table does not has a name, key-value will be overwritten.
+  - table: 'hrProcessorLoad'
     label: 'ProcessorLoad'
     perf: True
   - table: 'diskIONRead'
@@ -129,21 +123,36 @@ snmp:
   - table: 'ifHCOutUcastPkts'
     table_index: 'ifIndex'
     label: 'NIC'
-    exclude: 'lo, sit0, virbr0, br0'
+    exclude_value: 'lo, sit0, virbr0, br0'
     related_symbol: 'ifName'
     perf: True
   - group:
       - 'ssSwapIn'
       - 'ssSwapOut'
-    label: 'SystemSwapStat'
+      - 'memAvailReal'
+    label: 'SysMemSwapStat'
     perf: True
   - group:
       - 'ssCpuUser'
       - 'ssCpuSystem'
       - 'ssCpuIdle'
-      - 'ssCpuRawUser'
     label: 'SysCpuStat'
     perf: True
+  - group:
+      - ssCpuRawUser
+      - ssCpuRawNice
+      - ssCpuRawSystem
+      - ssCpuRawIdle
+      - ssCpuRawWait
+      - ssCpuRawKernel
+      - ssCpuRawInterrupt
+      - ssCpuRawSoftIRQ
+      - ssCpuRawSteal
+      - ssCpuRawGuest
+      - ssCpuRawGuestNice
+    label: 'sysCpuRawStat'
+    perf: True
+
 
 
 

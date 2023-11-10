@@ -369,7 +369,7 @@ class SNMP(object):
                 rel_val = vals_related[i]
             except (IndexError, TypeError):
                 # rel_val = None
-                rel_val = f'{self._read_oid_desc(table)}-{index}'
+                rel_val = f'{self._read_oid_desc(table)}.{index}'
 
             try:
                 ref = vals_ref[i]

@@ -19,30 +19,17 @@ from influxdb_client_3 import InfluxDBClient3, Point, InfluxDBError, write_clien
 import time
 import os
 import sys
-
-_PWD_ = os.path.abspath(os.path.dirname(__file__))
-_SRC_ = os.path.abspath(os.path.join(_PWD_, '../'))
-_TYPE_ = os.path.abspath(os.path.join(_SRC_, 'type'))
-_CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
-sys.path.append(_SRC_)
 from type import SNMPAgent, OID, VOID
 
-TOKEN = os.environ.get("INFLUXDB_TOKEN")
-ORG = "orgs"
-HOST = "https://us-east-1-1.aws.cloud2.influxdata.com/"
-
-
-# ORG = "project"
-# HOST = "http://172.16.10:8086"
-# TOKEN = '1KlzGnddGlNpsTUdQgRDYGGE8xQNriUTOKGAlQTMs0Xl0M6S7ubV9ZFbCXiXJEkT-S8tdgDkz6y2Rk6CDbXFNQ=='
-# LocI0WvYIBM690fYYg0i-X1msNsRAbKi9wU_4xyBXiWvv2VgEXz-x5gGT1dsCRE7-7MmLSKGW2ZvAlHSm__DHg==
+# _PWD_ = os.path.abspath(os.path.dirname(__file__))
+# _SRC_ = os.path.abspath(os.path.join(_PWD_, '../'))
+# _TYPE_ = os.path.abspath(os.path.join(_SRC_, 'type'))
+# _CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
+# sys.path.append(_SRC_)
 
 
 class InfluxDB(object):
-    def __init__(self, host: str = None, token: str = None, org: str = None):
-        # self._host = HOST
-        # self._token = TOKEN
-        # self._org = ORG
+    def __init__(self, host: str = None, token: str = None, org: str = None, database: str = None):
         self._host = host
         self._token = token
         self._org = org
@@ -50,7 +37,7 @@ class InfluxDB(object):
 
         # Define callbacks for writing responses
         def success(self, data: str):
-            print(f"Successfully wrote batch: data: {data}")
+            print(f"Successfully wrote batch: config: {self}, data: {data}")
 
         def error(self, data: str, exception: InfluxDBError):
             print(f"Failed writing batch: config: {self}, data: {data}, error: {exception}")
@@ -68,9 +55,9 @@ class InfluxDB(object):
                                       token=self._token,
                                       org=self._org,
                                       write_client_options=wco)
-        self.database = "devmon"
+        self.database = database
 
-    def insert_void(self, snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None):
+    def ____insert_void(self, snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None):
         if not l_void:
             return False
 
@@ -89,8 +76,36 @@ class InfluxDB(object):
                 continue
 
             point.field(k, v)
+            print(point)
 
+        # print(point)
         return self.client.write(database=self.database, record=point)
+
+    @staticmethod
+    def void_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None) -> Point:
+        if not l_void:
+            return Point('Nul')
+
+        point = (Point(oid.label)
+                 .tag('address', snmp_agent.address)
+                 .tag('region', snmp_agent.region)
+                 .tag('area', snmp_agent.area)
+                 .tag('label', oid.label))
+
+        for void in l_void:
+            k = void.desc if void.desc else oid.label
+
+            try:
+                v = float(void.value)
+            except (ValueError, TypeError):
+                continue
+
+            point.field(k, v)
+        # todo Successfully wrote batch: config: ('devmon', 'orgs', 'ns'), data: b'\n\n\n\n\n\n\n\n\n\n'
+        return point
+
+    def insert_points(self, points: list[Point] = None):
+        return self.client.write(record=points, database=self.database)
 
     def select(self):
         query = ("SELECT *FROM 'census' WHERE time >= now() - interval '24 hours' "
