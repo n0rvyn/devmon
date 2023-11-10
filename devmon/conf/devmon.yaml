@@ -24,8 +24,8 @@ mongo_ts_col: test_0031
 
 # Definition for InfluxDB
 # token for hm
-# influx_url: "http://172.16.10.250:8086"
-# influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5tVGRmY3V0LVJwT3hBeEQtbnoyT1BUTHdiYUh5UjhmSTJ5MmstUFZ5R0tKUzRPOU1NRmNqY0lNWTdGM043Z0p6eDlCaUdsTmlKYS1aRzNBdHpSSWNidz09'
+influx_url: "http://172.16.10.250:8086"
+influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5oTWk2ZVR3dU1QRlRpMXAzSmp5UnNPeVdwN2twZUpDLUxNTW5ZdTRscThzeU9fZmdmSHV6RmhqUnN4UEtwMWRvXzNuRm9odk11cEExcDVhaWwwXzFHdz09'
 
 # token for cloud
 #influx_url: "https://us-east-2-1.aws.cloud2.influxdata.com/"
@@ -33,8 +33,8 @@ mongo_ts_col: test_0031
 #influx_org: 'orgs'
 
 # token for of
-influx_url: "http://localhost:8086"
-influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5NUVJ4YTF0MUpCb2xNWFZteUZlZC1oVWRJRlBFWmtuMkl6eTJRZk4teU1lWF9MbTlhZ2g5b0J0UG5zUWg3YkpOeWo4ODFjeHdyT1FndnpSQmJ3YklLZz09'
+# influx_url: "http://localhost:8086"
+# influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5NUVJ4YTF0MUpCb2xNWFZteUZlZC1oVWRJRlBFWmtuMkl6eTJRZk4teU1lWF9MbTlhZ2g5b0J0UG5zUWg3YkpOeWo4ODFjeHdyT1FndnpSQmJ3YklLZz09'
 influx_org: 'orgs'
 
 influx_database: 'devmon'

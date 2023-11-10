@@ -53,21 +53,8 @@ Side = Literal[
     'a', 'b'
 ]
 
-# EventType = Literal[
-#     'alert', 'recovery', 'message'
-# ]
 
 notify_start = notify_end = None
-
-
-# def read_config(file: str = _CONF_):
-#     try:
-#         with open(file, 'r+') as f:
-#             config = safe_load(f)
-#     except FileNotFoundError as err:
-#         raise err
-#
-#     return config
 
 
 class DevMon(object):
@@ -101,7 +88,7 @@ class DevMon(object):
         self.a_side_snmps = A_SIDE_SNMPs
         self.b_side_snmps = B_SIDE_SNMPs
 
-    def _load_config(self, pm: bool = False, service: bool = False):
+    def _load_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
         # read configuration from file 'ROOT/conf/devmon.yaml'
         # config = read_config()
         self.read_secret(service=service)
@@ -142,18 +129,19 @@ class DevMon(object):
             mongo_uri = config['mongo_uri']
         except KeyError:
             mongo_uri = None
+
         try:
             mongo_server = config['mongo_server']
             mongo_user = config['mongo_user']
-            # mongo_pass = config['mongo_pass']  # todo !!!!!!!!!
-            # mongo_pass = self.decode_password(config['mongo_pass']) if config['mongo_pass'] else None
             mongo_pass = self.decode_password(config['mongo_pass'])
         except KeyError:
             mongo_user = mongo_pass = mongo_server = None
+
         try:
             mongo_port = config['mongo_port']
         except KeyError:
             mongo_port = 27017
+
         try:
             mongo_db = config['mongo_db']
             mongo_col = config['mongo_col']
@@ -169,24 +157,16 @@ class DevMon(object):
             ts_db = config['mongo_ts_db']
             ts_col = config['mongo_ts_col']
         except KeyError:
-            ts_db = 'perfmon'
-            ts_col = 'test'  # todo should the different metadata be stored at the different collection or all-in-one???
+            ts_col = 'perf'
 
-        self.mongo = MongoDB(server=mongo_server, uri=mongo_uri,
-                             username=mongo_user, password=mongo_pass, port=mongo_port,
-                             database=mongo_db, collection=mongo_col)
+        if init_mongo:
+            self.mongo = MongoDB(server=mongo_server, uri=mongo_uri,
+                                 username=mongo_user, password=mongo_pass, port=mongo_port,
+                                 database=mongo_db, collection=mongo_col)
 
-        self.cmdb_mongo = self.mongo.client[mongo_db][cmdb_col]
+            self.cmdb_mongo = self.mongo.client[mongo_db][cmdb_col]
+            self.mongots = self.mongo.client[mongo_db][ts_col]
 
-        # self.cmdb_mongo = MongoDB(server=mongo_server, uri=mongo_uri,
-        #                           username=mongo_user, password=mongo_pass, port=mongo_port,
-        #                           database=mongo_db, collection=cmdb_col)
-
-        # self.mongots = MongoDB(server=mongo_server, uri=mongo_uri,
-        #                           username=mongo_user, password=mongo_pass, port=mongo_port,
-        #                           database=ts_db, collection=ts_col)
-        self.mongots = self.mongo.client[ts_db][ts_col]
-        if not pm:
             try:
                 with timeout(2):
                     self.mongo.client.admin.command('ping')
@@ -259,6 +239,11 @@ class DevMon(object):
         except KeyError:
             self.influx_db = 'devmon'
 
+        self.influx = InfluxDB(host=self.influx_url,
+                               token=self.influx_token,
+                               org=self.influx_org,
+                               database=self.influx_db) if init_influx else None
+
     def read_secret(self, service: bool = False):
         _secret_ = None
         _pos_code_ = 0
@@ -288,9 +273,9 @@ class DevMon(object):
     def decode_password(self, password_hide: str = None) -> str:
         return self.hp.decrypt(password_hide.encode())
 
-    def refresh_config(self, pm: bool = False, service: bool = False):
+    def refresh_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
         self._load_agents()
-        self._load_config(pm=pm, service=service)
+        self._load_config(init_mongo=init_mongo, service=service)
 
     def _debug(self, msg: str = None):
         f_info = currentframe()
@@ -1078,10 +1063,6 @@ class DevMon(object):
 
         points: list[Point] = []
         idb_points = []
-        idb = InfluxDB(host=self.influx_url,
-                       token=self.influx_token,
-                       org=self.influx_org,
-                       database=self.influx_db) if influx else None
 
         def _gather_points(_agent: SNMPAgent = None):
             if device and _agent.address != device:
@@ -1089,7 +1070,7 @@ class DevMon(object):
 
             for (_, _oid, _l_void) in self._read_snmp_agent(_agent, perf=True):
                 points.append(oid_to_point(_agent, _oid, _l_void)) if mongo else None
-                idb_points.append(idb.void_to_point(_agent, _oid, _l_void)) if influx else None
+                idb_points.append(self.influx.void_to_point(_agent, _oid, _l_void)) if influx else None
 
         # Gather time series points with multiple threading
         threads = [Thread(target=_gather_points, args=(agent, )) for agent in agents]
@@ -1097,7 +1078,7 @@ class DevMon(object):
         [t.join() for t in threads]
 
         # Insert InfluxDB points into database
-        idb.insert_points(idb_points) if influx else None
+        self.influx.insert_points(idb_points) if influx else None
 
         def _insert_points(_point: Point):
             self.mongots.collection.insert_one(asdict(_point)) if mongo and _point.data else ''  # todo add insert_many
@@ -1108,8 +1089,8 @@ class DevMon(object):
 
     def perf_service(self, device: str = None,
                      mongo: bool = False,
-                     influx: bool = False,
-                     perf_interval_sec: int = 5):
+                     influx: bool = True,
+                     perf_interval_sec: int = 30):
         while True:
             self.perf(device=device, mongo=mongo, influx=influx)
             time.sleep(perf_interval_sec)
@@ -1119,7 +1100,7 @@ class DevMon(object):
         Preventive maintenance for SNMP agents
         :return:
         """
-        self.refresh_config(pm=True)
+        self.refresh_config(init_mongo=False, init_influx=False, service=False)
         if device:
             cases = self.create_snmp_cases(device=device, pm=True)
         else:
@@ -1206,63 +1187,67 @@ class DevMon(object):
 
 if __name__ == '__main__':
     USAGE = (f'Usage: \n'
-             f'  {sys.argv[0]} [run | service]  # one-time run or as a service \n'
-             f'  {sys.argv[0]} pm [device] \n'
+             f'  {sys.argv[0]} alert [-s | --service]  # one-time run or as a service \n'
              f'  {sys.argv[0]} query \n'
-             f'  {sys.argv[0]} perf  # run performance checking\n'
              f'  {sys.argv[0]} sync  # syncing resources ID from CMDB to MongoDB \n'
-             f'  {sys.argv[0]} hide PASSWORD  # converting password to strings \n'
              f'  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n'
+             
+             f'  {sys.argv[0]} pm [device] \n'
+             
+             f'  {sys.argv[0]} perf [-s | --service] # run performance checking\n'
+             
+             f'  {sys.argv[0]} hide PASSWORD  # converting password to strings \n'
              f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.')
 
     devmon = DevMon()
-
+    act = opt = None
     try:
-        if sys.argv[1] in ['run', 'query', 'sync', 'close']:
-            devmon.refresh_config()
-
-        if sys.argv[1] == 'run':
-            devmon.run()  # add a sleep interval
-
-        elif sys.argv[1] == 'pm':
-            try:
-                dev = sys.argv[2]
-            except IndexError:
-                dev = None
-            devmon.pm_snmp(device=dev)
-
-        elif sys.argv[1] == 'perf':
-            try:
-                if sys.argv[2] in ['-s', '--service']:
-                    devmon.refresh_config(service=True)
-                    devmon.perf_service(influx=True)
-            except IndexError:
-                devmon.refresh_config()
-                devmon.perf()
-
-        elif sys.argv[1] == 'query':
-            devmon.show_all_alerts()
-
-        elif sys.argv[1] == 'sync':
-            devmon.sync_rid()
-
-        elif sys.argv[1] == 'service':
-            devmon.refresh_config(service=True)
-            devmon.service_run()
-
-        elif sys.argv[1] == 'close':
-            _id = sys.argv[2]
-            _content = sys.argv[3]
-            _cur_val = sys.argv[4]
-            # push a recovery message to syslog server
-            devmon.close_case(case_id=_id, content=_content, current_value=_cur_val)
-
-        elif sys.argv[1] == 'hide':
-            devmon.read_secret()
-            _password_ = sys.argv[2]
-            print(devmon.hp.encrypt(_password_))
-
-        else:
-            print(USAGE)
+        act = sys.argv[1]
     except IndexError:
         print(USAGE)
+
+    if act in ['query', 'sync', 'close']:
+        devmon.refresh_config(init_mongo=True)
+
+    if act == 'alert':
+        try:
+            if sys.argv[2] in ['-s', '--service']:
+                devmon.refresh_config(init_mongo=True, service=True)
+                devmon.service_run()
+        except IndexError:
+            devmon.refresh_config(init_mongo=True)
+            devmon.run()  # add a sleep interval
+
+    elif act == 'pm':
+        try:
+            dev = sys.argv[2]
+        except IndexError:
+            dev = None
+        devmon.pm_snmp(device=dev)
+
+    elif act == 'perf':
+        try:
+            if sys.argv[2] in ['-s', '--service']:
+                devmon.refresh_config(service=True)
+                devmon.perf_service(influx=True)
+        except IndexError:
+            devmon.refresh_config()
+            devmon.perf()
+
+    elif act == 'query':
+        devmon.show_all_alerts()
+
+    elif act == 'sync':
+        devmon.sync_rid()
+
+    elif act == 'close':
+        _id = sys.argv[2]
+        _content = sys.argv[3]
+        _cur_val = sys.argv[4]
+        # push a recovery message to syslog server
+        devmon.close_case(case_id=_id, content=_content, current_value=_cur_val)
+
+    elif act == 'hide':
+        devmon.read_secret()
+        _password_ = sys.argv[2]
+        print(devmon.hp.encrypt(_password_))
