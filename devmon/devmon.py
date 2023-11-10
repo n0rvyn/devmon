@@ -275,7 +275,7 @@ class DevMon(object):
 
     def refresh_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
         self._load_agents()
-        self._load_config(init_mongo=init_mongo, service=service)
+        self._load_config(init_mongo=init_mongo, service=service, init_influx=init_influx)
 
     def _debug(self, msg: str = None):
         f_info = currentframe()
