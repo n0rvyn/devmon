@@ -1231,7 +1231,7 @@ if __name__ == '__main__':
                 devmon.refresh_config(service=True, init_influx=True)
                 devmon.perf_service(influx=True)
         except IndexError:
-            devmon.refresh_config()
+            devmon.refresh_config(init_influx=True)
             devmon.perf()
 
     elif act == 'query':
