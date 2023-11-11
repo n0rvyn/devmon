@@ -18,6 +18,10 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo import errors
+from threading import Thread
+from type import PointMeta, Point, SNMPAgent, VOID, OID
+from datetime import datetime, timezone
+import pytz
 
 
 class MongoDB(object):
@@ -104,6 +108,53 @@ class MongoDB(object):
     def update_dict(self, flt: dict = None, update: dict = None):
         update = {'$set': update}
         return self.collection.update_one(filter=flt, update=update)
+
+    def insert_dicts(self, data: list[dict]):
+        threads = [Thread(target=self.insert_dict, args=(d, )) for d in data]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+
+class MongoPoint(object):
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def void_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None) -> Point:
+        if not oid.perf:
+            return Point()
+
+        point_meta = PointMeta(snmp_agent.address, snmp_agent.region, snmp_agent.area, oid.label)
+        data = {}
+
+        for lv in l_void:
+            try:
+                float(lv.value)
+            except (ValueError, TypeError):
+                continue
+
+            if lv.desc:
+                data.update({lv.desc: float(lv.value)})
+
+            elif oid.label:
+                data.update({oid.label: float(lv.value)})
+
+        now = datetime.now()
+        local_now = pytz.timezone('Asia/Shanghai').localize(now)
+
+        point = Point(metadata=point_meta,
+                      timestamp=local_now,
+                      data=data)
+
+        return point
+
+    # @staticmethod
+    # def cal_points_shift(last_point: Point = None, point: Point = None) -> Point:
+    #     pass
+    #
+    # @staticmethod
+    # def cal_many_points_shift(last_points: list[Point] = None, points: list[Point] = None) -> list[Point]:
+    #     pass
 
 
 if __name__ == '__main__':

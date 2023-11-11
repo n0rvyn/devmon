@@ -16,9 +16,6 @@
 
 """
 from influxdb_client_3 import InfluxDBClient3, Point, InfluxDBError, write_client_options, WriteOptions
-import time
-import os
-import sys
 from type import SNMPAgent, OID, VOID
 
 # _PWD_ = os.path.abspath(os.path.dirname(__file__))
@@ -57,35 +54,38 @@ class InfluxDB(object):
                                       write_client_options=wco)
         self.database = database
 
-    def ____insert_void(self, snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None):
-        if not l_void:
-            return False
-
-        point = (Point(oid.label)
-                 .tag('address', snmp_agent.address)
-                 .tag('region', snmp_agent.region)
-                 .tag('area', snmp_agent.area)
-                 .tag('label', oid.label))
-
-        for void in l_void:
-            k = void.desc if void.desc else oid.label
-
-            try:
-                v = float(void.value)
-            except ValueError:
-                continue
-
-            point.field(k, v)
-            print(point)
-
-        # print(point)
-        return self.client.write(database=self.database, record=point)
+    # def ____insert_void(self, snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None):
+    #     if not l_void:
+    #         return False
+    #
+    #     point = (Point(oid.label)
+    #              .tag('address', snmp_agent.address)
+    #              .tag('region', snmp_agent.region)
+    #              .tag('area', snmp_agent.area)
+    #              .tag('label', oid.label))
+    #
+    #     for void in l_void:
+    #         k = void.desc if void.desc else oid.label
+    #
+    #         try:
+    #             v = float(void.value)
+    #         except ValueError:
+    #             continue
+    #
+    #         point.field(k, v)
+    #         print(point)
+    #
+    #     # print(point)
+    #     return self.client.write(database=self.database, record=point)
 
     @staticmethod
     def void_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None) -> Point:
         if not l_void:
             return Point('Nul')
 
+        if oid.label == 'gpfsFsSystemBytes':
+            print(l_void)
+
         point = (Point(oid.label)
                  .tag('address', snmp_agent.address)
                  .tag('region', snmp_agent.region)
@@ -93,6 +93,9 @@ class InfluxDB(object):
                  .tag('label', oid.label))
 
         for void in l_void:
+            if not void:  # todo l_void == [None, None...] ???
+                continue
+
             k = void.desc if void.desc else oid.label
 
             try:
@@ -101,8 +104,44 @@ class InfluxDB(object):
                 continue
 
             point.field(k, v)
-        # todo Successfully wrote batch: config: ('devmon', 'orgs', 'ns'), data: b'\n\n\n\n\n\n\n\n\n\n'
         return point
+
+    # def cal_point_shift(last_point: Point = None, point: Point = None) -> Point:
+    #     new_point: Point = Point(point.measurement)
+    #
+    #     for (tag, value) in point._tags.items():
+    #         new_point.tag(tag, value)
+    #
+    #     fields = {key: (value - last_point.fields[key]) for (key, value) in point.fields.items()}
+    #     new_point.from_dict(fields)
+    #
+    #     # for (key, value) in point._fields.items():
+    #     #     try:
+    #     #         new_value = value - last_point._fields[key]
+    #     #         new_point.field(key, new_value)
+    #     #     except ValueError:
+    #     #         pass
+    #     print(new_point, last_point)
+    #
+    #     return new_point
+
+    # def cal_many_points_shift(self, last_points: list[Point] = None, points: list[Point] = None) -> list[Point]:
+    #     final_points = []
+    #
+    #     if len(last_points) != len(points):
+    #         return points
+    #
+    #     last_points.sort()
+    #     points.sort()
+    #
+    #     def cal_target(last_point: Point, point: Point):
+    #         final_points.append(self.cal_point_shift(last_point, point))
+    #
+    #     threads = [Thread(target=cal_target, args=(last_points[i], points[i])) for i in range(len(last_points))]
+    #     [t.start() for t in threads]
+    #     [t.join() for t in threads]
+    #
+    #     return final_points
 
     def insert_points(self, points: list[Point] = None):
         return self.client.write(record=points, database=self.database)

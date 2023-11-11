@@ -48,7 +48,7 @@ rlog_port: 514
 notify_window: 8:00-18:00
 
 # Log level: 'debug', 'info', 'warn', 'error', 'critical'
-log_level: 'info'
+log_level: 'debug'
 # Set to 'True' to display messages to screen
 log_display: False
 

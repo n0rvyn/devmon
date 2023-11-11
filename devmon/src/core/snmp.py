@@ -385,15 +385,15 @@ class SNMP(object):
 
         return voids
 
-    def _read_group(self,
-                    oids: list[str] = None,
-                    related_symbol: str = None,
-                    exclude_index: str = None,
-                    exclude_value: str = None,
-                    read_ref_from: str = None,
-                    arithmetic: ArithType = None,
-                    arith_symbol: str = None,
-                    arith_pos: Position = None) -> list[VOID]:
+    def ____read_group(self,
+                       oids: list[str] = None,
+                       related_symbol: str = None,
+                       exclude_index: str = None,
+                       exclude_value: str = None,
+                       read_ref_from: str = None,
+                       arithmetic: ArithType = None,
+                       arith_symbol: str = None,
+                       arith_pos: Position = None) -> list[VOID]:
         return [self._read_id(oid=oid,
                               related_symbol=related_symbol,
                               exclude_index=exclude_index,
@@ -403,6 +403,30 @@ class SNMP(object):
                               arith_symbol=arith_symbol,
                               arith_pos=arith_pos)
                 for oid in oids]
+
+    def _read_group(self,
+                    tables: list[str] = None,
+                    index_table: str = None,
+                    related_symbol_table: str = None,
+                    exclude_index: str = None,
+                    exclude_value: str = None,
+                    reference_symbol_table: str = None,
+                    arith_symbol_table: str = None,
+                    arith: ArithType = None,
+                    arith_pos: int = 2
+                    ):
+        voids = []
+
+        [voids.extend(self._read_table(table=table,
+                                              index_table=index_table,
+                                              related_symbol_table=related_symbol_table,
+                                              exclude_index=exclude_index,
+                                              exclude_value=exclude_value,
+                                              reference_symbol_table=reference_symbol_table,
+                                              arith_symbol_table=arith_symbol_table,
+                                              arith=arith,
+                                              arith_pos=arith_pos)) for table in tables]
+        return voids
 
     def read_oid_dc(self, oid: OID = None) -> list[VOID]:
         """
@@ -444,13 +468,13 @@ class SNMP(object):
                                      arith_pos=oid.arith_pos)
 
         if oid.group:
-            voids = self._read_group(oids=oid.group,
-                                     related_symbol=oid.related_symbol,
+            voids = self._read_group(tables=oid.group,
+                                     related_symbol_table=oid.related_symbol,
                                      exclude_value=oid.exclude_value,
                                      exclude_index=oid.exclude_index,
-                                     read_ref_from=oid.read_ref_from,
-                                     arithmetic=oid.arithmetic,
-                                     arith_symbol=oid.arith_symbol,
+                                     reference_symbol_table=oid.read_ref_from,
+                                     arith=oid.arithmetic,
+                                     arith_symbol_table=oid.arith_symbol,
                                      arith_pos=oid.arith_pos)
 
         return voids

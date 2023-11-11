@@ -17,6 +17,8 @@
 """
 import datetime
 import time
+
+import influxdb_client_3
 from yaml import safe_load
 import os
 import sys
@@ -31,7 +33,7 @@ from inspect import currentframe
 from pymongo import errors, timeout
 from src import oid_to_case, ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
 from src import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart, EventType
-from src import Point, PointMeta, oid_to_point
+from src import Point, MongoPoint
 from src import InfluxDB
 
 
@@ -59,11 +61,10 @@ notify_start = notify_end = None
 
 class DevMon(object):
     def __init__(self):
-        self.a_side_snmps = None
-        self.b_side_snmps = None
+        self.a_side_snmps = self.b_side_snmps = self.all_snmps = None
         self.clog = None
         self.pushmsg = None
-        self.mongo = None
+        self.mongo = self.cmdb_mongo = self.mongots = None
         self.event_keys = None
         self.event_delimiter = None
         self.multithread = None
@@ -77,6 +78,8 @@ class DevMon(object):
         self.cmdb_server = self.cmdb_user = self.cmdb_pass = self.cmdb_db = None
         self.hp = None
         self.influx_token = self.influx_org = self.influx_url = None
+        self.last_idb_points = None
+        self.mongo_point = MongoPoint
 
     def _load_agents(self):
         try:
@@ -87,6 +90,7 @@ class DevMon(object):
         # define class attributes for SNMP agents from both a and b sides
         self.a_side_snmps = A_SIDE_SNMPs
         self.b_side_snmps = B_SIDE_SNMPs
+        self.all_snmps = self.a_side_snmps + self.b_side_snmps
 
     def _load_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
         # read configuration from file 'ROOT/conf/devmon.yaml'
@@ -456,7 +460,7 @@ class DevMon(object):
                         f'case in Mongo: [{case_mongo}], new case: [{case}].')
 
             if case_mongo.alert:
-                if case.alert:  # alert case exist and remain alert, count++
+                if case.alert:  # alert the case exists and which remain alert, count++
                     case.count += case_mongo.count
                     case.type = '1'
                     case.publish = 0  # set to 0, waiting for pushing alert to rsyslog server
@@ -586,7 +590,7 @@ class DevMon(object):
                           multithread: bool = True,
                           device: str = None,
                           perf: bool = False,
-                          pm: bool = False,
+                          pm: bool = False,  # todo clean the pm, health, perf...
                           health: bool = False) -> list[Case]:
         agents = None
 
@@ -603,8 +607,10 @@ class DevMon(object):
                     break
 
         if not agents:
-            self._error(f'device [{device}] not found in the devlist, return None value case.')
+            self._warn(f'Nothing found in devlist side [{side}], device [{device}], return None value case.')
             return [Case()]
+        else:
+            self._debug(f'Read devlist form side [{side}], devices addresses [{[agt.address for agt in agents]}].')
 
         # self.snmp_agents = []
         # self.snmp_cases = []
@@ -1058,41 +1064,86 @@ class DevMon(object):
         flt = {'ip': addr}  # todo verifying 'ip_hostname' key
         return self.cmdb_mongo.find_one(flt)
 
-    def perf(self, device: str = None, mongo: bool = False, influx: bool = True):
-        agents: list[SNMPAgent] = self.a_side_snmps + self.b_side_snmps
+    # def ____perf(self, device: str = None, mongo: bool = False, influx: bool = True):
+    #     agents: list[SNMPAgent] = self.a_side_snmps + self.b_side_snmps
+    #
+    #     points: list[Point] = []
+    #     idb_points = []
+    #
+    #     def _gather_points(_agent: SNMPAgent = None):
+    #         if device and _agent.address != device:
+    #             return None
+    #
+    #         for (_, _oid, _l_void) in self._read_snmp_agent(_agent, perf=True):
+    #             points.append(self.mongo_point.void_to_point(_agent, _oid, _l_void)) if mongo else None
+    #             idb_points.append(self.influx.void_to_point(_agent, _oid, _l_void)) if influx else None
+    #
+    #     # Gather time series points with multiple threading
+    #     threads = [Thread(target=_gather_points, args=(agent, )) for agent in agents]
+    #     [t.start() for t in threads]
+    #     [t.join() for t in threads]
+    #
+    #     # Insert InfluxDB points into database
+    #     self.influx.insert_points(idb_points) if influx else None
+    #
+    #     def _insert_points(_point: Point):
+    #         self.mongots.collection.insert_one(asdict(_point)) if mongo and _point.data else ''  # todo add insert_many
+    #
+    #     p_threads = [Thread(target=_insert_points, args=(p, )) for p in points]
+    #     [t.start() for t in p_threads]
+    #     [t.join() for t in p_threads]
 
-        points: list[Point] = []
-        idb_points = []
+    def _perf_gather(self, device: str = None, mongo: bool = False, influx: bool = False) -> tuple[list, list]:
+        """
+        return: (list[MongoPoint], list[InfluxPoint])
+        """
+        agents: list[SNMPAgent] = self.all_snmps
+        mongo_points = influx_points = []
 
         def _gather_points(_agent: SNMPAgent = None):
             if device and _agent.address != device:
                 return None
 
             for (_, _oid, _l_void) in self._read_snmp_agent(_agent, perf=True):
-                points.append(oid_to_point(_agent, _oid, _l_void)) if mongo else None
-                idb_points.append(self.influx.void_to_point(_agent, _oid, _l_void)) if influx else None
+                mongo_points.append(self.mongo_point.void_to_point(_agent, _oid, _l_void)) if mongo else None
+                influx_points.append(self.influx.void_to_point(_agent, _oid, _l_void)) if influx else None
 
         # Gather time series points with multiple threading
         threads = [Thread(target=_gather_points, args=(agent, )) for agent in agents]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
-        # Insert InfluxDB points into database
-        self.influx.insert_points(idb_points) if influx else None
+        return mongo_points, influx_points
 
-        def _insert_points(_point: Point):
-            self.mongots.collection.insert_one(asdict(_point)) if mongo and _point.data else ''  # todo add insert_many
+    def _perf_insert(self,
+                     influx_points: list[influxdb_client_3.Point] = None,
+                     mongo_points: list[Point] = None,
+                     influx: bool = False,
+                     mongo: bool = False):
+        self.influx.insert_points(influx_points) if influx else None
+        self.mongots.insert_dicts([asdict(p) for p in mongo_points]) if mongo else None
 
-        p_threads = [Thread(target=_insert_points, args=(p, )) for p in points]
-        [t.start() for t in p_threads]
-        [t.join() for t in p_threads]
+    # def _perf_count(self, device: str = None, mongo: bool = False, influx: bool = True, interval: int = 1, count: int = 1):
+    #     last_mongo_points, last_influx_points = self._perf_gather(device, mongo=mongo, influx=influx)
+    #
+    #     for c in range(count):
+    #         time.sleep(interval)
+    #         curr_mongo_points, curr_influx_points = self._perf_gather(device=device, mongo=mongo, influx=influx)
+    #         print(last_influx_points[0]._fields, curr_influx_points[0]._fields)
+    #
+    #         mongo_points = self.mongo_point.cal_many_points_shift(last_mongo_points, curr_mongo_points) if mongo else None
+    #         influx_points = self.influx.cal_many_points_shift(last_influx_points, curr_influx_points) if influx else None
+    #
+    #         self._perf_insert(influx_points=influx_points, mongo_points=mongo_points, influx=influx, mongo=mongo)
 
     def perf_service(self, device: str = None,
                      mongo: bool = False,
                      influx: bool = True,
-                     perf_interval_sec: int = 30):
+                     perf_interval_sec: int = 60):
         while True:
-            self.perf(device=device, mongo=mongo, influx=influx)
+            # self.perf(device=device, mongo=mongo, influx=influx)
+            mongo_points, influx_points = self._perf_gather(device, mongo, influx)
+            self._perf_insert(mongo_points=mongo_points, influx_points=influx_points, mongo=mongo, influx=influx)
             time.sleep(perf_interval_sec)
 
     def pm_snmp(self, device: str = None):
@@ -1101,6 +1152,7 @@ class DevMon(object):
         :return:
         """
         self.refresh_config(init_mongo=False, init_influx=False, service=False)
+
         if device:
             cases = self.create_snmp_cases(device=device, pm=True)
         else:
@@ -1108,8 +1160,6 @@ class DevMon(object):
 
         all_stats = {}
         for c in cases:
-            # if c.count == 0:
-            #     continue
             if not c.void:
                 continue
 
@@ -1158,10 +1208,10 @@ class DevMon(object):
             label_detail = all_stats[host]
             for exp in label_detail.keys():
                 faulty = label_detail[exp]['alert']
-                err = label_detail[exp]['errors']
+                err = list(set(label_detail[exp]['errors']))
 
                 if faulty < 0:  # the value is just for showing
-                    val_to_show = ''.join(err)
+                    val_to_show = '|'.join(err)
                     p_len = 96 - len(val_to_show)
                     print(f'{exp:.<{p_len}s} \033[0;37m{val_to_show}\033[0m')
                     continue
@@ -1200,6 +1250,7 @@ if __name__ == '__main__':
              f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.')
 
     devmon = DevMon()
+
     act = opt = None
     try:
         act = sys.argv[1]

@@ -11,14 +11,14 @@ try:
                       CaseUpdatePart, EventType, Point, PointMeta)
     from core import (SNMP, ReadAgents, ColorLogger, oid_to_case,
                       PushMsg, MongoDB, CMDB, ContextSNMP, HidePass,
-                      oid_to_point, InfluxDB)
+                      MongoPoint, InfluxDB)
 except ModuleNotFoundError:
     from .type import (SNMPAgent, VOID, OIDType, OID,
                        OutOpts, Version, Case, TheSameCasePart,
                        CaseUpdatePart, EventType, Point, PointMeta)
     from .core import (SNMP, ReadAgents, ColorLogger, oid_to_case,
                        PushMsg, MongoDB, CMDB, ContextSNMP, HidePass,
-                       oid_to_point, InfluxDB)
+                       MongoPoint, InfluxDB)
 
 
 __all__ = [
@@ -40,7 +40,7 @@ __all__ = [
     'HidePass',
     'Point',
     'PointMeta',
-    'oid_to_point',
+    'MongoPoint',
     'InfluxDB'
 ]
 

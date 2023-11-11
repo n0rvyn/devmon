@@ -35,6 +35,7 @@ snmp:
     - '1'
     - '2'
   # snmpwalk读取OID超时时间，可选
+  # 对于繁忙或者配置较低的机器，适当增加超时时间，避免读取OID失败
   timeout: 1
   # snmpwalk读取OID失败后尝试次数，可选
   retries: 1
