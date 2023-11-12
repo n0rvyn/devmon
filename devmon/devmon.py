@@ -1182,7 +1182,8 @@ class DevMon(object):
 
             if c.oid.show:  # the value is for show  # todo verify the parameter when without a pm method!!!!
                 faulty = -1
-                err = c.void.value
+                # err = c.void.value
+                err = f'{c.void.value} {c.void.unit}' if c.void.unit else c.void.value
 
             label = c.oid.label
 

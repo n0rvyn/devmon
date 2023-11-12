@@ -41,8 +41,8 @@ snmp:
   retries: 1
   # OID关联配置
   OIDs:
-  # 以单个OID定义，id, id_range, table三必选一
-  - id: '1.22.1.3'
+  # 以单个OID定义，id_range, table, group三必选一 ('id' is deprecated, single OID can be specified with a 'table')
+  - table: '1.22.1.3'
     # OID标签，用于巡检展示分类（建议字符不宜过长），必选项
     label: SystemStat
     # 可选项；设置show为True，该OID值将仅作为PM时展示用（默认False)。
@@ -109,10 +109,10 @@ snmp:
     related_symbol: 'hrSWRunName'  # 用来提取每个OID对应的名称，不定义则默认从OID中读取最后一个非数字的字符串
     perf: True  # 标识该OID定义为性能收集
   # System Available Memory
-  - id: 'memSysAvail'  # 单个OID定义
+  - table: 'memSysAvail'  # 单个OID定义
     label: 'MemoryAvail'
     perf: True
-  - id: 'ssCpuIdle'
+  - table: 'ssCpuIdle'
     label: 'CPU IDLE'
     perf: True
   # a set of IDs share the same 'label', 'related_symbol' ...
@@ -121,7 +121,7 @@ snmp:
       - 'memSysTotal'
     label: 'MemoryUsage'
     perf: True
-  - id: 'sysName.0'
+  - table: 'sysName.0'
     label: SystemName
     explanation: '主机名'
     show: True  # 为True，则该OID定义仅作为PM时展示用

@@ -23,7 +23,7 @@ snmp:
 #    related_symbol: 'ifDescr'
 #
 # System Processes
-#  - id: 'hrSystemProcesses.0'
+#  - table: 'hrSystemProcesses.0'
 #    label: 'HrSystemProcesses'
 #    explanation: '系统进程数百分比'
 #    severity: '1'

@@ -12,19 +12,19 @@ snmp:
   mib: 'XIV-MIB'
   OIDs:
   # Filled Disks
-  - id: 'xivFailedDisks'
+  - table: 'xivFailedDisks'
     label: xivFailedDisks
     explanation: '已故障硬盘'
     watermark:
       low: -1
       high: 0
   # xivMachineStatus
-  - id: 'xivMachineStatus'
+  - table: 'xivMachineStatus'
     label: 'xivMachineStatus'
     explanation: 'XIV机器状态'
     severity: '3'
     reference: 'Full Redundancy'
-  - id: 'xivUtilizationSoft'
+  - table: 'xivUtilizationSoft'
     label: xivUtilizationSoft
     explanation: 'XIV软使用率'
     severity: '3'
@@ -32,7 +32,7 @@ snmp:
       low: 80
       high: 101
       restricted: True
-  - id: 'xivUtilizationHard'
+  - table: 'xivUtilizationHard'
     label: 'xivUtilizationHard'
     explanation: 'XIV硬使用率'
     severity: '3'

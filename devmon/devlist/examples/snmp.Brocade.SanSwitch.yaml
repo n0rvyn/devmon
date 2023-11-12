@@ -15,11 +15,11 @@ snmp:
     - '128'
     - '16'
   OIDs:
-  - id: '1.6'
+  - table: '1.6'
     label: Firmware
     explanation: '微码版本'
     reference: 'v7.2.1'
-  - id: '1.7'
+  - table: '1.7'
     label: 'System Stat'
     explanation: '系统状态'
     reference: '1'  # '1': 'online', '2': 'offline', '3': 'testing', '4': 'faulty'

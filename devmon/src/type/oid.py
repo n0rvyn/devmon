@@ -64,10 +64,11 @@ class OID:
     watermark:  WaterMark = None
     arithmetic: ArithType = None
     arith_symbol:     str = None
-    arith_pos:   ArithPos = 2  # a / b; b takes the position of 2
-    enum:            dict = None  # transform int values to human-readable iterm
+    arith_pos:   ArithPos = 2      # a / b; b takes the position of 2
+    enum:            dict = None   # transform int values to human-readable iterm
     perf:            bool = False  # set to True to calculate performance of OID
     show:            bool = False  # set to True to show the value ONLY
+    unit:             str = None   # the unit of the value
     # file: devmon.py line: 258
 
     # todo add support for OID values need to be combined
@@ -81,4 +82,5 @@ class VOID:
     desc: str = None
     value: str = None
     reference: str = None
+    unit: str = None
 
