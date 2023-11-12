@@ -135,6 +135,9 @@ snmp:
       - 'diskIOLA5'
       - 'diskIOLA15'
     table_index: 'diskIOIndex'
+    exclude_keywords:
+      - loop
+      - dm
     label: 'diskIoLoadStat'
     related_symbol: 'diskIODevice'
     unit: percent

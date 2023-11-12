@@ -85,6 +85,10 @@ snmp:
     exclude_index: '7, 8, 10, 11, 37, 38, 41'
     # 需排除的读取值，可选。
     exclude_value: '/mnt'
+    # 排除读取的OID值中包含关键字的项，可选。类型：列表
+    exclude_keywords:
+      - 'loop'
+      - 'dm'
     # 同上，读取OID实际名称或者描述，可选。
     related_symbol: 'hrStorageDescr'
     # 取值需计算，例如存储百分比，可选。

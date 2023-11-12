@@ -328,6 +328,7 @@ class SNMP(object):
                     related_symbol_table: str = None,
                     exclude_index: str = None,
                     exclude_value: str = None,
+                    exclude_keywords: list[str] = None,
                     reference_symbol_table: str = None,
                     arith_symbol_table: str = None,
                     arith: ArithType = None,
@@ -347,6 +348,13 @@ class SNMP(object):
         # vals_arith = None if vals_arith == [''] else vals_arith
         vals_index = None if vals_index == [''] else vals_index
         vals_ref = None if vals_ref == [''] else vals_ref  # todo verity None type or [''] value
+
+        def _contains(_s: str = None, _keywords: list[str] = None):
+            for _key in _keywords:
+                if _key in _s:
+                    return True
+
+            return False
 
         for n in range(1, len(vals_table) + 1):
             i = n - 1
@@ -376,7 +384,6 @@ class SNMP(object):
             except (IndexError, TypeError):
                 # rel_val = None
                 rel_val = f'{self._read_oid_desc(table)}.{index}'
-            print(rel_val)
 
             try:
                 ref = vals_ref[i]
@@ -386,6 +393,10 @@ class SNMP(object):
             if exclude_index and str(index) in exclude_index:
                 continue
             if exclude_value and (str(rel_val) in exclude_value or str(val) in exclude_value):
+                continue
+
+            if exclude_keywords and (
+                    _contains(str(rel_val), exclude_keywords) or _contains(str(val), exclude_keywords)):
                 continue
 
             voids.append(VOID(index=index, desc=rel_val, value=val, reference=ref, unit=unit))
@@ -417,6 +428,7 @@ class SNMP(object):
                     related_symbol_table: str = None,
                     exclude_index: str = None,
                     exclude_value: str = None,
+                    exclude_keywords: list[str] = None,
                     reference_symbol_table: str = None,
                     arith_symbol_table: str = None,
                     arith: ArithType = None,
@@ -426,15 +438,16 @@ class SNMP(object):
         voids = []
 
         [voids.extend(self._read_table(table=table,
-                                              index_table=index_table,
-                                              related_symbol_table=related_symbol_table,
-                                              exclude_index=exclude_index,
-                                              exclude_value=exclude_value,
-                                              reference_symbol_table=reference_symbol_table,
-                                              arith_symbol_table=arith_symbol_table,
-                                              arith=arith,
-                                              arith_pos=arith_pos,
-                                              unit=unit, group=True)) for table in tables]
+                                       index_table=index_table,
+                                       related_symbol_table=related_symbol_table,
+                                       exclude_index=exclude_index,
+                                       exclude_value=exclude_value,
+                                       exclude_keywords=exclude_keywords,
+                                       reference_symbol_table=reference_symbol_table,
+                                       arith_symbol_table=arith_symbol_table,
+                                       arith=arith,
+                                       arith_pos=arith_pos,
+                                       unit=unit, group=True)) for table in tables]
         return voids
 
     def read_oid_dc(self, oid: OID = None) -> list[VOID]:
@@ -473,6 +486,7 @@ class SNMP(object):
                                      related_symbol_table=oid.related_symbol,
                                      exclude_index=oid.exclude_value,
                                      exclude_value=oid.exclude_value,
+                                     exclude_keywords=oid.exclude_keywords,
                                      arith_symbol_table=oid.arith_symbol,
                                      reference_symbol_table=oid.read_ref_from,
                                      arith=oid.arithmetic,
@@ -484,6 +498,7 @@ class SNMP(object):
                                      related_symbol_table=oid.related_symbol,
                                      exclude_value=oid.exclude_value,
                                      exclude_index=oid.exclude_index,
+                                     exclude_keywords=oid.exclude_keywords,
                                      reference_symbol_table=oid.read_ref_from,
                                      arith=oid.arithmetic,
                                      arith_symbol_table=oid.arith_symbol,
