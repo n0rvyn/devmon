@@ -116,7 +116,7 @@ snmp:
       - 'diskIONRead'
       - 'diskIONWritten'
     table_index: 'diskIOIndex'
-    label: 'diskIoWritten'
+    label: 'diskIoRWStat'
     related_symbol: 'diskIODevice'
     perf: True
   - group:
