@@ -55,7 +55,7 @@ snmp:
   - table: 'ssCpuNumCpus.0'
     label: 'CpuNum'
     explanation: 'CPU数量'
-    reference: 4
+    reference: '4'
   - table: 'memAvailSwap.0'
     label: 'SWAPAvailablePercent'
     explanation: '交换空间使用率'
@@ -130,21 +130,12 @@ snmp:
     related_symbol: 'diskIODevice'
     unit: number
     perf: True
-  - table: 'diskIOLA1'
+  - group:
+      - 'diskIOLA1'
+      - 'diskIOLA5'
+      - 'diskIOLA15'
     table_index: 'diskIOIndex'
-    label: 'diskIoLoad1Stat'
-    related_symbol: 'diskIODevice'
-    unit: percent
-    perf: True
-  - table: 'diskIOLA5'
-    table_index: 'diskIOIndex'
-    label: 'diskIoLoad5Stat'
-    related_symbol: 'diskIODevice'
-    unit: percent
-    perf: True
-  - table: 'diskIOLA15'
-    table_index: 'diskIOIndex'
-    label: 'diskIoLoad15Stat'
+    label: 'diskIoLoadStat'
     related_symbol: 'diskIODevice'
     unit: percent
     perf: True

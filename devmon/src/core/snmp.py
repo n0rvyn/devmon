@@ -332,7 +332,8 @@ class SNMP(object):
                     arith_symbol_table: str = None,
                     arith: ArithType = None,
                     arith_pos: int = 2,
-                    unit: str = None) -> Optional[list[VOID]]:
+                    unit: str = None,
+                    group: bool = False) -> Optional[list[VOID]]:
         vals_table = self._read_table_vals(table)
         vals_related = self._read_table_vals(related_symbol_table)
         vals_arith = self._read_table_vals(arith_symbol_table)
@@ -371,10 +372,11 @@ class SNMP(object):
                 # index = None
 
             try:
-                rel_val = vals_related[i]
+                rel_val = vals_related[i] if not group else f'{table}.{vals_related[i]}'
             except (IndexError, TypeError):
                 # rel_val = None
                 rel_val = f'{self._read_oid_desc(table)}.{index}'
+            print(rel_val)
 
             try:
                 ref = vals_ref[i]
@@ -432,7 +434,7 @@ class SNMP(object):
                                               arith_symbol_table=arith_symbol_table,
                                               arith=arith,
                                               arith_pos=arith_pos,
-                                              unit=unit)) for table in tables]
+                                              unit=unit, group=True)) for table in tables]
         return voids
 
     def read_oid_dc(self, oid: OID = None) -> list[VOID]:
