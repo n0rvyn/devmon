@@ -107,13 +107,10 @@ snmp:
     perf: True
   - table: 'hrSWRunPerfMem'
     table_index: 'hrSWRunIndex'
+    show_index: True
     label: 'swRunningMemStat'
     unit: 'KB'
     related_symbol: 'hrSWRunName'
-    perf: True
-  - table: 'hrProcessorLoad'
-    label: 'ProcessorLoad'
-    unit: 'percent'
     perf: True
   - group:
       - 'diskIONRead'
@@ -140,6 +137,7 @@ snmp:
       - 'ssCpuUser'
       - 'ssCpuSystem'
       - 'ssCpuIdle'
+      - 'hrProcessorLoad'
     label: 'SysCpuStat'
     perf: True
 #  - group:
