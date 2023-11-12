@@ -120,10 +120,18 @@ snmp:
     related_symbol: 'diskIODevice'
     perf: True
   - group:
-      - ifHCInUcastPkts
-      - ifHCOutUcastPkts
+      - ifOutErrors
+      - ifOutDiscards
+      - ifOutUcastPkts
+      - ifOutOctets
+      - ifInUnknownProtos
+      - ifInErrors
+      - ifInDiscards
+      - ifInUcastPkts
+      - ifInOctets
+      - ifSpeed
     table_index: 'ifIndex'
-    label: 'NIC'
+    label: 'sysInterfaceStat'
     exclude_value: 'lo, sit0, virbr0, br0'
     related_symbol: 'ifName'
     perf: True
@@ -132,6 +140,7 @@ snmp:
       - 'ssSwapOut'
       - 'memAvailReal'
     label: 'SysMemSwapStat'
+    unit: kB
     perf: True
   - group:
       - 'ssCpuUser'
@@ -139,21 +148,8 @@ snmp:
       - 'ssCpuIdle'
       - 'hrProcessorLoad'
     label: 'SysCpuStat'
+    unit: 'percent'
     perf: True
-#  - group:
-#      - ssCpuRawUser
-#      - ssCpuRawNice
-#      - ssCpuRawSystem
-#      - ssCpuRawIdle
-#      - ssCpuRawWait
-#      - ssCpuRawKernel
-#      - ssCpuRawInterrupt
-#      - ssCpuRawSoftIRQ
-#      - ssCpuRawSteal
-#      - ssCpuRawGuest
-#      - ssCpuRawGuestNice
-#    label: 'sysCpuRawStat'
-#    perf: True
   - group:
       - memTotalSwap.0
       - memAvailSwap.0
@@ -164,20 +160,16 @@ snmp:
       - memShared.0
       - memBuffer.0
       - memCached.0
-    label: 'MemRawStat'
+    label: 'sysMemRawStat'
     unit: 'kB'
-    perf: True
-  - group:
-      - ssIOSent.0
-      - ssIOReceive.0
-    label: 'sysIOTrans'
-    unit: 'blocks/s'
     perf: True
   - group:
       - ssSysInterrupts.0
       - ssSysContext.0
-    label: 'sysContAndIrp'
-    unit: no/s
+      - ssRawInterrupts.0
+      - ssRawContexts.0
+    label: 'sysCpuIrContStat'
+    unit: 'number'
     perf: True
   - group:
       - ssCpuRawUser
@@ -191,26 +183,15 @@ snmp:
       - ssCpuRawSteal
       - ssCpuRawGuest
       - ssCpuRawGuestNice
-      - ssIORawSent.0
-      - ssIORawReceived.0
-      - ssRawInterrupts.0
-      - ssRawContexts.0
-      - ssRawSwapIn.0
-      - ssRawSwapOut.0
-    label: 'cpuRawStat'
-    unit: Counter64
+    label: 'sysCpuRawStat'
+    unit: ticks
     perf: True
   - group:
-      - memTotalSwapX.0
-      - memAvailSwapX.0
-      - memTotalRealX.0
-      - memAvailRealX.0
-      - memTotalFreeX.0
-      - memMinimumSwapX.0
-      - memSharedX.0
-      - memBufferX.0
-      - memCachedX.0
-      - memSysAvail.0
-    label: 'memRawStat'
-    unit: 'kB'
+      - ssIORawSent
+      - ssIORawReceived
+      - ssRawSwapIn
+      - ssRawSwapOut
+    label: 'sysIORawStat'
+    unit: 'blocks'
     perf: True
+
