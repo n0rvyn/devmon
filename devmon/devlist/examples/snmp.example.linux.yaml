@@ -115,9 +115,29 @@ snmp:
   - group:
       - 'diskIONRead'
       - 'diskIONWritten'
+      - 'diskIONReadX'
+      - 'diskIONWrittenX'
     table_index: 'diskIOIndex'
     label: 'diskIoRWStat'
     related_symbol: 'diskIODevice'
+    unit: bytes
+    perf: True
+  - group:
+      - 'diskIOReads'
+      - 'diskIOWrites'
+    table_index: 'diskIOIndex'
+    label: 'diskIoAccessStat'
+    related_symbol: 'diskIODevice'
+    unit: number
+    perf: True
+  - group:
+      - 'diskIOLA15'
+      - 'diskIOLA5'
+      - 'diskIOLA1'
+    table_index: 'diskIOIndex'
+    label: 'diskIoLoadStat'
+    related_symbol: 'diskIODevice'
+    unit: percent
     perf: True
   - group:
       - ifOutErrors
