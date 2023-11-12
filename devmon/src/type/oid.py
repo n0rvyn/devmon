@@ -44,11 +44,13 @@ ArithPos = Literal[
 
 @dataclass
 class OID:
-    id:               str = None  # both single OID and OID table entry is allowed.
+    id:               str = None   # Both single OID and OID table entry is allowed. Deprecated, will be deleted in the future version
     id_range:     IDRange = None
     table:            str = None
-    group:      list[str] = None  # A set of OIDs; when collecting perf data, insert these values in one document.
-    table_index:      str = None
+    group:      list[str] = None   # A set of OIDs; when collecting perf data, insert these values in one document.
+    table_index:      str = None   # An oid table for reading index from
+    # Adding index value as oid name's suffix. It's useful when determining a PID number with oid 'hrSWRunName'.
+    show_index:      bool = False
     # an OID which used to read the id, id_range, table or group's name from;
     # when the value of this parameter ends with an '.index', read the same name for (all the) id, id_range, table or group;
     # when nothing index were given to this parameter, read the names with different indexes the same with the OID;

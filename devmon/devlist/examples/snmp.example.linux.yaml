@@ -52,6 +52,10 @@ snmp:
       low: 0
       high: 20
       restricted: True
+  - table: 'ssCpuNumCpus.0'
+    label: 'CpuNum'
+    explanation: 'CPU数量'
+    reference: 4
   - table: 'memAvailSwap.0'
     label: 'SWAPAvailablePercent'
     explanation: '交换空间使用率'
@@ -83,7 +87,9 @@ snmp:
     watermark:
       low: 80
       high: 100
-      restricted: True  # set to True to alert when value is between 'low' and 'high'
+      # when set to True, an alert will be sent when the value is between 'low' and 'high'
+      # otherwise, a value out of the scope will generate an alert
+      restricted: True
   - table: 'ssCpuIdle.0'
     label: 'CPU Idle'
     explanation: 'CPU空闲率'
@@ -92,36 +98,33 @@ snmp:
       low: 0
       high: 60
       restricted: True  # Alert when CPU IDLE is between 0-60
-  - table: 'hrSWRunPerfCPU'
+  - table: 'hrSWRunPerfCPU'  # index is the proc ID
     table_index: 'hrSWRunIndex'
+    show_index: True
     label: 'swRunningCpuStat'
     related_symbol: 'hrSWRunName'
+    unit: 'centi-second'
     perf: True
   - table: 'hrSWRunPerfMem'
     table_index: 'hrSWRunIndex'
     label: 'swRunningMemStat'
+    unit: 'KB'
     related_symbol: 'hrSWRunName'
     perf: True
   - table: 'hrProcessorLoad'
     label: 'ProcessorLoad'
+    unit: 'percent'
     perf: True
-  - table: 'diskIONRead'
-    table_index: 'diskIOIndex'
-    label: 'diskIoRead'
-    related_symbol: 'diskIODevice'
-    perf: True
-  - table: 'diskIONWritten'
+  - group:
+      - 'diskIONRead'
+      - 'diskIONWritten'
     table_index: 'diskIOIndex'
     label: 'diskIoWritten'
     related_symbol: 'diskIODevice'
     perf: True
-  - table: 'ifHCInUcastPkts'
-    table_index: 'ifIndex'
-    label: 'NIC'
-    exclude: 'lo, sit0, virbr0, br0'
-    related_symbol: 'ifName'
-    perf: True
-  - table: 'ifHCOutUcastPkts'
+  - group:
+      - ifHCInUcastPkts
+      - ifHCOutUcastPkts
     table_index: 'ifIndex'
     label: 'NIC'
     exclude_value: 'lo, sit0, virbr0, br0'
@@ -139,6 +142,45 @@ snmp:
       - 'ssCpuIdle'
     label: 'SysCpuStat'
     perf: True
+#  - group:
+#      - ssCpuRawUser
+#      - ssCpuRawNice
+#      - ssCpuRawSystem
+#      - ssCpuRawIdle
+#      - ssCpuRawWait
+#      - ssCpuRawKernel
+#      - ssCpuRawInterrupt
+#      - ssCpuRawSoftIRQ
+#      - ssCpuRawSteal
+#      - ssCpuRawGuest
+#      - ssCpuRawGuestNice
+#    label: 'sysCpuRawStat'
+#    perf: True
+  - group:
+      - memTotalSwap.0
+      - memAvailSwap.0
+      - memTotalReal.0
+      - memAvailReal.0
+      - memTotalFree.0
+      - memMinimumSwap.0
+      - memShared.0
+      - memBuffer.0
+      - memCached.0
+    label: 'MemRawStat'
+    unit: 'kB'
+    perf: True
+  - group:
+      - ssIOSent.0
+      - ssIOReceive.0
+    label: 'sysIOTrans'
+    unit: 'blocks/s'
+    perf: True
+  - group:
+      - ssSysInterrupts.0
+      - ssSysContext.0
+    label: 'sysContAndIrp'
+    unit: no/s
+    perf: True
   - group:
       - ssCpuRawUser
       - ssCpuRawNice
@@ -151,65 +193,26 @@ snmp:
       - ssCpuRawSteal
       - ssCpuRawGuest
       - ssCpuRawGuestNice
-    label: 'sysCpuRawStat'
+      - ssIORawSent.0
+      - ssIORawReceived.0
+      - ssRawInterrupts.0
+      - ssRawContexts.0
+      - ssRawSwapIn.0
+      - ssRawSwapOut.0
+    label: 'cpuRawStat'
+    unit: Counter64
     perf: True
-
-  -group:
-    - memTotalSwap.0
-    - memAvailSwap.0
-    - memTotalReal.0
-    - memAvailReal.0
-    - memTotalFree.0
-    - memMinimumSwap.0
-    - memShared.0
-    - memBuffer.0
-    - memCached.0
-  label: ''
-  perf: True
-
-
-
-
-
-#UCD-SNMP-MIB::ssIOSent.0 = INTEGER: 124 blocks/s
-#UCD-SNMP-MIB::ssIOReceive.0 = INTEGER: 0 blocks/s
-#UCD-SNMP-MIB::ssSysInterrupts.0 = INTEGER: 1646 interrupts/s
-#UCD-SNMP-MIB::ssSysContext.0 = INTEGER: 8172 switches/s
-
-#UCD-SNMP-MIB::ssCpuRawNice.0 = Counter32: 110270
-#UCD-SNMP-MIB::ssCpuRawSystem.0 = Counter32: 12388959
-#UCD-SNMP-MIB::ssCpuRawIdle.0 = Counter32: 557879365
-#UCD-SNMP-MIB::ssCpuRawWait.0 = Counter32: 321451
-#UCD-SNMP-MIB::ssCpuRawKernel.0 = Counter32: 0
-#UCD-SNMP-MIB::ssCpuRawInterrupt.0 = Counter32: 0
-#UCD-SNMP-MIB::ssIORawSent.0 = Counter32: 251480036
-#UCD-SNMP-MIB::ssIORawReceived.0 = Counter32: 121093182
-#UCD-SNMP-MIB::ssRawInterrupts.0 = Counter32: 114853064
-#UCD-SNMP-MIB::ssRawContexts.0 = Counter32: 3195413835
-#UCD-SNMP-MIB::ssCpuRawSoftIRQ.0 = Counter32: 50944
-#UCD-SNMP-MIB::ssRawSwapIn.0 = Counter32: 1125957
-#UCD-SNMP-MIB::ssRawSwapOut.0 = Counter32: 2158334
-#UCD-SNMP-MIB::ssCpuRawSteal.0 = Counter32: 0
-#UCD-SNMP-MIB::ssCpuRawGuest.0 = Counter32: 3742
-#UCD-SNMP-MIB::ssCpuRawGuestNice.0 = Counter32: 0
-#UCD-SNMP-MIB::ssCpuNumCpus.0 = INTEGER: 4
-
-# UCD-SNMP-MIB::memIndex.0 = INTEGER: 0
-# UCD-SNMP-MIB::memErrorName.0 = STRING: swap
-
-# UCD-SNMP-MIB::memTotalSwapX.0 = Counter64: 8388604 kB
-# UCD-SNMP-MIB::memAvailSwapX.0 = Counter64: 8167164 kB
-# UCD-SNMP-MIB::memTotalRealX.0 = Counter64: 16271032 kB
-# UCD-SNMP-MIB::memAvailRealX.0 = Counter64: 588236 kB
-# UCD-SNMP-MIB::memTotalFreeX.0 = Counter64: 8755400 kB
-# UCD-SNMP-MIB::memMinimumSwapX.0 = Counter64: 16000 kB
-# UCD-SNMP-MIB::memSharedX.0 = Counter64: 4199992 kB
-# UCD-SNMP-MIB::memBufferX.0 = Counter64: 650036 kB
-# UCD-SNMP-MIB::memCachedX.0 = Counter64: 14105308 kB
-# UCD-SNMP-MIB::memSysAvail.0 = Counter64: 10797828 kB
-
-# UCD-SNMP-MIB::memSwapError.0 = INTEGER: noError(0)
-# UCD-SNMP-MIB::memSwapErrorMsg.0 = STRING:
-
-
-# https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/deployment_guide/sect-system_monitoring_tools-net-snmp-retrieving
+  - group:
+      - memTotalSwapX.0
+      - memAvailSwapX.0
+      - memTotalRealX.0
+      - memAvailRealX.0
+      - memTotalFreeX.0
+      - memMinimumSwapX.0
+      - memSharedX.0
+      - memBufferX.0
+      - memCachedX.0
+      - memSysAvail.0
+    label: 'memRawStat'
+    unit: 'kB'
+    perf: True

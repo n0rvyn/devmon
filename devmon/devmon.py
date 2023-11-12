@@ -176,7 +176,9 @@ class DevMon(object):
                     self.mongo.client.admin.command('ping')
             except errors.ServerSelectionTimeoutError:
                 print('MongoDB connection timeout after 2 seconds.')
+                self._critical(f'MongoDB enabled but server not respond, exit with error.')
                 exit(1)
+
             self._debug(f'Initiated MongoDB client finished.\n'
                         f'Mongo Server {mongo_server}, uri {mongo_uri}, '
                         f'user {mongo_user}, port {mongo_port}, db {mongo_db}, collection {mongo_col}')

@@ -1,0 +1,20 @@
+[Unit]
+Description=Devices Hardware Monitor Console
+DefaultDependencies=no
+After=sysinit.target local-fs.target network.target
+
+[Service]
+User=devmon
+Group=devmon
+Type=simple
+PyPATH=''
+ToolPATH=''
+Action=''  # 'perf -s' or 'alert -s', choose one
+ExecStart=$PyPATH $ToolPATH $Action
+ExecStop=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=300s
+
+[Install]
+WantedBy=multi-user.target

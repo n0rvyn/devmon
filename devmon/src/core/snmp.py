@@ -131,7 +131,7 @@ class SNMP(object):
         try:
             int(index)
         except ValueError:
-            index = '1'
+            index = '0'
 
         if exclude_index and str(index) in exclude_index:  # exclude index for oid or oid_range
             return void
@@ -368,6 +368,7 @@ class SNMP(object):
                 index = vals_index[i]
             except (IndexError, TypeError):
                 index = str(i)
+                # index = None
 
             try:
                 rel_val = vals_related[i]

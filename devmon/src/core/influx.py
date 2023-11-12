@@ -90,13 +90,15 @@ class InfluxDB(object):
                  .tag('address', snmp_agent.address)
                  .tag('region', snmp_agent.region)
                  .tag('area', snmp_agent.area)
-                 .tag('label', oid.label))
+                 .tag('label', oid.label)
+                 .tag('unit', oid.unit))
 
         for void in l_void:
             if not void:  # todo l_void == [None, None...] ???
                 continue
 
             k = void.desc if void.desc else oid.label
+            k = f'{k}.{void.index}' if oid.show_index else k
 
             try:
                 v = float(void.value)
