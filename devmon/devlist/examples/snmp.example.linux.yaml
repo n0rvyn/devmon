@@ -130,12 +130,21 @@ snmp:
     related_symbol: 'diskIODevice'
     unit: number
     perf: True
-  - group:
-      - 'diskIOLA15'
-      - 'diskIOLA5'
-      - 'diskIOLA1'
+  - table: 'diskIOLA1'
     table_index: 'diskIOIndex'
-    label: 'diskIoLoadStat'
+    label: 'diskIoLoad1Stat'
+    related_symbol: 'diskIODevice'
+    unit: percent
+    perf: True
+  - table: 'diskIOLA5'
+    table_index: 'diskIOIndex'
+    label: 'diskIoLoad5Stat'
+    related_symbol: 'diskIODevice'
+    unit: percent
+    perf: True
+  - table: 'diskIOLA15'
+    table_index: 'diskIOIndex'
+    label: 'diskIoLoad15Stat'
     related_symbol: 'diskIODevice'
     unit: percent
     perf: True
