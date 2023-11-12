@@ -33,14 +33,131 @@ snmp:
     label: 'gpfsClusterNumFileSystems'
     explanation: ''
     show: True
+  - group:
+      - gpfsClusterConfigName
+      - gpfsClusterUidDomain
+    label: 'ClusterDomainName'
+    show: True
+  - group:
+      - gpfsClusterRemoteShellCommand
+      - gpfsClusterRemoteFileCopyCommand
+    label: 'RemoteShell'
+    show: True
+  - group:
+      - gpfsClusterPrimaryServer
+      - gpfsClusterSecondaryServer
+    label: 'primaryAndSecond'
+    show: True
+#  - group:
+#      - gpfsClusterMaxBlockSize
+#      - gpfsClusterDistributedTokenServer
+#      - gpfsClusterFailureDetectionTime
+#      - gpfsClusterTCPPort
+#      - gpfsClusterMinMissedPingTimeout
+#      - gpfsClusterMaxMissedPingTimeout
+#      - gpfsNodeName
+#      - gpfsNodeIpAddress
+#      - gpfsNodePlatform
+#      - gpfsNodeVersion
+#      - gpfsNodeConfigName
+#      - gpfsNodeType
+#      - gpfsNodeAdmin
+#      - gpfsNodePagePoolL
+#      - gpfsNodePagePoolH
+#      - gpfsNodePrefetchThreads
+#      - gpfsNodeMaxMbps
+#      - gpfsNodeMaxFilesToCache
+#      - gpfsNodeMaxStatCache
+#      - gpfsNodeWorker1Threads
+#      - gpfsNodeDmapiEventTimeout
+#      - gpfsNodeDmapiMountTimeout
+#      - gpfsNodeDmapiSessFailureTimeout
+#      - gpfsNodeNsdServerWaitTimeWindowOnMount
+#      - gpfsNodeNsdServerWaitTimeForMount
+#      - gpfsFileSystemName
+#      - gpfsFileSystemStatus
+#      - gpfsFileSystemXstatus
+#      - gpfsFileSystemTotalSpaceL
+#      - gpfsFileSystemTotalSpaceH
+#      - gpfsFileSystemNumTotalInodesL
+#      - gpfsFileSystemNumTotalInodesH
+#      - gpfsFileSystemFreeSpaceL
+#      - gpfsFileSystemFreeSpaceH
+#      - gpfsFileSystemNumFreeInodesL
+#      - gpfsFileSystemNumFreeInodesH
+#      - gpfsStgPoolName
+#      - gpfsStgPoolFSName
+#      - gpfsStgPoolTotalSpaceL
+#      - gpfsStgPoolTotalSpaceH
+#      - gpfsStgPoolFreeSpaceL
+#      - gpfsStgPoolFreeSpaceH
+#      - gpfsStgPoolNumDisks
+#      - gpfsDiskName
+#      - gpfsDiskFSName
+#      - gpfsDiskStgPoolName
+#      - gpfsDiskTotalSpaceL
+#      - gpfsDiskTotalSpaceH
+#      - gpfsDiskFullBlockFreeSpaceL
+#      - gpfsDiskFullBlockFreeSpaceH
+#      - gpfsDiskSubBlockFreeSpaceL
+#      - gpfsDiskSubBlockFreeSpaceH
+#      - gpfsDiskConfigName
+#      - gpfsDiskConfigFSName
+#      - gpfsDiskConfigStgPoolName
+#      - gpfsDiskMetadata-DUP
+#    label: 'test'
+#    show: True
 
+  - group:
+      - gpfsNodeFailureCount
+      - gpfsNodeThreadWait
+    label: 'FailureWaitCount'
+    explanation: '节点失败或线程等待次数'
+    reference: '0'
+    severity: '1'
+
+  - group:
+      - gpfsNodeStatus
+    label: 'nodeStatus'
+    explanation: '节点状态'
+    reference: 'up'
+    severity: '1'
+  - group:
+      - gpfsNodeUnmountOnDiskFail
+    label: 'unmountOnDiskFail'
+    explanation: '节点因磁盘故障而解挂载'
+    reference: 'false'
+    severity: '1'
+  - group:
+      - gpfsNodeHealthy
+    label: 'nodeHealth'
+    explanation: '节点是否健康'
+    reference: 'yes'
+    severity: '1'
+  - group:
+      - gpfsNodeDiagnosis
+    label: 'nodeDiag'
+    explanation: '节点诊断'
+    reference: 'none'
+    severity: '1'
+  - group:
+      - gpfsDiskStatus
+    label: 'diskStatus'
+    explanation: '硬盘状态'
+    reference: 'InUse'
+    severity: '1'
+  - group:
+      - gpfsDiskAvailability
+    label: 'diskAvailability'
+    explanation: '硬盘在线'
+    reference: 'OK'
+    severity: '1'
   - group:
       - gpfsDiskPerfName
       - gpfsDiskPerfFSName
       - gpfsDiskPerfStgPoolName
     label: gpfsStorgePoolName
     show: True
-
   - group:
       - gpfsDiskReadTimeL
       - gpfsDiskReadTimeH
@@ -56,7 +173,6 @@ snmp:
       - gpfsDiskShortestWriteTimeH
     label: gpfsPerfTime
     perf: True
-
   - group:
       - gpfsDiskReadBytesL
       - gpfsPerfBytes
@@ -67,7 +183,6 @@ snmp:
       - gpfsDiskWriteOps
     label: gpfsPerfOps
     perf: True
-
   - group:
       - gpfsFileSystemPerfName
       - gpfsFileSystemBytesReadL
@@ -78,14 +193,12 @@ snmp:
       - gpfsFileSystemBytesWrittenH
     label: gpfsFsSystemBytes
     perf: True
-
   - group:
       - gpfsFileSystemReads
       - gpfsFileSystemCaches
       - gpfsFileSystemWrites
     label: gpfsFsIO
     perf: True
-
   - group:
       - gpfsFileSystemOpenCalls
       - gpfsFileSystemCloseCalls
@@ -94,7 +207,6 @@ snmp:
       - gpfsFileSystemReaddirCalls
     label: gpfsFSSysCalls
     perf: True
-
   - group:
       - gpfsFileSystemInodesWritten
       - gpfsFileSystemInodesRead
@@ -102,7 +214,6 @@ snmp:
       - gpfsFileSystemInodesCreated
     label: gpfsFSInodeIO
     perf: True
-
   - group:
       - gpfsFileSystemStatCacheHit
       - gpfsFileSystemStatCacheMiss

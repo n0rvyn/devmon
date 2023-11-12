@@ -32,7 +32,7 @@ class SNMP(object):
     def __init__(self, snmp_agent: SNMPAgent = None, snmpwalk: str = '/usr/bin/snmpwalk', context: str = None):
         self.agent = snmp_agent
         self.snmpwalk = snmpwalk
-        self.snmpd_stat = True
+        self.snmpd_stat = True  # todo add alert message for SNMPD down
         self.context = context
 
     def _read_oid(self, oid: str, *outopts) -> str:

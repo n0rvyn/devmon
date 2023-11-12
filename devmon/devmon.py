@@ -1216,7 +1216,10 @@ class DevMon(object):
                 if faulty < 0:  # the value is just for showing
                     val_to_show = '|'.join(err)
                     p_len = 96 - len(val_to_show)
-                    print(f'{exp:.<{p_len}s} \033[0;37m{val_to_show}\033[0m')
+                    try:
+                        print(f'{exp:.<{p_len}s} \033[0;37m{val_to_show}\033[0m')
+                    except ValueError:
+                        print(f'{exp}...too long to show.')
                     continue
 
                 if faulty > 0:
