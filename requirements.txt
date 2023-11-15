@@ -1,9 +1,9 @@
-# dnspython<3.0.0,>=1.16.0
 PyYAML
 PyMySQL
 pymongo
 paramiko
-pandas<3,>=1.3.5
+pytz
 influxdb3-python
-pymongoarrow
-# influxdb-client
+pyarrow<13.1,>=13.0
+numpy<=1.26.1
+pandas

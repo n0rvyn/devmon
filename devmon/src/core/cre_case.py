@@ -55,7 +55,7 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
 
     if oid.enum or snmp_agent.enum:  # 'enum' for single OID will rewrite the definition from SNMPAgent
         val = _trans_enum(snmp_agent, oid, void.value)
-        thd = _trans_enum(snmp_agent, oid, threshold)
+        thd = _trans_enum(snmp_agent, oid, threshold)  # todo AttributeError
     else:
         val = void.value
         thd = threshold

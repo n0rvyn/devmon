@@ -4,6 +4,7 @@ address: IBM_SWITCH_ADDR  # the address which been listened to by SNMP Daemon
 region: DataCenterD  # The region of device, e.g., DCA, DCB, DataCenterA...
 area: Dev  # the business area
 addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
+rid: 'THis is Resource ID'
 snmp:
   version: '3'  # the SNMPD version
   community: 'public'  # the SNMPD community
@@ -13,12 +14,12 @@ snmp:
   username: 'user1'
   context:
     - '128'
-    - '16'
   OIDs:
   - table: '1.6'
     label: Firmware
     explanation: '微码版本'
     reference: 'v7.2.1'
+    show: True
   - table: '1.7'
     label: 'System Stat'
     explanation: '系统状态'
@@ -48,7 +49,7 @@ snmp:
     label: 'Port Physical Stat'
     explanation: '交换机端口物理状态'
     related_symbol: '6.2.1.36'
-    reference: '6, 2'
+    reference: '6, 2, 4'
     enum:
       '1': 'noCard'
       '2': 'noTransceiver'  # No transceiver module in this port
