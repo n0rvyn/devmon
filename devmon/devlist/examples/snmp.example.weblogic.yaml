@@ -1,0 +1,42 @@
+---
+# device address which runs SNMP agent
+address: WLS_Address  # the address which been listened to by SNMP Daemon
+region: SomeRegion  # The region of device, e.g., DCA, DCB, DataCenterA...
+area: SomeArea  # the business area
+addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
+rid: 'THis is resource ID'
+snmp:
+  version: '2c'  # the SNMPD version
+  community: 'public'  # the SNMPD community
+  timeout: 1  # second(s) to timeout
+  retries: 1  # time(s) to retry after failed
+  port: 1161  # change the value to suite your environment
+  base: '.1.3.6.1.4.1.140'
+  OIDs:
+  - table: '625.730.1.120.16'
+    label: 'ListenPort'
+    explanation: '监听端口'
+    show: True
+  - table: '625.735.1.15.16'
+    label: 'ServerName'
+    explanation: '服务名称'
+    show: True
+  - table: '625.360.1.60.16'
+    label: 'serverRuntimeState'
+    explanation: '服务运行时状态'
+    reference: 'RUNNING'
+  - table: '625.361.1.25.16'
+    label: 'serverLifeCycleRuntimeState'
+    related_symbol: '625.361.1.15.16'
+    explanation: '服务运行时状态'
+    reference: 'RUNNING'
+  - table: '625.455.1.144.16'
+    label: 'connectorConnectionPoolRuntimeConnectionLeakProfileCount'
+    related_symbol: '625.955.1.9.16'
+    explanation: 'datasourceLeakedConnection'
+    reference: '0'
+  - table: '625.455.1.157.16'
+    label: 'connectorConnectionPoolRuntimeState'
+    related_symbol: '.625.455.1.30.16'
+    explanation: 'poolRuntimeState'
+    reference: 'Running'

@@ -1037,10 +1037,9 @@ class DevMon(object):
         self.insert_cases(b_snmp_cases)
         self._info(f'All B side snmp cases inserted to MongoDB, spent {perf_counter() - start:.2f} seconds.')
 
-        if show:
-            self.push_all_alerts()
-            self.push_all_recoveries()
-            self.show_all_alerts()
+        self.push_all_alerts()
+        self.push_all_recoveries()
+        self.show_all_alerts() if show else None
 
     def service_run(self):
         """
@@ -1288,8 +1287,7 @@ if __name__ == '__main__':
                 devmon.refresh_config(service=True, init_influx=True)
                 devmon.perf_service(influx=True)
         except IndexError:
-            devmon.refresh_config(init_influx=True)
-            devmon.perf()
+            print(USAGE)
 
     elif act == 'query':
         devmon.show_all_alerts()

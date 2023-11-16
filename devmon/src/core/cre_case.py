@@ -64,9 +64,9 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
     void.value = val  # void of modifying the rest of the code
 
     if void.desc:
-        content = f'{void.desc}{oid.explanation}{oid.alert} 阈值{threshold}'
+        content = f'{void.desc}，{oid.explanation}{oid.alert}，阈值{threshold}，当前值{void.value}。'
     else:
-        content = f'{oid.explanation}{oid.alert} 阈值{threshold}'
+        content = f'{oid.explanation}{oid.alert}，阈值{threshold}，当前值{void.value}。'  # todo device only has index, no name available.
 
     current_val = f'当前值{void.value}'
 

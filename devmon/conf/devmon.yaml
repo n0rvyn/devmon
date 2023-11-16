@@ -19,8 +19,8 @@ mongo_col: devmon
 # Configuration for Time Series Objects for Devices' Performance Observability
 
 
-mongo_ts_db: test
-mongo_ts_col: test_0031
+mongo_ts_db: devmon
+mongo_ts_col: perf
 
 # Definition for InfluxDB
 # token for hm

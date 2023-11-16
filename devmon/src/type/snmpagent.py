@@ -35,6 +35,7 @@ class SNMPAgent:
     mib: str = None
     retries: int = 1
     timeout: int = 1
+    port: int = None
     base: str = None  # file: snmp.py line: 59
     enum: dict = None  # the same as file: oid.py line: 63; file: devmon.py line: 278
     OIDs: [OID] = None

@@ -60,6 +60,7 @@ class SNMP(object):
         user = f'-u {self.agent.username}' if self.agent.username else ''
         mib = f'-m {self.agent.mib}' if self.agent.mib else ''
         cont = f'-n VF:{self.context}' if self.context else ''
+        addr_with_port = f'{self.agent.address}:{self.agent.port}' if self.agent.port else self.agent.address
 
         self.snmpwalk = f'set -H; {self.snmpwalk}' if '!' in comm else self.snmpwalk  # todo -H or +H????
 
@@ -67,7 +68,7 @@ class SNMP(object):
               f"{user} {cont} " \
               f"{retries} {timeout} " \
               f"{opt} " \
-              f"{self.agent.address} {oid}"
+              f"{addr_with_port} {oid}"  # f"{self.agent.address} {oid}"
 
         NO_VALUE_ERR = ['No Such Instance currently exists at this OID',
                         'No Such Object available on this agent at this OID',
