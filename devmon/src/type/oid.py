@@ -58,9 +58,10 @@ class OID:
     exclude_index:     str = None  # OIDs' index excluded for some discontinuous OID table; for oid -> snmp.py line: 214
     exclude_value:     str = None  # exclude values from values' list; for table -> snmp.py line: 452
     exclude_keywords: list = None  # the value contains the keywords will be ignored.
-    label:             str = None  # the label of the OID, e.g., CPU, Memory, Fan...
-    explanation:       str = None  # the meaning of OID
-    alert:             str = "异常，请持续关注"  # the suffix of an alert
+    label:             str = None  # the label of the OID, e.g., CPU, Memory, Fan... for identifying the group in Time Series DataBase
+    explanation:       str = None  # the meaning of OID  # todo delete in the future version when no YAMLs contains this argument.
+    description:       str = None  # the meaning of OID
+    alert:             str = "异常，请关注"  # the suffix of an alert
     severity:     CaseServ = '1'
     reference:         str = None  # -oe no symbol label for enum values  # todo
     read_ref_from:     str = None  # read reference from another OID
@@ -76,14 +77,14 @@ class OID:
 
     # todo add support for OID values need to be combined
     # todo add support for OID values need to be arithmetic with more than 2 values.
-    # todo add support for showing multiple values in one window, e.g., Butt: 100%|98%
 
 
 @dataclass
 class VOID:
-    index: str = None
-    desc: str = None
-    value: str = None
-    reference: str = None
-    unit: str = None
+    index:      str = None  # TODO figure out if this parameter is necessary!!!
+    desc:       str = None  # todo delete in the future version
+    identifier: str = None  # TODO give this parameter a value no matter what happened
+    value:      str = None
+    reference:  str = None
+    unit:       str = None
 

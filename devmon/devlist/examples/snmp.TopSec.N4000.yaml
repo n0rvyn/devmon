@@ -15,14 +15,14 @@ snmp:
     # 1. HA stat
   - table: '4.5'
     label: CPULoad
-    explanation: '天融信N4000处理器负载'
+    description: '天融信N4000处理器负载'
     severity: '1'
     watermark:
       low: 0
       high: 80
   - table: '4.6'
     label: MemLoad
-    explanation: '天融信N4000内存负载'
+    description: '天融信N4000内存负载'
     severity: '1'
     watermark:
       low: 0

@@ -140,12 +140,15 @@ class SNMP(object):
         value = self._read_oid_val(oid)
 
         if related_symbol:
-            if len(related_symbol.split('.')) > 1:
+            if len(related_symbol.split('.')) > 1:  # get a string like 'sysName.0'
                 desc = self._read_oid_val(related_symbol)
             else:
                 desc = self._read_oid_val(f'{related_symbol}.{index}')
         else:
             desc = self._read_oid_desc(oid)
+
+        # todo verify
+        # desc = desc if desc else oid.description
 
         if read_ref_from:
             ref = self._read_oid_val(f'{read_ref_from}.{index}')
@@ -161,7 +164,7 @@ class SNMP(object):
         if exclude_value and (str(value) in exclude_value or str(desc) in exclude_value):
             return void
 
-        void = VOID(index=index, value=value, desc=desc, reference=ref, unit=unit)
+        void = VOID(index=index, value=value, desc=desc, identifier=desc, reference=ref, unit=unit)
 
         return void
 
@@ -211,7 +214,7 @@ class SNMP(object):
             threads.append(Thread(target=read_id_target,
                                   args=(oid, related_symbol, exclude_index,
                                         exclude_value, read_ref_from,
-                                        arithmetic, arith_symbol, arith_pos,)))
+                                        arithmetic, arith_symbol, arith_pos, unit)))
 
         _ = [t.start() for t in threads]
         _ = [t.join() for t in threads]
@@ -381,10 +384,10 @@ class SNMP(object):
                 # index = None
 
             try:
-                rel_val = vals_related[i] if not group else f'{table}.{vals_related[i]}'
+                identifier = vals_related[i] if not group else f'{table}.{vals_related[i]}'
             except (IndexError, TypeError):
                 # rel_val = None
-                rel_val = f'{self._read_oid_desc(table)}.{index}'
+                identifier = f'{self._read_oid_desc(table)}.{index}'
 
             try:
                 ref = vals_ref[i]
@@ -393,14 +396,14 @@ class SNMP(object):
 
             if exclude_index and str(index) in exclude_index:
                 continue
-            if exclude_value and (str(rel_val) in exclude_value or str(val) in exclude_value):
+            if exclude_value and (str(identifier) in exclude_value or str(val) in exclude_value):
                 continue
 
             if exclude_keywords and (
-                    _contains(str(rel_val), exclude_keywords) or _contains(str(val), exclude_keywords)):
+                    _contains(str(identifier), exclude_keywords) or _contains(str(val), exclude_keywords)):
                 continue
 
-            voids.append(VOID(index=index, desc=rel_val, value=val, reference=ref, unit=unit))
+            voids.append(VOID(index=index, desc=identifier, identifier=identifier, value=val, reference=ref, unit=unit))
 
         return voids
 

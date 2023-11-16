@@ -34,14 +34,24 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
     if not void.value:
         return Case()
 
-    if void.desc and oid.label:
-        obj = f'{oid.label}-{void.desc}'
-    else:
-        obj = f'{oid.label}'
+    # if void.desc and oid.label:
+    #     obj = f'{oid.label}-{void.desc}'
+    # else:
+    #     obj = f'{oid.label}'
+
+    # todo deleting in the future version
+    oid.description = oid.explanation if not oid.description else oid.description
+    label = oid.label if oid.label else ''
+    identifier = void.identifier if void.identifier else ''
+    description = oid.description
 
     def _trans_enum(_agent: SNMPAgent = None, _oid: OID = None, _entry: str = None, delimiter: str = ','):
-        _lst_val = [v.strip() for v in _entry.split(delimiter)]
         _rtn_val = []
+
+        try:  # handle None value of '_entry'
+            _lst_val = [v.strip() for v in _entry.split(delimiter)]
+        except AttributeError:
+            return _entry
 
         for _val in _lst_val:
             try:
@@ -55,20 +65,21 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
 
     if oid.enum or snmp_agent.enum:  # 'enum' for single OID will rewrite the definition from SNMPAgent
         val = _trans_enum(snmp_agent, oid, void.value)
-        thd = _trans_enum(snmp_agent, oid, threshold)  # todo AttributeError
+        thd = _trans_enum(snmp_agent, oid, threshold)
     else:
         val = void.value
         thd = threshold
 
     threshold = thd
-    void.value = val  # void of modifying the rest of the code
+    value = val  # void of modifying the rest of the code
 
-    if void.desc:
-        content = f'{void.desc}，{oid.explanation}{oid.alert}，阈值{threshold}，当前值{void.value}。'
-    else:
-        content = f'{oid.explanation}{oid.alert}，阈值{threshold}，当前值{void.value}。'  # todo device only has index, no name available.
+    # if void.desc:
+    #     content = f'{void.desc}，{oid.description}{oid.alert}，阈值{threshold}，当前值{void.value}。'
+    # else:
+    #     content = f'{oid.explanation}{oid.alert}，阈值{threshold}，当前值{void.value}。'  # todo device only has index, no name available.
 
-    current_val = f'当前值{void.value}'
+    content = f'{identifier}，{description}{oid.alert}，阈值{threshold}，当前值{value}。'
+    current_val = f'当前值{value}'
 
     # rid = snmp_agent.rid if snmp_agent.rid else self.find_rid(snmp_agent.addr_in_cmdb)
     # rid = rid if rid else 'Null_Resource_ID'
@@ -78,9 +89,9 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
                            area=snmp_agent.area,
                            addr_in_cmdb=snmp_agent.addr_in_cmdb,
                            severity=oid.severity,
-                           object=obj,
+                           object=f'{description}{identifier}',
                            sources=source,
-                           description=oid.explanation,
+                           description=description,
                            threshold=f'{threshold}',
                            index=void.index,
                            address=snmp_agent.address)

@@ -48,7 +48,7 @@ snmp:
     # 可选项；设置show为True，该OID值将仅作为PM时展示用（默认False)。
     show: True
     # OID解释，用于拼凑告警内容，必选项
-    explanation: '系统状态'
+    description: '系统状态'
     # OID参考值，等于或包含OID读取值，则视为正常，否则触发告警，与watermark二必选一
     reference: '1'
     # 将 'reference' 中的值转义成目标字符串；
@@ -67,7 +67,7 @@ snmp:
       count: 31  # the number of the OID range
       # end: 'ifOperStatus.3'
     label: 'NetworkInterface'
-    explanation: '网卡状态'
+    description: '网卡状态'
     # OID名称或者描述需从其它OID读取的，则定义'related_symbol'，索引自动参考当前OID
     # 注意：不以索引号结尾！！！
     # 根据需要配置，可选。
@@ -78,7 +78,7 @@ snmp:
     # 需读取当前索引号的OID列表入口，可选项
     table_index: 'hrStorageIndex'
     label: 'Storage Used Percent'
-    explanation: '存储设备使用率'
+    description: '存储设备使用率'
     # 用于拼凑告警内容，可选，有默认值。
     alert: '严重异常，请管理员务必关注！'
     # 需排除读取的索引号，可选。
@@ -127,5 +127,5 @@ snmp:
     perf: True
   - table: 'sysName.0'
     label: SystemName
-    explanation: '主机名'
+    description: '主机名'
     show: True  # 为True，则该OID定义仅作为PM时展示用

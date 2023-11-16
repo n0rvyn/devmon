@@ -13,25 +13,25 @@ snmp:
   OIDs:
   - table: 'sysName.0'
     label: SystemName
-    explanation: '主机名'
+    description: '主机名'
     show: True
   - table: 'hrMemorySize.0'
     label: 'Memory Size'
-    explanation: '内存大小'
+    description: '内存大小'
     unit: KiB
     show: True
   - id_range:
       start: 'ifOperStatus.1'  # the base part of an OID range
       count: 31  # the number of the OID range
     label: 'NetworkInterface'
-    explanation: '网卡状态'
+    description: '网卡状态'
     related_symbol: 'ifDescr'  # OID symbol to fetch a related name
     exclude_value: 'br0, virbr0'
     reference: 'up(1)'  # a reference value which been considered as normal stat
   - table: 'hrStorageUsed'
     table_index: 'hrStorageIndex'
     label: 'Storage Used Percent'
-    explanation: '存储设备使用率'
+    description: '存储设备使用率'
     exclude_index: '7, 8, 10, 11, 37, 38, 41, 72'
     exclude_value: 'Physical memory, Cached memory, Shared memory, /dev/shm, Available memory'
     related_symbol: 'hrStorageDescr'
@@ -44,7 +44,7 @@ snmp:
   # OID configuration for Memory Usage Percent
   - table: 'memSysAvail.0'
     label: 'MemoryFreePercent'
-    explanation: '内存使用率'
+    description: '内存使用率'
     arith_symbol: 'memTotalRealX'
     arithmetic: '%'
     arith_pos: 2
@@ -54,11 +54,11 @@ snmp:
       restricted: True
   - table: 'ssCpuNumCpus.0'
     label: 'CpuNum'
-    explanation: 'CPU数量'
+    description: 'CPU数量'
     reference: '4'
   - table: 'memAvailSwap.0'
     label: 'SWAPAvailablePercent'
-    explanation: '交换空间使用率'
+    description: '交换空间使用率'
     arith_symbol: 'memTotalSwap'
     arithmetic: '%'
     arith_pos: 2
@@ -69,7 +69,7 @@ snmp:
       start: 'diskIOLA15.1'
       end: 'diskIOLA15.32'
     label: 'Disk I/O Load 15(min) Avg'
-    explanation: '硬盘I/O负载15分钟平均值'
+    description: '硬盘I/O负载15分钟平均值'
     related_symbol: 'diskIODevice'
     severity: '1'
     watermark:
@@ -80,7 +80,7 @@ snmp:
       start: 'diskIOLA15.1'
       end: 'diskIOLA15.32'
     label: 'Disk I/O Load 15(min) Avg'
-    explanation: '硬盘I/O负载15分钟平均值'
+    description: '硬盘I/O负载15分钟平均值'
     alert: '严重异常，请管理员务必关注！'
     related_symbol: 'diskIODevice'
     severity: '3'
@@ -92,7 +92,7 @@ snmp:
       restricted: True
   - table: 'ssCpuIdle.0'
     label: 'CPU Idle'
-    explanation: 'CPU空闲率'
+    description: 'CPU空闲率'
     severity: '1'
     watermark:
       low: 0

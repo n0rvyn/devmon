@@ -1061,9 +1061,12 @@ class DevMon(object):
 
         return self.cmdb_mongo.collection.insert_many(mongo_data)
 
-    def find_rid(self, addr: str = None):
+    def find_rid(self, addr: str = None) -> str:
         flt = {'ip': addr}  # todo verifying 'ip_hostname' key
-        return self.cmdb_mongo.find_one(flt)
+        try:
+            return self.cmdb_mongo.find_one(flt)
+        except AttributeError:
+            return 'Nul'
 
     # def ____perf(self, device: str = None, mongo: bool = False, influx: bool = True):
     #     agents: list[SNMPAgent] = self.a_side_snmps + self.b_side_snmps

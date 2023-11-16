@@ -15,19 +15,19 @@ snmp:
   # Filled Disks
   - table: 'xivFailedDisks'
     label: xivFailedDisks
-    explanation: '已故障硬盘'
+    description: '已故障硬盘'
     watermark:
       low: -1
       high: 0
   # xivMachineStatus
   - table: 'xivMachineStatus'
     label: 'xivMachineStatus'
-    explanation: 'XIV机器状态'
+    description: 'XIV机器状态'
     severity: '3'
     reference: 'Full Redundancy'
   - table: 'xivUtilizationSoft'
     label: xivUtilizationSoft
-    explanation: 'XIV软使用率'
+    description: 'XIV软使用率'
     severity: '3'
     watermark:
       low: 80
@@ -35,7 +35,7 @@ snmp:
       restricted: True
   - table: 'xivUtilizationHard'
     label: 'xivUtilizationHard'
-    explanation: 'XIV硬使用率'
+    description: 'XIV硬使用率'
     severity: '3'
     watermark:
       low: 80
@@ -44,6 +44,6 @@ snmp:
   # xivIfStatus
   - table: 'xivIfStatus'
     label: xivIfStatus
-    explanation: 'XIV接口状态'
+    description: 'XIV接口状态'
     reference: 'OK, Ready'
     severity: '1'

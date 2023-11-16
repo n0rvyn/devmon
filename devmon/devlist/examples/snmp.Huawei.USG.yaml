@@ -15,13 +15,13 @@ snmp:
   # 1. HA stat
   - table: '1.3.6.1.4.1.2011.6.122.51.1.3'
     label: hwHrpState
-    explanation: '设备HA状态'
+    description: '设备HA状态'
     severity: '1'
     reference: 'abnormal(active)'  # abnormal(standby)
   # Hrp Switch Over Times
   - table: '1.3.6.1.4.1.2011.6.122.51.1.4'
     label: 'hwHrpSwitchOverTimes'
-    explanation: '双机切换次数'
+    description: '双机切换次数'
     severity: '1'
     watermark:
       low: 2
@@ -30,14 +30,14 @@ snmp:
   # Online Power Supply number
   - table: '1.3.6.1.4.1.2011.5.25.31.1.1.1.1.41'
     label: 'hwEntityNomalPwrNum'
-    explanation: '在线电源数量'
+    description: '在线电源数量'
     severity: '1'
     read_ref_from: '1.3.6.1.4.1.2011.5.25.31.1.1.1.1.40'
   # Standby Status
   - table: '1.3.6.1.4.1.2011.5.25.31.1.1.1.1.3'
     table_index: ''
     label: 'hwEntityStandbyStatus'
-    explanation: '热备状态'
+    description: '热备状态'
     severity: '1'
     reference: '2'
     enum:
@@ -48,7 +48,7 @@ snmp:
   # Trunk member status
   - table: '1.3.6.1.4.1.2011.5.25.41.1.4.1.1.6'
     label: 'hwTrunkOperstatus'
-    explanation: 'Trunk成员端口的状态'
+    description: 'Trunk成员端口的状态'
     severity: '1'
     reference: '1'  # 1: up, 2: down
     enum:
