@@ -13,212 +13,212 @@ snmp:
   retries: 1  # time(s) to retry after failed
   OIDs:
   # the information of GPFS cluster
-  - table: 'gpfsClusterName'
-    label: gpfsClusterName
-    description: 'GPFS集群名称'
-    show: True  # add support for group showing
-  - table: 'gpfsClusterId'
-    label: gpfsClusterId
-    description: 'GPFS集群ID'
-    show: True
-  - table: 'gpfsClusterMinReleaseLevel'
-    label: gpfsClusterMinReleaseLevel
-    description: ''
-    show: True
-  - table: 'gpfsClusterNumNodes'
-    label: 'gpfsClusterNumNodes'
-    description: ''
-    show: True
-  - table: 'gpfsClusterNumFileSystems'
-    label: 'gpfsClusterNumFileSystems'
-    description: ''
-    show: True
-  - group:
-      - gpfsClusterConfigName
-      - gpfsClusterUidDomain
-    label: 'ClusterDomainName'
-    show: True
-  - group:
-      - gpfsClusterRemoteShellCommand
-      - gpfsClusterRemoteFileCopyCommand
-    label: 'RemoteShell'
-    show: True
-  - group:
-      - gpfsClusterPrimaryServer
-      - gpfsClusterSecondaryServer
-    label: 'primaryAndSecond'
-    show: True
-#  - group:
-#      - gpfsClusterMaxBlockSize
-#      - gpfsClusterDistributedTokenServer
-#      - gpfsClusterFailureDetectionTime
-#      - gpfsClusterTCPPort
-#      - gpfsClusterMinMissedPingTimeout
-#      - gpfsClusterMaxMissedPingTimeout
-#      - gpfsNodeName
-#      - gpfsNodeIpAddress
-#      - gpfsNodePlatform
-#      - gpfsNodeVersion
-#      - gpfsNodeConfigName
-#      - gpfsNodeType
-#      - gpfsNodeAdmin
-#      - gpfsNodePagePoolL
-#      - gpfsNodePagePoolH
-#      - gpfsNodePrefetchThreads
-#      - gpfsNodeMaxMbps
-#      - gpfsNodeMaxFilesToCache
-#      - gpfsNodeMaxStatCache
-#      - gpfsNodeWorker1Threads
-#      - gpfsNodeDmapiEventTimeout
-#      - gpfsNodeDmapiMountTimeout
-#      - gpfsNodeDmapiSessFailureTimeout
-#      - gpfsNodeNsdServerWaitTimeWindowOnMount
-#      - gpfsNodeNsdServerWaitTimeForMount
-#      - gpfsFileSystemName
-#      - gpfsFileSystemStatus
-#      - gpfsFileSystemXstatus
-#      - gpfsFileSystemTotalSpaceL
-#      - gpfsFileSystemTotalSpaceH
-#      - gpfsFileSystemNumTotalInodesL
-#      - gpfsFileSystemNumTotalInodesH
-#      - gpfsFileSystemFreeSpaceL
-#      - gpfsFileSystemFreeSpaceH
-#      - gpfsFileSystemNumFreeInodesL
-#      - gpfsFileSystemNumFreeInodesH
-#      - gpfsStgPoolName
-#      - gpfsStgPoolFSName
-#      - gpfsStgPoolTotalSpaceL
-#      - gpfsStgPoolTotalSpaceH
-#      - gpfsStgPoolFreeSpaceL
-#      - gpfsStgPoolFreeSpaceH
-#      - gpfsStgPoolNumDisks
-#      - gpfsDiskName
-#      - gpfsDiskFSName
-#      - gpfsDiskStgPoolName
-#      - gpfsDiskTotalSpaceL
-#      - gpfsDiskTotalSpaceH
-#      - gpfsDiskFullBlockFreeSpaceL
-#      - gpfsDiskFullBlockFreeSpaceH
-#      - gpfsDiskSubBlockFreeSpaceL
-#      - gpfsDiskSubBlockFreeSpaceH
-#      - gpfsDiskConfigName
-#      - gpfsDiskConfigFSName
-#      - gpfsDiskConfigStgPoolName
-#      - gpfsDiskMetadata-DUP
-#    label: 'test'
-#    show: True
+    - table: 'gpfsClusterName'
+      label: gpfsClusterName
+      description: 'GPFS集群名称'
+      show: True  # add support for group showing
+    - table: 'gpfsClusterId'
+      label: gpfsClusterId
+      description: 'GPFS集群ID'
+      show: True
+    - table: 'gpfsClusterMinReleaseLevel'
+      label: gpfsClusterMinReleaseLevel
+      description: ''
+      show: True
+    - table: 'gpfsClusterNumNodes'
+      label: 'gpfsClusterNumNodes'
+      description: ''
+      show: True
+    - table: 'gpfsClusterNumFileSystems'
+      label: 'gpfsClusterNumFileSystems'
+      description: ''
+      show: True
+    - group:
+        - gpfsClusterConfigName
+        - gpfsClusterUidDomain
+      label: 'ClusterDomainName'
+      show: True
+    - group:
+        - gpfsClusterRemoteShellCommand
+        - gpfsClusterRemoteFileCopyCommand
+      label: 'RemoteShell'
+      show: True
+    - group:
+        - gpfsClusterPrimaryServer
+        - gpfsClusterSecondaryServer
+      label: 'primaryAndSecond'
+      show: True
+  #  - group:
+  #      - gpfsClusterMaxBlockSize
+  #      - gpfsClusterDistributedTokenServer
+  #      - gpfsClusterFailureDetectionTime
+  #      - gpfsClusterTCPPort
+  #      - gpfsClusterMinMissedPingTimeout
+  #      - gpfsClusterMaxMissedPingTimeout
+  #      - gpfsNodeName
+  #      - gpfsNodeIpAddress
+  #      - gpfsNodePlatform
+  #      - gpfsNodeVersion
+  #      - gpfsNodeConfigName
+  #      - gpfsNodeType
+  #      - gpfsNodeAdmin
+  #      - gpfsNodePagePoolL
+  #      - gpfsNodePagePoolH
+  #      - gpfsNodePrefetchThreads
+  #      - gpfsNodeMaxMbps
+  #      - gpfsNodeMaxFilesToCache
+  #      - gpfsNodeMaxStatCache
+  #      - gpfsNodeWorker1Threads
+  #      - gpfsNodeDmapiEventTimeout
+  #      - gpfsNodeDmapiMountTimeout
+  #      - gpfsNodeDmapiSessFailureTimeout
+  #      - gpfsNodeNsdServerWaitTimeWindowOnMount
+  #      - gpfsNodeNsdServerWaitTimeForMount
+  #      - gpfsFileSystemName
+  #      - gpfsFileSystemStatus
+  #      - gpfsFileSystemXstatus
+  #      - gpfsFileSystemTotalSpaceL
+  #      - gpfsFileSystemTotalSpaceH
+  #      - gpfsFileSystemNumTotalInodesL
+  #      - gpfsFileSystemNumTotalInodesH
+  #      - gpfsFileSystemFreeSpaceL
+  #      - gpfsFileSystemFreeSpaceH
+  #      - gpfsFileSystemNumFreeInodesL
+  #      - gpfsFileSystemNumFreeInodesH
+  #      - gpfsStgPoolName
+  #      - gpfsStgPoolFSName
+  #      - gpfsStgPoolTotalSpaceL
+  #      - gpfsStgPoolTotalSpaceH
+  #      - gpfsStgPoolFreeSpaceL
+  #      - gpfsStgPoolFreeSpaceH
+  #      - gpfsStgPoolNumDisks
+  #      - gpfsDiskName
+  #      - gpfsDiskFSName
+  #      - gpfsDiskStgPoolName
+  #      - gpfsDiskTotalSpaceL
+  #      - gpfsDiskTotalSpaceH
+  #      - gpfsDiskFullBlockFreeSpaceL
+  #      - gpfsDiskFullBlockFreeSpaceH
+  #      - gpfsDiskSubBlockFreeSpaceL
+  #      - gpfsDiskSubBlockFreeSpaceH
+  #      - gpfsDiskConfigName
+  #      - gpfsDiskConfigFSName
+  #      - gpfsDiskConfigStgPoolName
+  #      - gpfsDiskMetadata-DUP
+  #    label: 'test'
+  #    show: True
 
-  - group:
-      - gpfsNodeFailureCount
-      - gpfsNodeThreadWait
-    label: 'FailureWaitCount'
-    description: '节点失败或线程等待次数'
-    reference: '0'
-    severity: '1'
+    - group:
+        - gpfsNodeFailureCount
+        - gpfsNodeThreadWait
+      label: 'FailureWaitCount'
+      description: '节点失败或线程等待次数'
+      reference: '0'
+      severity: '1'
 
-  - group:
-      - gpfsNodeStatus
-    label: 'nodeStatus'
-    description: '节点状态'
-    reference: 'up'
-    severity: '1'
-  - group:
-      - gpfsNodeUnmountOnDiskFail
-    label: 'unmountOnDiskFail'
-    description: '节点因磁盘故障而解挂载'
-    reference: 'false'
-    severity: '1'
-  - group:
-      - gpfsNodeHealthy
-    label: 'nodeHealth'
-    description: '节点是否健康'
-    reference: 'yes'
-    severity: '1'
-  - group:
-      - gpfsNodeDiagnosis
-    label: 'nodeDiag'
-    description: '节点诊断'
-    reference: 'none'
-    severity: '1'
-  - group:
-      - gpfsDiskStatus
-    label: 'diskStatus'
-    description: '硬盘状态'
-    reference: 'InUse'
-    severity: '1'
-  - group:
-      - gpfsDiskAvailability
-    label: 'diskAvailability'
-    description: '硬盘在线'
-    reference: 'OK'
-    severity: '1'
-  - group:
-      - gpfsDiskPerfName
-      - gpfsDiskPerfFSName
-      - gpfsDiskPerfStgPoolName
-    label: gpfsStorgePoolName
-    show: True
-  - group:
-      - gpfsDiskReadTimeL
-      - gpfsDiskReadTimeH
-      - gpfsDiskWriteTimeL
-      - gpfsDiskWriteTimeH
-      - gpfsDiskLongestReadTimeL
-      - gpfsDiskLongestReadTimeH
-      - gpfsDiskLongestWriteTimeL
-      - gpfsDiskLongestWriteTimeH
-      - gpfsDiskShortestReadTimeL
-      - gpfsDiskShortestReadTimeH
-      - gpfsDiskShortestWriteTimeL
-      - gpfsDiskShortestWriteTimeH
-    label: gpfsPerfTime
-    perf: True
-  - group:
-      - gpfsDiskReadBytesL
-      - gpfsPerfBytes
-      - gpfsDiskReadBytesH
-      - gpfsDiskWriteBytesL
-      - gpfsDiskWriteBytesH
-      - gpfsDiskReadOps
-      - gpfsDiskWriteOps
-    label: gpfsPerfOps
-    perf: True
-  - group:
-      - gpfsFileSystemPerfName
-      - gpfsFileSystemBytesReadL
-      - gpfsFileSystemBytesReadH
-      - gpfsFileSystemBytesCacheL
-      - gpfsFileSystemBytesCacheH
-      - gpfsFileSystemBytesWrittenL
-      - gpfsFileSystemBytesWrittenH
-    label: gpfsFsSystemBytes
-    perf: True
-  - group:
-      - gpfsFileSystemReads
-      - gpfsFileSystemCaches
-      - gpfsFileSystemWrites
-    label: gpfsFsIO
-    perf: True
-  - group:
-      - gpfsFileSystemOpenCalls
-      - gpfsFileSystemCloseCalls
-      - gpfsFileSystemReadCalls
-      - gpfsFileSystemWriteCalls
-      - gpfsFileSystemReaddirCalls
-    label: gpfsFSSysCalls
-    perf: True
-  - group:
-      - gpfsFileSystemInodesWritten
-      - gpfsFileSystemInodesRead
-      - gpfsFileSystemInodesDeleted
-      - gpfsFileSystemInodesCreated
-    label: gpfsFSInodeIO
-    perf: True
-  - group:
-      - gpfsFileSystemStatCacheHit
-      - gpfsFileSystemStatCacheMiss
-    label: gpfsFSCacheNo
-    perf: True
+    - group:
+        - gpfsNodeStatus
+      label: 'nodeStatus'
+      description: '节点状态'
+      reference: 'up'
+      severity: '1'
+    - group:
+        - gpfsNodeUnmountOnDiskFail
+      label: 'unmountOnDiskFail'
+      description: '节点因磁盘故障而解挂载'
+      reference: 'false'
+      severity: '1'
+    - group:
+        - gpfsNodeHealthy
+      label: 'nodeHealth'
+      description: '节点是否健康'
+      reference: 'yes'
+      severity: '1'
+    - group:
+        - gpfsNodeDiagnosis
+      label: 'nodeDiag'
+      description: '节点诊断'
+      reference: 'none'
+      severity: '1'
+    - group:
+        - gpfsDiskStatus
+      label: 'diskStatus'
+      description: '硬盘状态'
+      reference: 'InUse'
+      severity: '1'
+    - group:
+        - gpfsDiskAvailability
+      label: 'diskAvailability'
+      description: '硬盘在线'
+      reference: 'OK'
+      severity: '1'
+    - group:
+        - gpfsDiskPerfName
+        - gpfsDiskPerfFSName
+        - gpfsDiskPerfStgPoolName
+      label: gpfsStorgePoolName
+      show: True
+    - group:
+        - gpfsDiskReadTimeL
+        - gpfsDiskReadTimeH
+        - gpfsDiskWriteTimeL
+        - gpfsDiskWriteTimeH
+        - gpfsDiskLongestReadTimeL
+        - gpfsDiskLongestReadTimeH
+        - gpfsDiskLongestWriteTimeL
+        - gpfsDiskLongestWriteTimeH
+        - gpfsDiskShortestReadTimeL
+        - gpfsDiskShortestReadTimeH
+        - gpfsDiskShortestWriteTimeL
+        - gpfsDiskShortestWriteTimeH
+      label: gpfsPerfTime
+      perf: True
+    - group:
+        - gpfsDiskReadBytesL
+        - gpfsPerfBytes
+        - gpfsDiskReadBytesH
+        - gpfsDiskWriteBytesL
+        - gpfsDiskWriteBytesH
+        - gpfsDiskReadOps
+        - gpfsDiskWriteOps
+      label: gpfsPerfOps
+      perf: True
+    - group:
+        - gpfsFileSystemPerfName
+        - gpfsFileSystemBytesReadL
+        - gpfsFileSystemBytesReadH
+        - gpfsFileSystemBytesCacheL
+        - gpfsFileSystemBytesCacheH
+        - gpfsFileSystemBytesWrittenL
+        - gpfsFileSystemBytesWrittenH
+      label: gpfsFsSystemBytes
+      perf: True
+    - group:
+        - gpfsFileSystemReads
+        - gpfsFileSystemCaches
+        - gpfsFileSystemWrites
+      label: gpfsFsIO
+      perf: True
+    - group:
+        - gpfsFileSystemOpenCalls
+        - gpfsFileSystemCloseCalls
+        - gpfsFileSystemReadCalls
+        - gpfsFileSystemWriteCalls
+        - gpfsFileSystemReaddirCalls
+      label: gpfsFSSysCalls
+      perf: True
+    - group:
+        - gpfsFileSystemInodesWritten
+        - gpfsFileSystemInodesRead
+        - gpfsFileSystemInodesDeleted
+        - gpfsFileSystemInodesCreated
+      label: gpfsFSInodeIO
+      perf: True
+    - group:
+        - gpfsFileSystemStatCacheHit
+        - gpfsFileSystemStatCacheMiss
+      label: gpfsFSCacheNo
+      perf: True
 
 
 

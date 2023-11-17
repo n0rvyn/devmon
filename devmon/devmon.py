@@ -1167,10 +1167,10 @@ class DevMon(object):
             if not c.void:
                 continue
 
-            if c.void.desc:
-                obj = f'{c.void.desc}'
-            else:
-                obj = f'{c.oid.label}'
+            # if c.void.desc:
+            #     obj = f'{c.void.desc}'
+            # else:
+            #     obj = f'{c.oid.label}'
 
             if c.oid.watermark and c.oid.watermark.restricted:
                 name = '限制区'
@@ -1178,7 +1178,7 @@ class DevMon(object):
                 name = '阈值区'
 
             if c.alert:
-                err = f'标签{c.oid.label:30s}{c.current_value:20s}{name}{c.threshold:10s}设备{obj:20s}'
+                err = f'标签{c.oid.label:30s}{c.current_value:25s}{name}{c.threshold:25s}{c.object:20s}'
                 faulty = 1
             else:
                 err = ''

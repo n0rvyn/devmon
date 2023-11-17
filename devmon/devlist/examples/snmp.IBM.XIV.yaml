@@ -12,38 +12,42 @@ snmp:
   retries: 1  # time(s) to retry after failed
   mib: 'XIV-MIB'
   OIDs:
-  # Filled Disks
-  - table: 'xivFailedDisks'
-    label: xivFailedDisks
-    description: '已故障硬盘'
-    watermark:
-      low: -1
-      high: 0
-  # xivMachineStatus
-  - table: 'xivMachineStatus'
-    label: 'xivMachineStatus'
-    description: 'XIV机器状态'
-    severity: '3'
-    reference: 'Full Redundancy'
-  - table: 'xivUtilizationSoft'
-    label: xivUtilizationSoft
-    description: 'XIV软使用率'
-    severity: '3'
-    watermark:
-      low: 80
-      high: 101
-      restricted: True
-  - table: 'xivUtilizationHard'
-    label: 'xivUtilizationHard'
-    description: 'XIV硬使用率'
-    severity: '3'
-    watermark:
-      low: 80
-      high: 101
-      restricted: True
-  # xivIfStatus
-  - table: 'xivIfStatus'
-    label: xivIfStatus
-    description: 'XIV接口状态'
-    reference: 'OK, Ready'
-    severity: '1'
+    # Filled Disks
+    - table: 'sysName'
+      label: 'sysName'
+      description: '系统名称'
+      show: True
+    - table: 'xivFailedDisks'
+      label: xivFailedDisks
+      description: '已故障硬盘'
+      watermark:
+        low: -1
+        high: 0
+    # xivMachineStatus
+    - table: 'xivMachineStatus'
+      label: 'xivMachineStatus'
+      description: 'XIV机器状态'
+      severity: '3'
+      reference: 'Full Redundancy'
+    - table: 'xivUtilizationSoft'
+      label: xivUtilizationSoft
+      description: 'XIV软使用率'
+      severity: '3'
+      watermark:
+        low: 80
+        high: 101
+        restricted: True
+    - table: 'xivUtilizationHard'
+      label: 'xivUtilizationHard'
+      description: 'XIV硬使用率'
+      severity: '3'
+      watermark:
+        low: 80
+        high: 101
+        restricted: True
+    # xivIfStatus
+    - table: 'xivIfStatus'
+      label: xivIfStatus
+      description: 'XIV接口状态'
+      reference: 'OK, Ready'
+      severity: '1'

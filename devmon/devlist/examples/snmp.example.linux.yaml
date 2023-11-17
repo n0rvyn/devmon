@@ -11,210 +11,210 @@ snmp:
   timeout: 1  # second(s) to timeout
   retries: 1  # time(s) to retry after failed
   OIDs:
-  - table: 'sysName.0'
-    label: SystemName
-    description: '主机名'
-    show: True
-  - table: 'hrMemorySize.0'
-    label: 'Memory Size'
-    description: '内存大小'
-    unit: KiB
-    show: True
-  - id_range:
-      start: 'ifOperStatus.1'  # the base part of an OID range
-      count: 31  # the number of the OID range
-    label: 'NetworkInterface'
-    description: '网卡状态'
-    related_symbol: 'ifDescr'  # OID symbol to fetch a related name
-    exclude_value: 'br0, virbr0'
-    reference: 'up(1)'  # a reference value which been considered as normal stat
-  - table: 'hrStorageUsed'
-    table_index: 'hrStorageIndex'
-    label: 'Storage Used Percent'
-    description: '存储设备使用率'
-    exclude_index: '7, 8, 10, 11, 37, 38, 41, 72'
-    exclude_value: 'Physical memory, Cached memory, Shared memory, /dev/shm, Available memory'
-    related_symbol: 'hrStorageDescr'
-    arithmetic: '%'
-    arith_symbol: 'hrStorageSize'
-    arith_pos: 2
-    watermark:
-      low: -1
-      high: 80
-  # OID configuration for Memory Usage Percent
-  - table: 'memSysAvail.0'
-    label: 'MemoryFreePercent'
-    description: '内存使用率'
-    arith_symbol: 'memTotalRealX'
-    arithmetic: '%'
-    arith_pos: 2
-    watermark:
-      low: 0
-      high: 20
-      restricted: True
-  - table: 'ssCpuNumCpus.0'
-    label: 'CpuNum'
-    description: 'CPU数量'
-    reference: '4'
-  - table: 'memAvailSwap.0'
-    label: 'SWAPAvailablePercent'
-    description: '交换空间使用率'
-    arith_symbol: 'memTotalSwap'
-    arithmetic: '%'
-    arith_pos: 2
-    watermark:
-      low: 80
-      high: 100
-  - id_range:
-      start: 'diskIOLA15.1'
-      end: 'diskIOLA15.32'
-    label: 'Disk I/O Load 15(min) Avg'
-    description: '硬盘I/O负载15分钟平均值'
-    related_symbol: 'diskIODevice'
-    severity: '1'
-    watermark:
-      low: 50
-      high: 80
-      restricted: True
-  - id_range:
-      start: 'diskIOLA15.1'
-      end: 'diskIOLA15.32'
-    label: 'Disk I/O Load 15(min) Avg'
-    description: '硬盘I/O负载15分钟平均值'
-    alert: '严重异常，请管理员务必关注！'
-    related_symbol: 'diskIODevice'
-    severity: '3'
-    watermark:
-      low: 80
-      high: 100
-      # when set to True, an alert will be sent when the value is between 'low' and 'high'
-      # otherwise, a value out of the scope will generate an alert
-      restricted: True
-  - table: 'ssCpuIdle.0'
-    label: 'CPU Idle'
-    description: 'CPU空闲率'
-    severity: '1'
-    watermark:
-      low: 0
-      high: 60
-      restricted: True  # Alert when CPU IDLE is between 0-60
-  - table: 'hrSWRunPerfCPU'  # index is the proc ID
-    table_index: 'hrSWRunIndex'
-    show_index: True
-    label: 'swRunningCpuStat'
-    related_symbol: 'hrSWRunName'
-    unit: 'centi-second'
-    perf: True
-  - table: 'hrSWRunPerfMem'
-    table_index: 'hrSWRunIndex'
-    show_index: True
-    label: 'swRunningMemStat'
-    unit: 'KB'
-    related_symbol: 'hrSWRunName'
-    perf: True
-  - group:
-      - 'diskIONRead'
-      - 'diskIONWritten'
-      - 'diskIONReadX'
-      - 'diskIONWrittenX'
-    table_index: 'diskIOIndex'
-    label: 'diskIoRWStat'
-    related_symbol: 'diskIODevice'
-    unit: bytes
-    perf: True
-  - group:
-      - 'diskIOReads'
-      - 'diskIOWrites'
-    table_index: 'diskIOIndex'
-    label: 'diskIoAccessStat'
-    related_symbol: 'diskIODevice'
-    unit: number
-    perf: True
-  - group:
-      - 'diskIOLA1'
-      - 'diskIOLA5'
-      - 'diskIOLA15'
-    table_index: 'diskIOIndex'
-    exclude_keywords:
-      - loop
-      - dm
-    label: 'diskIoLoadStat'
-    related_symbol: 'diskIODevice'
-    unit: percent
-    perf: True
-  - group:
-      - ifOutErrors
-      - ifOutDiscards
-      - ifOutUcastPkts
-      - ifOutOctets
-      - ifInUnknownProtos
-      - ifInErrors
-      - ifInDiscards
-      - ifInUcastPkts
-      - ifInOctets
-      - ifSpeed
-    table_index: 'ifIndex'
-    label: 'sysInterfaceStat'
-    exclude_value: 'lo, sit0, virbr0, br0'
-    related_symbol: 'ifName'
-    perf: True
-  - group:
-      - 'ssSwapIn'
-      - 'ssSwapOut'
-      - 'memAvailReal'
-    label: 'SysMemSwapStat'
-    unit: kB
-    perf: True
-  - group:
-      - 'ssCpuUser'
-      - 'ssCpuSystem'
-      - 'ssCpuIdle'
-      - 'hrProcessorLoad'
-    label: 'SysCpuStat'
-    unit: 'percent'
-    perf: True
-  - group:
-      - memTotalSwap.0
-      - memAvailSwap.0
-      - memTotalReal.0
-      - memAvailReal.0
-      - memTotalFree.0
-      - memMinimumSwap.0
-      - memShared.0
-      - memBuffer.0
-      - memCached.0
-    label: 'sysMemRawStat'
-    unit: 'kB'
-    perf: True
-  - group:
-      - ssSysInterrupts.0
-      - ssSysContext.0
-      - ssRawInterrupts.0
-      - ssRawContexts.0
-    label: 'sysCpuIrContStat'
-    unit: 'number'
-    perf: True
-  - group:
-      - ssCpuRawUser
-      - ssCpuRawNice
-      - ssCpuRawSystem
-      - ssCpuRawIdle
-      - ssCpuRawWait
-      - ssCpuRawKernel
-      - ssCpuRawInterrupt
-      - ssCpuRawSoftIRQ
-      - ssCpuRawSteal
-      - ssCpuRawGuest
-      - ssCpuRawGuestNice
-    label: 'sysCpuRawStat'
-    unit: ticks
-    perf: True
-  - group:
-      - ssIORawSent
-      - ssIORawReceived
-      - ssRawSwapIn
-      - ssRawSwapOut
-    label: 'sysIORawStat'
-    unit: 'blocks'
-    perf: True
+    - table: 'sysName.0'
+      label: SystemName
+      description: '主机名'
+      show: True
+    - table: 'hrMemorySize.0'
+      label: 'Memory Size'
+      description: '内存大小'
+      unit: KiB
+      show: True
+    - id_range:
+        start: 'ifOperStatus.1'  # the base part of an OID range
+        count: 31  # the number of the OID range
+      label: 'NetworkInterface'
+      description: '网卡状态'
+      related_symbol: 'ifDescr'  # OID symbol to fetch a related name
+      exclude_value: 'br0, virbr0'
+      reference: 'up(1)'  # a reference value which been considered as normal stat
+    - table: 'hrStorageUsed'
+      table_index: 'hrStorageIndex'
+      label: 'StorageUsedPercent'
+      description: '存储设备使用率'
+      exclude_index: '7, 8, 10, 11, 37, 38, 41, 72'
+      exclude_value: 'Physical memory, Cached memory, Shared memory, /dev/shm, Available memory'
+      related_symbol: 'hrStorageDescr'
+      arithmetic: '%'
+      arith_symbol: 'hrStorageSize'
+      arith_pos: 2
+      watermark:
+        low: -1
+        high: 80
+    # OID configuration for Memory Usage Percent
+    - table: 'memSysAvail.0'
+      label: 'MemoryFreePercent'
+      description: '内存使用率'
+      arith_symbol: 'memTotalRealX'
+      arithmetic: '%'
+      arith_pos: 2
+      watermark:
+        low: 0
+        high: 20
+        restricted: True
+    - table: 'ssCpuNumCpus.0'
+      label: 'CpuNum'
+      description: 'CPU数量'
+      reference: '4'
+    - table: 'memAvailSwap.0'
+      label: 'SWAPAvailablePercent'
+      description: '交换空间使用率'
+      arith_symbol: 'memTotalSwap'
+      arithmetic: '%'
+      arith_pos: 2
+      watermark:
+        low: 80
+        high: 100
+    - id_range:
+        start: 'diskIOLA15.1'
+        end: 'diskIOLA15.32'
+      label: 'Disk I/O Load 15(min) Avg'
+      description: '硬盘I/O负载15分钟平均值'
+      related_symbol: 'diskIODevice'
+      severity: '1'
+      watermark:
+        low: 50
+        high: 80
+        restricted: True
+    - id_range:
+        start: 'diskIOLA15.1'
+        end: 'diskIOLA15.32'
+      label: 'Disk I/O Load 15(min) Avg'
+      description: '硬盘I/O负载15分钟平均值'
+      alert: '严重异常，请管理员务必关注！'
+      related_symbol: 'diskIODevice'
+      severity: '3'
+      watermark:
+        low: 80
+        high: 100
+        # when set to True, an alert will be sent when the value is between 'low' and 'high'
+        # otherwise, a value out of the scope will generate an alert
+        restricted: True
+    - table: 'ssCpuIdle.0'
+      label: 'CPU Idle'
+      description: 'CPU空闲率'
+      severity: '1'
+      watermark:
+        low: 0
+        high: 60
+        restricted: True  # Alert when CPU IDLE is between 0-60
+    - table: 'hrSWRunPerfCPU'  # index is the proc ID
+      table_index: 'hrSWRunIndex'
+      show_index: True
+      label: 'swRunningCpuStat'
+      related_symbol: 'hrSWRunName'
+      unit: 'centi-second'
+      perf: True
+    - table: 'hrSWRunPerfMem'
+      table_index: 'hrSWRunIndex'
+      show_index: True
+      label: 'swRunningMemStat'
+      unit: 'KB'
+      related_symbol: 'hrSWRunName'
+      perf: True
+    - group:
+        - 'diskIONRead'
+        - 'diskIONWritten'
+        - 'diskIONReadX'
+        - 'diskIONWrittenX'
+      table_index: 'diskIOIndex'
+      label: 'diskIoRWStat'
+      related_symbol: 'diskIODevice'
+      unit: bytes
+      perf: True
+    - group:
+        - 'diskIOReads'
+        - 'diskIOWrites'
+      table_index: 'diskIOIndex'
+      label: 'diskIoAccessStat'
+      related_symbol: 'diskIODevice'
+      unit: number
+      perf: True
+    - group:
+        - 'diskIOLA1'
+        - 'diskIOLA5'
+        - 'diskIOLA15'
+      table_index: 'diskIOIndex'
+      exclude_keywords:
+        - loop
+        - dm
+      label: 'diskIoLoadStat'
+      related_symbol: 'diskIODevice'
+      unit: percent
+      perf: True
+    - group:
+        - ifOutErrors
+        - ifOutDiscards
+        - ifOutUcastPkts
+        - ifOutOctets
+        - ifInUnknownProtos
+        - ifInErrors
+        - ifInDiscards
+        - ifInUcastPkts
+        - ifInOctets
+        - ifSpeed
+      table_index: 'ifIndex'
+      label: 'sysInterfaceStat'
+      exclude_value: 'lo, sit0, virbr0, br0'
+      related_symbol: 'ifName'
+      perf: True
+    - group:
+        - 'ssSwapIn'
+        - 'ssSwapOut'
+        - 'memAvailReal'
+      label: 'SysMemSwapStat'
+      unit: kB
+      perf: True
+    - group:
+        - 'ssCpuUser'
+        - 'ssCpuSystem'
+        - 'ssCpuIdle'
+        - 'hrProcessorLoad'
+      label: 'SysCpuStat'
+      unit: 'percent'
+      perf: True
+    - group:
+        - memTotalSwap.0
+        - memAvailSwap.0
+        - memTotalReal.0
+        - memAvailReal.0
+        - memTotalFree.0
+        - memMinimumSwap.0
+        - memShared.0
+        - memBuffer.0
+        - memCached.0
+      label: 'sysMemRawStat'
+      unit: 'kB'
+      perf: True
+    - group:
+        - ssSysInterrupts.0
+        - ssSysContext.0
+        - ssRawInterrupts.0
+        - ssRawContexts.0
+      label: 'sysCpuIrContStat'
+      unit: 'number'
+      perf: True
+    - group:
+        - ssCpuRawUser
+        - ssCpuRawNice
+        - ssCpuRawSystem
+        - ssCpuRawIdle
+        - ssCpuRawWait
+        - ssCpuRawKernel
+        - ssCpuRawInterrupt
+        - ssCpuRawSoftIRQ
+        - ssCpuRawSteal
+        - ssCpuRawGuest
+        - ssCpuRawGuestNice
+      label: 'sysCpuRawStat'
+      unit: ticks
+      perf: True
+    - group:
+        - ssIORawSent
+        - ssIORawReceived
+        - ssRawSwapIn
+        - ssRawSwapOut
+      label: 'sysIORawStat'
+      unit: 'blocks'
+      perf: True
 

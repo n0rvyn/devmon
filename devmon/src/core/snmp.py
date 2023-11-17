@@ -338,7 +338,8 @@ class SNMP(object):
                     arith: ArithType = None,
                     arith_pos: int = 2,
                     unit: str = None,
-                    group: bool = False) -> Optional[list[VOID]]:
+                    group: bool = False,
+                    label: str = None) -> Optional[list[VOID]]:
         vals_table = self._read_table_vals(table)
         vals_related = self._read_table_vals(related_symbol_table)
         vals_arith = self._read_table_vals(arith_symbol_table)
@@ -387,7 +388,7 @@ class SNMP(object):
                 identifier = vals_related[i] if not group else f'{table}.{vals_related[i]}'
             except (IndexError, TypeError):
                 # rel_val = None
-                identifier = f'{self._read_oid_desc(table)}.{index}'
+                identifier = f'{self._read_oid_desc(table, label)}.{index}'
 
             try:
                 ref = vals_ref[i]
@@ -437,7 +438,7 @@ class SNMP(object):
                     arith_symbol_table: str = None,
                     arith: ArithType = None,
                     arith_pos: int = 2,
-                    unit: str = None
+                    unit: str = None, label: str = None
                     ):
         voids = []
 
@@ -451,7 +452,8 @@ class SNMP(object):
                                        arith_symbol_table=arith_symbol_table,
                                        arith=arith,
                                        arith_pos=arith_pos,
-                                       unit=unit, group=True)) for table in tables]
+                                       unit=unit, group=True,
+                                       label=label)) for table in tables]
         return voids
 
     def read_oid_dc(self, oid: OID = None) -> list[VOID]:
@@ -495,7 +497,8 @@ class SNMP(object):
                                      reference_symbol_table=oid.read_ref_from,
                                      arith=oid.arithmetic,
                                      arith_pos=oid.arith_pos,
-                                     unit=oid.unit)
+                                     unit=oid.unit,
+                                     label=oid.label)
 
         if oid.group:
             voids = self._read_group(tables=oid.group,
@@ -507,12 +510,13 @@ class SNMP(object):
                                      arith=oid.arithmetic,
                                      arith_symbol_table=oid.arith_symbol,
                                      arith_pos=oid.arith_pos,
-                                     unit=oid.unit)
+                                     unit=oid.unit,
+                                     label=oid.label)
 
         return voids
 
     @staticmethod
-    def _read_oid_desc(oid: str = None):
+    def _read_oid_desc(oid: str = None, label: str = None):
         """
         Read description from OID
         From:
@@ -530,7 +534,7 @@ class SNMP(object):
                 else:
                     return oid_parts[-1]
             except IndexError:
-                return None
+                return label
 
 
 class ContextSNMP(object):
