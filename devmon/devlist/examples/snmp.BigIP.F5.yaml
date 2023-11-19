@@ -4,7 +4,7 @@ address: F5_MGMT_ADDR  # the address which been listened by SNMP Daemon
 region: DataCenter  # the region of device, e.g. DCA, DCB, DataCenterA...
 area: Prod  # the business area
 addr_in_cmdb: Address  # the address which related with Resource ID in CMDB
-rtable: 'This is Resource ID'  # todo fix issues when met None type rtable
+rid: 'This is Resource ID'  # todo fix issues when met None type rid
 enum:
   '0': bad
   '1': good

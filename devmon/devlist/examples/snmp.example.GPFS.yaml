@@ -4,7 +4,7 @@ address: GPFS_Collector_Node_Address  # the address which been listened to by SN
 region: SomeRegion  # The region of device, e.g., DCA, DCB, DataCenterA...
 area: SomeArea  # the business area
 addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
-rtable: 'THis is resource ID'
+rid: 'THis is resource ID'
 snmp:
   version: '2c'  # the SNMPD version
   community: 'public'  # the SNMPD community

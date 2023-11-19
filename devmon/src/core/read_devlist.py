@@ -48,7 +48,7 @@ except Exception as e:
 def __read_yaml(file: str = None) -> Optional[dict]:
     try:
         with open(file, 'r+', encoding='utf8') as f:
-            return safe_load(f)
+            return safe_load(f)  # TODO '.localhost.yaml.un~'
     except FileNotFoundError:
         return None
 

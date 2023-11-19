@@ -107,7 +107,7 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"SysCpuStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"SysCpuStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"$address\")\n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -198,7 +198,7 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysCpuRawStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysCpuRawStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -289,7 +289,7 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"SysMemSwapStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"SysMemSwapStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -338,8 +338,6 @@
             }
           },
           "mappings": [],
-          "min": 0,
-          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -353,7 +351,7 @@
               }
             ]
           },
-          "unit": "blocks"
+          "unit": "deckbytes"
         },
         "overrides": []
       },
@@ -363,7 +361,7 @@
         "x": 12,
         "y": 8
       },
-      "id": 14,
+      "id": 17,
       "options": {
         "legend": {
           "calcs": [],
@@ -382,11 +380,11 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysIORawStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysMemRawStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
-      "title": "Linux System IO Stat",
+      "title": "Linux Memory Raw Stat",
       "type": "timeseries"
     },
     {
@@ -475,7 +473,7 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"diskIoAccessStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"diskIoAccessStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -524,6 +522,8 @@
             }
           },
           "mappings": [],
+          "min": 0,
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -537,7 +537,7 @@
               }
             ]
           },
-          "unit": "percent"
+          "unit": "blocks"
         },
         "overrides": []
       },
@@ -547,7 +547,7 @@
         "x": 12,
         "y": 16
       },
-      "id": 21,
+      "id": 14,
       "options": {
         "legend": {
           "calcs": [],
@@ -566,11 +566,11 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"diskIoLoad1Stat\" or r[\"_measurement\"] == \"diskIoLoad5Stat\" or r[\"_measurement\"] == \"diskIoLoad15Stat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysIORawStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
-      "title": "Linux Disks IO Load",
+      "title": "Linux System IO Stat",
       "type": "timeseries"
     },
     {
@@ -659,7 +659,7 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"diskIoRWStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"diskIoRWStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -708,8 +708,6 @@
             }
           },
           "mappings": [],
-          "min": 0,
-          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -722,8 +720,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "packages"
+          }
         },
         "overrides": []
       },
@@ -733,7 +730,7 @@
         "x": 12,
         "y": 24
       },
-      "id": 18,
+      "id": 21,
       "options": {
         "legend": {
           "calcs": [],
@@ -746,17 +743,18 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "10.1.4",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysInterfaceStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"diskIoLoadStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
-      "title": "Linux Interface",
+      "title": "Linux Disks IO Load",
       "type": "timeseries"
     },
     {
@@ -843,7 +841,7 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysCpuIrContStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysCpuIrContStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -892,6 +890,8 @@
             }
           },
           "mappings": [],
+          "min": 0,
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -905,7 +905,7 @@
               }
             ]
           },
-          "unit": "deckbytes"
+          "unit": "pkgs"
         },
         "overrides": []
       },
@@ -915,7 +915,7 @@
         "x": 12,
         "y": 32
       },
-      "id": 17,
+      "id": 18,
       "options": {
         "legend": {
           "calcs": [],
@@ -934,11 +934,11 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysMemRawStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sysInterfaceStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> group(columns: [\"_field\", \"_measurement\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
-      "title": "Linux Memory Raw Stat",
+      "title": "Linux Interface",
       "type": "timeseries"
     },
     {
@@ -1025,7 +1025,7 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"swRunningCpuStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> map(fn: (r) => ({ r with _value: r._value * 10.0 }))  \n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"swRunningCpuStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> difference(nonNegative: true, columns: [\"_value\"])  \n  |> map(fn: (r) => ({ r with _value: r._value * 10.0 }))  \n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -1116,7 +1116,7 @@
             "type": "influxdb",
             "uid": "f75fabef-3397-4092-be13-bbcf88aa999f"
           },
-          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"swRunningMemStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"localhost\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "query": "from(bucket: \"devmon\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"swRunningMemStat\")\n  |> filter(fn: (r) => r[\"address\"] == \"${address}\")\n  |> group(columns: [\"_measurement\", \"_field\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
           "refId": "A"
         }
       ],
@@ -1124,12 +1124,40 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "auto",
+  "refresh": "5m",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "localhost",
+          "value": "localhost"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "address",
+        "options": [
+          {
+            "selected": true,
+            "text": "localhost",
+            "value": "localhost"
+          },
+          {
+            "selected": false,
+            "text": "172.16.10.250",
+            "value": "172.16.10.250"
+          }
+        ],
+        "query": "localhost, 172.16.10.250",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
   },
   "time": {
     "from": "now-30m",
@@ -1139,6 +1167,6 @@
   "timezone": "",
   "title": "Linux Performance Observability",
   "uid": "a88b1489-a339-406d-b9e0-88e7c5cc69c3",
-  "version": 6,
+  "version": 11,
   "weekStart": "monday"
 }

@@ -13,7 +13,7 @@ area: SomeArea
 # 设备在CMDB中录入IP，用于关联CMDB中资源ID，必选项
 addr_in_cmdb: SomeAddr
 # 手动指定资源ID，如无此字段，则尝试在MongoDB(需先同步) 对应表中查找，可选项，数量少建议手动查找指定。
-rtable: 'THis is resource ID'
+rid: 'THis is resource ID'
 # 每个厂家有对应的OID，为缩短下属OID定义，可以将共有的部分添加为‘base’
 base: '1.a.b.c.d'
 # 参考值转义字典；单个OID中的定义会覆写全局定义。

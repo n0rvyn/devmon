@@ -4,7 +4,7 @@ address: IBM_SWITCH_ADDR  # the address which been listened to by SNMP Daemon
 region: DataCenterD  # The region of device, e.g., DCA, DCB, DataCenterA...
 area: Dev  # the business area
 addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
-rtable: 'THis is Resource ID'
+rid: 'THis is Resource ID'
 snmp:
   version: '3'  # the SNMPD version
   community: 'public'  # the SNMPD community

@@ -1181,17 +1181,24 @@ class DevMon(object):
                      influx: bool = True,
                      perf_interval_sec: int = 60):
         while True:
-            # self.perf(device=device, mongo=mongo, influx=influx)
             mongo_points, influx_points = self._perf_gather(device, mongo, influx)
             self._perf_insert(mongo_points=mongo_points, influx_points=influx_points, mongo=mongo, influx=influx)
             time.sleep(perf_interval_sec)
 
-    def test(self):
-        self.refresh_config(init_mongo=False, init_influx=False, service=False)
-        for agent in self.a_side_snmps + self.b_side_snmps:
-            snmp = SNMP(agent)
-            for oid in agent.OIDs:
-                print(snmp.read(oid=oid))
+    def alert_influx(self):
+        """
+        for testing
+        """
+        self.refresh_config(init_influx=True)
+        cases = self.create_snmp_cases(multithread=True, alert=True)
+        points = []
+        [points.append(self.influx.case_to_point(case)) for case in cases]
+        self.influx.insert_points(points)
+        time.sleep(5)
+        cases = self.create_snmp_cases(multithread=True, alert=True)
+        points = []
+        [points.append(self.influx.case_to_point(case)) for case in cases]
+        self.influx.insert_points(points)
 
     def pm_snmp(self, device: str = None):
         """
@@ -1303,6 +1310,7 @@ if __name__ == '__main__':
              f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.')
 
     devmon = DevMon()
+
     act = opt = None
     try:
         act = sys.argv[1]
