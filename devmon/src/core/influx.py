@@ -97,8 +97,8 @@ class InfluxDB(object):
             if not void:  # todo l_void == [None, None...] ???
                 continue
 
-            k = void.desc if void.desc else oid.label
-            k = f'{k}.{void.index}' if oid.show_index else k
+            k = void.objectname if void.objectname else oid.label
+            k = f'{k}.{void.instance}' if oid.show_index else k
 
             try:
                 v = float(void.value)
@@ -188,5 +188,5 @@ if __name__ == '__main__':
     pass
 
     """
-    influx delete --host "https://us-east-1.com" --token {NbL5jpRcgmIblHsFun1K-rm-7P20pPtseXHaSl2NGGZu4SfD0EQ==} --org {OPS}  --bucket {devmon}  --start 1970-01-01T00:00:00Z   --stop $(date +"%Y-%m-%dT%H:%M:%SZ")
+    influx delete --host "https://us-east-1.com" --token {NbL5jpIblHsFun1K-rm-7P20pXHaSl2NGGZu4SfD0EQ==} --org {OPS}  --bucket {devmon}  --start 1970-01-01T00:00:00Z   --stop $(date +"%Y-%m-%dT%H:%M:%SZ")
     """

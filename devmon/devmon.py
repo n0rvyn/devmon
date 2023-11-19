@@ -15,9 +15,7 @@
 ---Short description of this Python module---
 
 """
-import datetime
 import time
-
 import influxdb_client_3
 from yaml import safe_load
 import os
@@ -31,11 +29,10 @@ from threading import Thread
 from time import perf_counter
 from inspect import currentframe
 from pymongo import errors, timeout
-from src import oid_to_case, ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
-from src import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart, EventType
+from src import oid_to_case, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
+from src import OID, VOID, SNMPAgent, Case, CaseUpdatePart, EventType
 from src import Point, MongoPoint
-from src import InfluxDB
-
+from src import InfluxDB, read_snmp_agents
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
 _ROOT_ = '/etc/devmon' if _ROOT_.startswith('/tmp') else _ROOT_
@@ -50,11 +47,18 @@ _LOG_ = os.path.abspath(os.path.join(_ROOT_, 'log/devmon.log'))
 # from core import ReadAgents, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP
 # from type import OID, VOID, SNMPAgent, Case, TheSameCasePart, CaseUpdatePart
 
+# if _ROOT_.startswith('/tmp') or _ROOT_ == '/':
+#     _ROOT_ = '/etc/devmon'
+
+# _CONFIG_DIR_ = os.path.join(_ROOT_, 'conf')
+_DEVLIST_DIR_ = os.path.join(_ROOT_, 'devlist')
+
+A_SIDE = os.path.abspath(os.path.join(_DEVLIST_DIR_, 'a-side'))
+B_SIDE = os.path.join(_DEVLIST_DIR_, 'b-side')
 
 Side = Literal[
     'a', 'b'
 ]
-
 
 notify_start = notify_end = None
 
@@ -83,8 +87,10 @@ class DevMon(object):
 
     def _load_agents(self):
         try:
-            A_SIDE_SNMPs, B_SIDE_SNMPs, A_SIDE_SSHs, B_SIDE_SSHs, MAINTAIN_DEVS = ReadAgents()
-        except TypeError as err:  # todo move config file definition in this file.
+            # A_SIDE_SNMPs, B_SIDE_SNMPs, A_SIDE_SSHs, B_SIDE_SSHs = ReadAgents()
+
+            A_SIDE_SNMPs, B_SIDE_SNMPs = read_snmp_agents(A_SIDE, B_SIDE)
+        except ValueError as err:
             raise err
 
         # define class attributes for SNMP agents from both a and b sides
@@ -316,11 +322,12 @@ class DevMon(object):
     def _notify(self):
         pass
 
-    def oid_to_case(self, snmp_agent: SNMPAgent = None,
-                     oid: OID = None,
-                     alert: bool = None,
-                     threshold: str = None,
-                     void: VOID = None) -> Case:
+    def oid_to_case(self,
+                    snmp_agent: SNMPAgent = None,
+                    oid: OID = None,
+                    alert: bool = None,
+                    threshold: str = None,
+                    void: VOID = None) -> Case:
         rid = snmp_agent.rid if snmp_agent.rid else self.find_rid(snmp_agent.addr_in_cmdb)
         rid = rid if rid else 'Null_Resource_ID'
 
@@ -329,6 +336,7 @@ class DevMon(object):
                f'alert [{alert}], threshold: [{threshold}],'
                f'void: [{void}], rid: [{rid}, source: [{self.source}')
         self._debug(f'{dbg}')
+
         return oid_to_case(snmp_agent=snmp_agent,
                            oid=oid,
                            alert=alert,
@@ -559,7 +567,7 @@ class DevMon(object):
     def _read_snmp_agent(self, agent: SNMPAgent,
                          perf: bool = False,
                          pm: bool = False,
-                         health: bool = False) -> list[tuple[SNMPAgent, OID, list[VOID]]]:
+                         alert: bool = False) -> list[tuple[SNMPAgent, OID, list[VOID]]]:
         # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
         snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
         agent_oid_voids = []
@@ -576,15 +584,20 @@ class DevMon(object):
             if pm and _oid.perf:
                 return None
 
-            if health and (_oid.perf or _oid.show):
+            if alert and (_oid.perf or _oid.show):
                 return None
 
-            _l_voids = snmp.read_oid_dc(_oid)
+            # _l_voids = snmp.read_oid_dc(_oid)
+            _l_voids = snmp.read(_oid)
             agent_oid_voids.append((agent, _oid, _l_voids)) if _l_voids else ''
 
-        threads = [Thread(target=__read_oid, args=(oid, )) for oid in agent.OIDs]
+        threads = [Thread(target=__read_oid, args=(oid,)) for oid in agent.OIDs]
         _ = [t.start() for t in threads]
         _ = [t.join() for t in threads]
+
+        # for detecting SNMPD stat
+        _snmpd_stat_oid = OID(table='sysSnmpdStat', label='sysSnmpdStat', description='SNMPD状态', reference='up')
+        agent_oid_voids.append((agent, _snmpd_stat_oid, snmp.read_snmp_stat()))
 
         return agent_oid_voids
 
@@ -593,7 +606,7 @@ class DevMon(object):
                           device: str = None,
                           perf: bool = False,
                           pm: bool = False,  # todo clean the pm, health, perf...
-                          health: bool = False) -> list[Case]:
+                          alert: bool = False) -> list[Case]:
         agents = None
 
         if side == 'a':
@@ -601,6 +614,9 @@ class DevMon(object):
 
         elif side == 'b':
             agents = self.b_side_snmps
+
+        elif not side:
+            agents = self.a_side_snmps + self.b_side_snmps
 
         elif device:
             for agt in self.a_side_snmps + self.b_side_snmps:
@@ -622,7 +638,7 @@ class DevMon(object):
         snmp_cases = []
 
         def read_agent(agent: SNMPAgent):
-            snmp_agents.extend(self._read_snmp_agent(agent, perf, pm, health))
+            snmp_agents.extend(self._read_snmp_agent(agent, perf, pm, alert))
             # The method already returns a list, so snmp_agents should extend rather than append.
             # The snmp_agent is a list of tuple, not a list of list.
 
@@ -630,19 +646,29 @@ class DevMon(object):
             snmp_cases.append(self._cre_snmp_case(_agent, _oid, _void))
 
         if multithread:
-            # r_threads = [Thread(target=self._read_snmp_agent, args=(agent, )) for agent in agents]
+            """
+            r_threads = [Thread(target=self._read_snmp_agent, args=(agent, )) for agent in agents]
+            """
             r_threads = [Thread(target=read_agent, args=(agent,)) for agent in agents]
             _ = [t.start() for t in r_threads]
             _ = [t.join() for t in r_threads]
 
             # for agent, oid, l_voids in self.snmp_agents:
-            for agent, oid, l_voids in snmp_agents:
-                for void in l_voids:
-                    # v_threads.append(Thread(target=self._cre_snmp_case, args=(agent, oid, void, )))
-                    v_threads.append(Thread(target=cre_cases, args=(agent, oid, void,)))
+            # for agent, oid, l_voids in snmp_agents:
+            #     # for void in l_voids:
+            #     #     v_threads.append(Thread(target=cre_cases, args=(agent, oid, void,)))
+            #     v_threads.extend([Thread(target=cre_cases, args=(agent, oid, void)) for void in l_voids])
 
-                # v_threads = [Thread(target=self._cre_snmp_case, args=(agent, snmp, oid, void, exclude_index, )) for void in l_voids]
-                # missing some void in l_voids .... # todo ?????
+            """
+                the last version:
+                v_threads = ([Thread(target=cre_cases, args=(agent, oid, void)) for void in l_voids])
+                missing some void in l_voids ...
+                
+                the reason is: 
+                in each 'snmp_agents' loop, v_threads is initiated with the new list value.
+                which means, it should be extended, NOT appended or initiated.
+                """
+            [v_threads.extend([Thread(target=cre_cases, args=(agent, oid, void,)) for void in l_voids]) for (agent, oid, l_voids) in snmp_agents]
 
             _ = [t.start() for t in v_threads]
             _ = [t.join() for t in v_threads]
@@ -656,7 +682,7 @@ class DevMon(object):
             for agent, oid, l_voids in snmp_agents:
                 for void in l_voids:
                     # self._cre_snmp_case(agent, oid, void)
-                    cre_cases(agent, oid, void)  # result already append
+                    cre_cases(agent, oid, void)  # the result already been appended
 
         # return self.snmp_cases
         return snmp_cases
@@ -670,17 +696,17 @@ class DevMon(object):
         """
         self._debug(f'Read SNMP agent: [{agent.address}], OID: [{oid}], Value: [{void}]')
 
-        index = void.index
+        # index = void.index
+        index = void.instance
         val = void.value
-        related_val = void.desc
+        # related_val = void.desc
+        related_val = void.objectname
         reference = void.reference if void.reference else oid.reference
-
         alert: bool = False
         threshold = None
-        self._debug(f'Reset [alert], [case_desc] & [threshold] to default value.')
 
         if not val:
-            self._debug(f'Address [{agent.address} OID [{oid}] got a None value.')
+            self._debug(f'device [{agent.address} got a None-type OID value [{oid}, {void}].')
             return Case()  # todo
 
         if oid.watermark:  # the value of OID has a watermark
@@ -711,16 +737,16 @@ class DevMon(object):
                 if low <= val < high:  # abnormal
                     alert = True
 
-            msg = f'Read OID: [id: {oid.id} or range: {oid.id_range}], index: [{index}], value: [{val}], watermark: [{oid.watermark}]'
+            msg = f'Read OID: [table: {oid.table} or group: {oid.group}], index: [{index}], value: [{val}], watermark: [{oid.watermark}]'
             self._info(msg)
 
         # elif oid.reference or oid.read_ref_from:  # the value of OID has a reference
         elif reference:
             threshold = reference
-            if not str(val) in str(threshold):  # abnormal  # todo waiting for been verified with multiple reference
+            if not str(val) in str(threshold):  # abnormal
                 alert = True  # alert has a default value 'False'
 
-            msg = f'Read OID: [id: {oid.id} or range: {oid.id_range}, index {index}, value: {val}, related symbol: {related_val}, threshold: {threshold}]'
+            msg = f'Read OID: [table: {oid.table} or group: {oid.group}, index {index}, value: {val}, related symbol: {related_val}, threshold: {threshold}]'
             self._info(msg)
 
         case = self.oid_to_case(snmp_agent=agent,
@@ -781,10 +807,12 @@ class DevMon(object):
                     l_event.append(case_in_mongo[key])
                 except KeyError:
                     l_event.append('')
-        except TypeError:  # case_in_mongo not exist or met wrong input
-            pass
 
-        event = f'{self.event_delimiter}'.join(l_event)
+            event = f'{self.event_delimiter}'.join(l_event)
+
+        except TypeError:  # case_in_mongo not exist or met wrong input
+            event = ''
+            self._error(f'met [TypeError] with case [{case_in_mongo}')
 
         return case_in_mongo['id'], event
 
@@ -826,11 +854,9 @@ class DevMon(object):
         """
         push all exist alert cases (not published before) to rsyslog server
         """
-        threads = [Thread(target=self.push_alert, args=(cid, event,)) for cid, event in
-                   self.create_events(self.filter_alerts_not_published())]
+        threads = [Thread(target=self.push_alert, args=(cid, event,)) for cid, event in self.create_events(self.filter_alerts_not_published())]
         _ = [t.start() for t in threads]
         _ = [t.join() for t in threads]
-        # return [self.push_alert(cid, event) for cid, event in self.create_events(self.filter_alerts_not_published())]
 
     def push_all_recoveries(self):
         """
@@ -845,7 +871,6 @@ class DevMon(object):
         """
         show all exist alert cases (both published or not) to rsyslog server instead of push them
         """
-        count = 0
         print('-' * 50, f'{"Alert Published Cases":^25s}', '-' * 50)
 
         def print_alert(_alerts: list[dict] = None):
@@ -884,7 +909,6 @@ class DevMon(object):
         #     print(f'|{count:2d}. Case: {cid} Stat: {pub_stat:9s} Event: {event}')
         print('-' * 127)
 
-        count = 0
         print('-' * 50, f'{"Alert not Published":^25s}', '-' * 50)
         print_alert(self.filter_alerts_not_published())
         # for alert in self.filter_alerts_not_published():
@@ -916,7 +940,7 @@ class DevMon(object):
 
     def close_case(self, case_id: str = None, content: str = None, current_value: str = None):
         """
-        What case in 'close case' means:
+        where case in 'close case' means:
         1. the type of case is 1
         2. already pushed alert event to rsyslog server
 
@@ -1014,34 +1038,46 @@ class DevMon(object):
 
         return True if b_rtn else False
 
-    def run(self, show: bool = True):
+    def alert(self, show: bool = True):
 
         multithread = self.multithread
         a2b_interval_in_sec = self.interval
+        alert = True
 
         start = perf_counter()
-        a_snmp_cases = self.create_snmp_cases('a', multithread)
-        self._info(f'All A side snmp agents checked, spent {perf_counter() - start:.2f} seconds.')
+        a_snmp_cases = self.create_snmp_cases('a', multithread=multithread, alert=alert)
+        self._info(f'All A side snmp agents checked, spent {perf_counter() - start:.2f} seconds, '
+                   f'multi-threading [{multithread}]')
 
         start = perf_counter()
         self.multi_insert_cases(a_snmp_cases) if multithread else self.insert_cases(a_snmp_cases)
-        self._info(f'All A side snmp cases inserted to MongoDB, spent {perf_counter() - start:.2f} seconds.')
+        self._info(f'All A side snmp cases inserted to MongoDB, '
+                   f'spent {perf_counter() - start:.2f} seconds, '
+                   f'multi-threading [{multithread}]')
 
         time.sleep(a2b_interval_in_sec)
 
         start = perf_counter()
-        b_snmp_cases = self.create_snmp_cases('b', multithread)
-        self._info(f'All B side snmp agents checked, spent {perf_counter() - start:.2f} seconds.')
+        b_snmp_cases = self.create_snmp_cases('b', multithread=multithread, alert=alert)
+        self._info(f'All B side snmp agents checked, '
+                   f'spent {perf_counter() - start:.2f} seconds, '
+                   f'multi-threading [{multithread}]')
 
         start = perf_counter()
-        self.insert_cases(b_snmp_cases)
-        self._info(f'All B side snmp cases inserted to MongoDB, spent {perf_counter() - start:.2f} seconds.')
+        self.multi_insert_cases(b_snmp_cases) if multithread else self.insert_cases(a_snmp_cases)
+        self._info(f'All B side snmp cases inserted to MongoDB, '
+                   f'spent {perf_counter() - start:.2f} seconds, '
+                   f'multi-threading [{multithread}]')
 
+        start = perf_counter()
         self.push_all_alerts()
         self.push_all_recoveries()
+        self._info(f'All cases pushed to remote syslog server, '
+                   f'spent {perf_counter() - start:.2f} seconds')
+
         self.show_all_alerts() if show else None
 
-    def service_run(self):
+    def service_alert(self):
         """
         Running the tool as a Linux service.
         Checking the status of failed device each 'interval' time.
@@ -1052,7 +1088,7 @@ class DevMon(object):
             patrol = 300
 
         while True:
-            self.run(show=False)
+            self.alert(show=False)
             time.sleep(patrol)
 
     def sync_rid(self):
@@ -1113,7 +1149,7 @@ class DevMon(object):
                 influx_points.append(self.influx.void_to_point(_agent, _oid, _l_void)) if influx else None
 
         # Gather time series points with multiple threading
-        threads = [Thread(target=_gather_points, args=(agent, )) for agent in agents]
+        threads = [Thread(target=_gather_points, args=(agent,)) for agent in agents]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -1149,6 +1185,13 @@ class DevMon(object):
             mongo_points, influx_points = self._perf_gather(device, mongo, influx)
             self._perf_insert(mongo_points=mongo_points, influx_points=influx_points, mongo=mongo, influx=influx)
             time.sleep(perf_interval_sec)
+
+    def test(self):
+        self.refresh_config(init_mongo=False, init_influx=False, service=False)
+        for agent in self.a_side_snmps + self.b_side_snmps:
+            snmp = SNMP(agent)
+            for oid in agent.OIDs:
+                print(snmp.read(oid=oid))
 
     def pm_snmp(self, device: str = None):
         """
@@ -1190,6 +1233,8 @@ class DevMon(object):
                 err = f'{c.void.value} {c.void.unit}' if c.void.unit else c.void.value
 
             label = c.oid.label
+            self._warn(f'Met a NoneType label: {label}, oid: {c.oid}') if label else None
+            label = label if label else 'None'
 
             try:
                 all_stats[c.address][label]['alert'] += faulty
@@ -1245,20 +1290,19 @@ class DevMon(object):
 
 if __name__ == '__main__':
     USAGE = (f'Usage: \n'
-             f'  {sys.argv[0]} alert [-s | --service]  # one-time run or as a service \n'
+             f'  {sys.argv[0]} alert [-s | --service]  # one-time alert or as a service \n'
              f'  {sys.argv[0]} query \n'
              f'  {sys.argv[0]} sync  # syncing resources ID from CMDB to MongoDB \n'
              f'  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n'
-             
+
              f'  {sys.argv[0]} pm [device] \n'
-             
+
              f'  {sys.argv[0]} perf [-s | --service] # run performance checking\n'
-             
+
              f'  {sys.argv[0]} hide PASSWORD  # converting password to strings \n'
              f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.')
 
     devmon = DevMon()
-
     act = opt = None
     try:
         act = sys.argv[1]
@@ -1272,10 +1316,10 @@ if __name__ == '__main__':
         try:
             if sys.argv[2] in ['-s', '--service']:
                 devmon.refresh_config(init_mongo=True, service=True)
-                devmon.service_run()
+                devmon.service_alert()
         except IndexError:
             devmon.refresh_config(init_mongo=True)
-            devmon.run()  # add a sleep interval
+            devmon.alert()  # add a sleep interval
 
     elif act == 'pm':
         try:

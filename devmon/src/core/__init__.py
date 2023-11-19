@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 try:
-    from read_devlist import ReadAgents
+    from read_devlist import read_snmp_agents
     from snmp import SNMP, ContextSNMP
     from log import ColorLogger
     from pushmsg import PushMsg
@@ -11,7 +11,7 @@ try:
     from encrypt import HidePass
     from influx import InfluxDB
 except (ModuleNotFoundError, ImportError):
-    from .read_devlist import ReadAgents
+    from .read_devlist import read_snmp_agents
     from .snmp import SNMP, ContextSNMP
     from .log import ColorLogger
     from .pushmsg import PushMsg
@@ -23,7 +23,6 @@ except (ModuleNotFoundError, ImportError):
 
 
 __all__ = [
-    'ReadAgents',
     'SNMP',
     'ColorLogger',
     'PushMsg',
@@ -33,6 +32,7 @@ __all__ = [
     'oid_to_case',
     'HidePass',
     'MongoPoint',
-    'InfluxDB'
+    'InfluxDB',
+    'read_snmp_agents'
 ]
 

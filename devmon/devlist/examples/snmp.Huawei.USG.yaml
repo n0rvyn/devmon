@@ -1,11 +1,11 @@
 ---
-# https://info.support.huawei.com/info-finder/search-center/zh/enterprise/routers/usg6655e-pid-250510928/mib?keyword=hwEntityStandbyStatus
+# https://info.support.huawei.com/info-finder/search-center/zh/enterprise/routers/usg6655e-ptable-250510928/mib?keyword=hwEntityStandbyStatus
 # device address which runs SNMP agent
 address: USG_MGMT_ADDR  # the address which been listened to by SNMP Daemon
 region: DataCenter  # the region of device, e.g., DCA, DCB, DataCenterA...
 area: Proc  # the business area
 addr_in_cmdb: ADDRESS  # the address which related with Resource ID in CMDB
-rid: 'This is Resource ID'
+rtable: 'This is Resource ID'
 snmp:
   version: '2c'  # the SNMPD version
   community: 'public'  # the SNMPD community
@@ -45,7 +45,7 @@ snmp:
         '1': notSupported
         '2': hotStandby
         '3': coldStandby
-        '4': providingService
+        '4': provtableingService
     # Trunk member status
     - table: '5.25.41.1.4.1.1.6'
       label: 'hwTrunkOperstatus'

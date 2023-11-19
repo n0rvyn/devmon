@@ -4,7 +4,7 @@ address: IBM_SWITCH_ADDR  # the address which been listened to by SNMP Daemon
 region: DataCenterD  # The region of device, e.g., DCA, DCB, DataCenterA...
 area: Dev  # the business area
 addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
-rid: 'THis is Resource ID'
+rtable: 'THis is Resource ID'
 snmp:
   version: '3'  # the SNMPD version
   community: 'public'  # the SNMPD community
@@ -32,7 +32,7 @@ snmp:
       severity: '3'
     - table: '1.22.1.3'
       table_index: '1.22.1.1'
-      related_symbol: '1.22.1.5'
+      read_name_from: '1.22.1.5'
       label: 'SensorStat'
       description: '传感器状态'
       reference: '4'  # 1: unknown, 2: faulty, 3: below-min, 4: nominal, 5: above-max, 6: absent
@@ -48,7 +48,7 @@ snmp:
       table_index: '6.2.1.1'
       label: 'PortPhyStat'
       description: '交换机端口物理状态'
-      related_symbol: '6.2.1.36'
+      read_name_from: '6.2.1.36'
       reference: '6, 2, 4'
       enum:
         '1': 'noCard'
@@ -60,15 +60,15 @@ snmp:
         '7': 'portFault'  # The port is marked faulty (GBIC, cable, or device)
         '8': 'diagFault'
         '9': 'lockRef'
-        '10': 'validating'
-        '11': 'invalidModule'
+        '10': 'valtableating'
+        '11': 'invaltableModule'
         '14': 'noSigDet'
         '255': 'unknown'
     - table: '6.2.1.6'
       table_index: '6.2.1.1'
       label: 'PortLinkStat'
       description: '交换机端口连接状态'
-      related_symbol: '6.2.1.36'
+      read_name_from: '6.2.1.36'
       reference: '1'
       enum:
         '1': 'enable'
@@ -77,7 +77,7 @@ snmp:
       table_index: '6.2.1.1'
       label: 'PortOperateStat'
       description: '交换机端口操作状态'
-      related_symbol: '6.2.1.36'
+      read_name_from: '6.2.1.36'
       read_ref_from: '6.2.1.5'
       enum:
         '0': 'unknown'
@@ -87,35 +87,35 @@ snmp:
         '4': 'faulty'
     - table: '28.1.1.1'
       label: 'PortTemp'
-      related_symbol: '6.2.1.36'
+      read_name_from: '6.2.1.36'
       description: '交换机端口温度'
       watermark:
         low: -5
         high: 85
     - table: '28.1.1.2'
       label: 'PortVoltage'
-      related_symbol: '6.2.1.36'
+      read_name_from: '6.2.1.36'
       description: '交换机端口电压(mV)'
       watermark:
         low: 3000
         high: 3600
     - table: '28.1.1.3'
       label: 'PortCurrent'
-      related_symbol: '6.2.1.36'
+      read_name_from: '6.2.1.36'
       description: '交换机端口电流(mAmps)'
       watermark:
         low: 2.5
         high: 12
     - table: '28.1.1.4'
       label: 'PortRXPower'
-      related_symbol: '6.2.1.36'
+      read_name_from: '6.2.1.36'
       description: '交换机端口接收功率'
       watermark:
         low: -15
         high: 60
     - table: '28.1.1.5'  # .6 --> power hours table
       label: 'PortTXPower'
-      related_symbol: '6.2.1.36'
+      read_name_from: '6.2.1.36'
       description: '交换机端口发送功率'
       watermark:
         low: -15

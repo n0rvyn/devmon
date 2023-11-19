@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from .snmpagent import Version, OutOpts, SNMPAgent
 from .sshagent import SSHAgent
-from .oid import OID, WaterMark, OIDType, ArithType, VOID, IDRange
+from .oid import OID, WaterMark, OIDType, ArithType, VOID, IDRange, ArithPosition
 from .case import Case, CaseType, TheSameCasePart, CaseUpdatePart
 from .sshcmd import LineCmd, DelmtIndexType, KeyValuePair, LineFeature
 from .event import EventType
@@ -21,6 +21,7 @@ __all__ = [
     'Case',
     'CaseType',
     'ArithType',
+    'ArithPosition',
     'TheSameCasePart',
     'CaseUpdatePart',
     'LineCmd',

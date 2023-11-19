@@ -29,7 +29,7 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
     """
     Creating Case() object which based on SNMPAgent, OID and other information.
     # h = hashlib.shake_256(a.encode())
-    # h.hexdigest(10)
+    # h.hex digest(10)
     """
     if not void.value:
         return Case()
@@ -39,10 +39,9 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
     # else:
     #     obj = f'{oid.label}'
 
-    # todo deleting in the future version
-    oid.description = oid.explanation if not oid.description else oid.description
-    label = oid.label if oid.label else ''
-    identifier = void.identifier if void.identifier else ''
+    # oid.description = oid.explanation if not oid.description else oid.description
+    # label = oid.label if oid.label else ''
+    identifier = void.objectname if void.objectname else ''
     description = oid.description
 
     def _trans_enum(_agent: SNMPAgent = None, _oid: OID = None, _entry: str = None, delimiter: str = ','):
@@ -70,15 +69,19 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
         val = void.value
         thd = threshold
 
-    threshold = thd
-    value = val  # void of modifying the rest of the code
+    threshold = thd if thd else threshold
+    # void of modifying the rest of the code
+    value = val if val else void.value
+
+    msg = oid.alert if alert else oid.recovery
 
     # if void.desc:
     #     content = f'{void.desc}，{oid.description}{oid.alert}，阈值{threshold}，当前值{void.value}。'
     # else:
     #     content = f'{oid.explanation}{oid.alert}，阈值{threshold}，当前值{void.value}。'  # todo device only has index, no name available.
 
-    content = f'{identifier}，{description}{oid.alert}，阈值{threshold}，当前值{value}。'
+    # content = f'{identifier}，{description}{oid.alert}，阈值{threshold}，当前值{value}。'
+    content = f'{identifier}，{description}{msg}，阈值{threshold}，当前值{value}。'
     current_val = f'当前值{value}'
 
     # rid = snmp_agent.rid if snmp_agent.rid else self.find_rid(snmp_agent.addr_in_cmdb)
@@ -93,7 +96,7 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
                            sources=source,
                            description=description,
                            threshold=f'{threshold}',
-                           index=void.index,
+                           index=void.instance,
                            address=snmp_agent.address)
 
     try:
@@ -103,7 +106,7 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
 
     b_core = s_core.encode()
     h = hashlib.shake_128(b_core)
-    cid = h.hexdigest(20)
+    cid = h.hexdigest(25)
 
     attach = CaseUpdatePart(count=1, alert=alert, content=content, current_value=current_val)
 
@@ -113,4 +116,5 @@ def oid_to_case(snmp_agent: SNMPAgent = None,
 
     for key, value in asdict(attach).items():
         case.__setattr__(key, value)
+
     return case

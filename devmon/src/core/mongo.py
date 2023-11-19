@@ -20,7 +20,7 @@ from pymongo.server_api import ServerApi
 from pymongo import errors
 from threading import Thread
 from type import PointMeta, Point, SNMPAgent, VOID, OID
-from datetime import datetime, timezone
+from datetime import datetime
 import pytz
 
 
@@ -161,6 +161,10 @@ if __name__ == '__main__':
     URI = "mongodb://localhost:27017"
     m = MongoDB(uri=URI, database='devmon', collection='devmon')
 
-    print(m.update_value('id', 'Pb6kI1jbvn1BglKq7Tt6', 'attach.visible', False))
-    m.update_dict({'id': 'DKmAQW3Ax7q1uFmsf8W8'}, {'core.rid': 'rid', 'core.area': 'Skydfdfdf', 'null': '11111'})
+    print(m.update_value('id',
+                         'Pb6kI11BglKq7Tt6',
+                         'attach.visible', False))
+    m.update_dict({'id': 'DKmAQW3Ax7q1uf8W8'},
+                  {'core.rid': 'rid', 'core.area': 'Sky', 'null': '11111'})
+
 

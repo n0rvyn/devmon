@@ -35,14 +35,15 @@ influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5oTWk2ZVR3dU1QRlRpMXAzSmp5UnNPeVdwN
 # token for of
 # influx_url: "http://localhost:8086"
 # influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5NUVJ4YTF0MUpCb2xNWFZteUZlZC1oVWRJRlBFWmtuMkl6eTJRZk4teU1lWF9MbTlhZ2g5b0J0UG5zUWg3YkpOeWo4ODFjeHdyT1FndnpSQmJ3YklLZz09'
-influx_org: 'orgs'
 
+influx_org: 'orgs'
 influx_database: 'devmon'
 
 
 # Remote log server (str) and port (int)
 rlog_server: 'localhost'
-rlog_port: 514
+# rlog_port: 514
+rlog_port: 10514
 
 # Notify windows, format: HH:MM-HH:MM
 notify_window: 8:00-18:00
@@ -58,7 +59,7 @@ multithread: True
 # waiting for seconds to read b-side SNMP agents after a-side finished
 interval: 0
 
-# the duration of minutes to run the next preventive maintenance
+# the duration of minutes to run the next checking
 patrol: 5
 
 # event: list = [

@@ -6,26 +6,25 @@ _SRC_ = os.path.abspath(os.path.join(_ROOT_, 'src'))
 
 
 try:
-    from type import (SNMPAgent, VOID, OIDType, OID,
+    from type import (SNMPAgent, VOID, OIDType, OID, ArithPosition,
                       OutOpts, Version, Case, TheSameCasePart,
                       CaseUpdatePart, EventType, Point, PointMeta)
-    from core import (SNMP, ReadAgents, ColorLogger, oid_to_case,
+    from core import (SNMP, ColorLogger, oid_to_case,
                       PushMsg, MongoDB, CMDB, ContextSNMP, HidePass,
-                      MongoPoint, InfluxDB)
+                      MongoPoint, InfluxDB, read_snmp_agents)
 except ModuleNotFoundError:
-    from .type import (SNMPAgent, VOID, OIDType, OID,
+    from .type import (SNMPAgent, VOID, OIDType, OID, ArithPosition,
                        OutOpts, Version, Case, TheSameCasePart,
                        CaseUpdatePart, EventType, Point, PointMeta)
-    from .core import (SNMP, ReadAgents, ColorLogger, oid_to_case,
+    from .core import (SNMP, ColorLogger, oid_to_case,
                        PushMsg, MongoDB, CMDB, ContextSNMP, HidePass,
-                       MongoPoint, InfluxDB)
+                       MongoPoint, InfluxDB, read_snmp_agents)
 
 
 __all__ = [
     'SNMPAgent',
     'SNMP',
     'ColorLogger',
-    'ReadAgents',
     'PushMsg',
     'oid_to_case',
     'MongoDB',
@@ -41,7 +40,9 @@ __all__ = [
     'Point',
     'PointMeta',
     'MongoPoint',
-    'InfluxDB'
+    'InfluxDB',
+    'read_snmp_agents',
+    'ArithPosition'
 ]
 
 

@@ -13,7 +13,7 @@ area: SomeArea
 # 设备在CMDB中录入IP，用于关联CMDB中资源ID，必选项
 addr_in_cmdb: SomeAddr
 # 手动指定资源ID，如无此字段，则尝试在MongoDB(需先同步) 对应表中查找，可选项，数量少建议手动查找指定。
-rid: 'THis is resource ID'
+rtable: 'THis is resource ID'
 # 每个厂家有对应的OID，为缩短下属OID定义，可以将共有的部分添加为‘base’
 base: '1.a.b.c.d'
 # 参考值转义字典；单个OID中的定义会覆写全局定义。
@@ -41,7 +41,7 @@ snmp:
   retries: 1
   # OID关联配置
   OIDs:
-  # 以单个OID定义，id_range, table, group三必选一 ('id' is deprecated, single OID can be specified with a 'table')
+  # 以单个OID定义，table, group三必选一 ('table' is deprecated, single OID can be specified with a 'table')
     - table: '1.22.1.3'
       # OID标签，用于巡检展示分类（建议字符不宜过长），必选项
       label: SystemStat
@@ -59,25 +59,15 @@ snmp:
         '1': 'Online'
         '2': 'Offline'
         '3': 'Unknown'
-    # 以OID范围定义
-    - id_range:
-        # OID开始值，如果不以.1(为例)结尾，则默认起始索引为1，以id_range定义必选项
-        start: 'ifOperStatus.1'
-        # OID范围内的总数量，或以 'end' 关键字为终止ID，与'end'二必选一
-        count: 31  # the number of the OID range
-        # end: 'ifOperStatus.3'
-      label: 'NetworkInterface'
-      description: '网卡状态'
-      # OID名称或者描述需从其它OID读取的，则定义'related_symbol'，索引自动参考当前OID
-      # 注意：不以索引号结尾！！！
-      # 根据需要配置，可选。
-      related_symbol: 'IF-MIB::ifDescr'
-      reference: 'up(1)'  # a reference value which been considered as normal stat
     # 列表定义OID，OID为列表入口(table entry)，三必选一
     - table: 'hrStorageUsed'
       # 需读取当前索引号的OID列表入口，可选项
       table_index: 'hrStorageIndex'
       label: 'Storage Used Percent'
+      # OID名称或者描述需从其它OID读取的，则定义'read_name_from'，索引自动参考当前OID
+      # 注意：不以索引号结尾！！！
+      # 根据需要配置，可选。
+      reference: 'up(1)'  # a reference value which been constableered as normal stat
       description: '存储设备使用率'
       # 用于拼凑告警内容，可选，有默认值。
       alert: '严重异常，请管理员务必关注！'
@@ -90,13 +80,13 @@ snmp:
         - 'loop'
         - 'dm'
       # 同上，读取OID实际名称或者描述，可选。
-      related_symbol: 'hrStorageDescr'
+      read_name_from: 'hrStorageDescr'
       # 取值需计算，例如存储百分比，可选。
       arithmetic: '%'
-      # 算术另一元的OID列表入口，'arithmetic', 'arith_symbol', 'arith_pos'三者在则同在，不在则都不在
-      arith_symbol: 'hrStorageSize'
+      # 算术另一元的OID列表入口，'arithmetic', 'read_arith_value_from', 'arith_position'三者在则同在，不在则都不在
+      read_arith_value_from: 'hrStorageSize'
       # 额外取值的OID处于算术符号的位置（1或者2），1在前，2在后
-      arith_pos: 2
+      arith_position: 2
       # OID结果需比对阈值（或者限制值）范围，与参考值二必选一。
       watermark:
         low: -1
@@ -110,7 +100,7 @@ snmp:
     - table: 'hrSWRunPerfCPU'  # OID为table入口
       table_index: 'hrSWRunIndex'
       label: 'SW Running CPU Stat'  # OID标签，用来在MongoDB中查询字段db.collection.find({"metadata.label": "标签内容"})
-      related_symbol: 'hrSWRunName'  # 用来提取每个OID对应的名称，不定义则默认从OID中读取最后一个非数字的字符串
+      read_name_from: 'hrSWRunName'  # 用来提取每个OID对应的名称，不定义则默认从OID中读取最后一个非数字的字符串
       perf: True  # 标识该OID定义为性能收集
     # System Available Memory
     - table: 'memSysAvail'  # 单个OID定义
@@ -119,7 +109,7 @@ snmp:
     - table: 'ssCpuIdle'
       label: 'CPU IDLE'
       perf: True
-    # a set of IDs share the same 'label', 'related_symbol' ...
+    # a set of IDs share the same 'label', 'read_name_from' ...
     - group:  # 相关的单个OID以组收集（共享同一个标签，方便在MongoDB查询时以组绘制看板）
         - 'memSysAvail'
         - 'memSysTotal'

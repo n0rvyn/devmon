@@ -5,7 +5,7 @@
 ---data type for OID
 """
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Any
 
 
 OIDType = Literal[
@@ -37,54 +37,105 @@ ArithType = Literal[
 ]
 
 
-ArithPos = Literal[
+ArithPosition = Literal[
     1, 2
 ]
 
 
 @dataclass
 class OID:
-    id:                str = None   # Both single OID and OID table entry is allowed. Deprecated, will be deleted in the future version
-    id_range:      IDRange = None
-    table:             str = None
-    group:       list[str] = None   # A set of OIDs; when collecting perf data, insert these values in one document.
-    table_index:       str = None   # An oid table for reading index from
-    # Adding index value as oid name's suffix. It's useful when determining a PID number with oid 'hrSWRunName'.
-    show_index:       bool = False
-    # an OID which used to read the id, id_range, table or group's name from;
-    # when the value of this parameter ends with an '.index', read the same name for (all the) id, id_range, table or group;
-    # when nothing index were given to this parameter, read the names with different indexes the same with the OID;
-    related_symbol:    str = None
-    exclude_index:     str = None  # OIDs' index excluded for some discontinuous OID table; for oid -> snmp.py line: 214
-    exclude_value:     str = None  # exclude values from values' list; for table -> snmp.py line: 452
-    exclude_keywords: list = None  # the value contains the keywords will be ignored.
-    label:             str = None  # the label of the OID, e.g., CPU, Memory, Fan... for identifying the group in Time Series DataBase
-    explanation:       str = None  # the meaning of OID  # todo delete in the future version when no YAMLs contains this argument.
-    description:       str = None  # the meaning of OID
-    alert:             str = "异常，请关注"  # the suffix of an alert
-    severity:     CaseServ = '1'
-    reference:         str = None  # -oe no symbol label for enum values  # todo
-    read_ref_from:     str = None  # read reference from another OID
-    watermark:   WaterMark = None
-    arithmetic:  ArithType = None
-    arith_symbol:      str = None
-    arith_pos:    ArithPos = 2      # a / b; b takes the position of 2
-    enum:             dict = None   # transform int values to human-readable iterm
-    perf:             bool = False  # set to True to calculate performance of OID
-    show:             bool = False  # set to True to show the value ONLY
-    unit:              str = None   # the unit of the value
-    # file: devmon.py line: 258
+    """
+    Belows will be deprecated in the future version
+    """
+    # explanation: str = None
+    # related_symbol:    str = None
+    # arith_symbol: str = None
+    # arith_pos: ArithPosition = 2 # a / b; b takes the position of 2
+    # table_index: str = None
+    # End of deprecation
 
-    # todo add support for OID values need to be combined
-    # todo add support for OID values need to be arithmetic with more than 2 values.
+    # an OID table entry, or many OIDs as a group (list)
+    table: str = None
+    group: list[str] = None   # A set of OIDs; when collecting perf data, insert these values in one document.
+
+    # a single OID or OID table for reading the last subidentifier (index) from
+    read_index_from: str = None   # An oid table for reading index from  # todo add or not ??
+    # Adding index value as oid name's suffix. It's useful when determining a PID number with oid 'hrSWRunName'.
+    show_index: bool = False
+
+    # a single OID or OID table for reading the names or descriptions from
+    read_name_from: str = None
+
+    # parameters for excluding index, value or keywords from OID(s) or OID values
+    exclude_index: str = None  # OIDs' index excluded for some discontinuous OID table; for oid -> snmp.py line: 214
+    exclude_value: str = None  # exclude values from values' list; for table -> snmp.py line: 452
+    exclude_keywords: list = None  # the value contains the keywords will be ignored.
+
+    # a group name of a set of OID values, for filter values in the Time Series Database;
+    # 1. using as a tag of InfluxDB's Point, or metadata label of MongoDB Time Series Collection;
+    # 2. using as a title the of pm method;
+    label: str = None
+
+    # the description of the OID, for mixed up an alert message
+    description: str = None
+    alert: str = "异常，请关注"
+    recovery: str = '已恢复'
+
+    # the level of an alert message, '1', '3' or '5'
+    severity: CaseServ = '1'
+
+    # the reference of the OID value, any other values will trigger an alert
+    reference: str = None
+    # need to read reference value from another OID,
+    # e.g., a switch's port has both operator stat and admin stat,
+    # we read the admin state as a value and the operator stat as a reference
+    read_ref_from: str = None
+
+    # the OID value is in a range
+    watermark: WaterMark = None
+
+    # calculating OID value with another one specified
+    arithmetic: ArithType = None
+    # for 'str' type, only '+' arithmetic is available
+    arith_value: Any = None
+    read_arith_value_from: str = None
+    arith_position: ArithPosition = 2
+    # TODO add support for OID values need to be arithmetic with more than 2 values.
+
+    # transform the numeric values to human-readable strings
+    enum: dict = None
+
+    # when set to True, the OID is just used for calculating performance data
+    perf: bool = False
+
+    # when set to True, the OID is only used for display messages executing the pm method
+    show: bool = False
+
+    # specifying a unit for the OID value
+    unit: str = None
 
 
 @dataclass
+# class OIDValue:
 class VOID:
-    index:      str = None  # TODO figure out if this parameter is necessary!!!
-    desc:       str = None  # todo delete in the future version
-    identifier: str = None  # TODO give this parameter a value no matter what happened
-    value:      str = None
-    reference:  str = None
-    unit:       str = None
+    objectname: str = None
+    instance: str = None
+    subtype: str = None
+    value: str = None
+    reference: str = None
+    unit: str = None
+
+
+# @dataclass
+# class VOID(OIDValue):
+#     index = OIDValue.instance
+#     desc = OIDValue.objectname
+#     identifier: OIDValue.objectname
+#     subtype = OIDValue.subtype
+#     value: str = None
+#     reference: str = None
+#     unit: str = None
+
+
+
 

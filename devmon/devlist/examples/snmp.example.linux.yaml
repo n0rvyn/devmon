@@ -4,7 +4,7 @@ address: SomeAddress  # the address which been listened to by SNMP Daemon
 region: SomeRegion  # The region of device, e.g., DCA, DCB, DataCenterA...
 area: SomeArea  # the business area
 addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
-rid: 'THis is resource ID'
+rtable: 'THis is resource ID'
 snmp:
   version: '2c'  # the SNMPD version
   community: 'public'  # the SNMPD community
@@ -20,69 +20,72 @@ snmp:
       description: '内存大小'
       unit: KiB
       show: True
-    - id_range:
-        start: 'ifOperStatus.1'  # the base part of an OID range
-        count: 31  # the number of the OID range
+    - table: 'ifOperStatus'  # the base part of an OID range
       label: 'NetworkInterface'
       description: '网卡状态'
-      related_symbol: 'ifDescr'  # OID symbol to fetch a related name
-      exclude_value: 'br0, virbr0'
-      reference: 'up(1)'  # a reference value which been considered as normal stat
+      read_name_from: 'ifDescr'  # OID symbol to fetch a related name
+      exclude_keywords:
+        - 'lo'
+        - 'sit0'
+        - 'virbr0'
+        - 'br0'
+      enum:
+        '1': 'up(1)'
+        '2': 'down(2)'
+      reference: 'up(1)'  # a reference value which been constableered as normal stat
     - table: 'hrStorageUsed'
       table_index: 'hrStorageIndex'
       label: 'StorageUsedPercent'
       description: '存储设备使用率'
       exclude_index: '7, 8, 10, 11, 37, 38, 41, 72'
       exclude_value: 'Physical memory, Cached memory, Shared memory, /dev/shm, Available memory'
-      related_symbol: 'hrStorageDescr'
+      exclude_keywords:
+        - 'media'
+      read_name_from: 'hrStorageDescr'
       arithmetic: '%'
-      arith_symbol: 'hrStorageSize'
-      arith_pos: 2
+      read_arith_value_from: 'hrStorageSize'
+      arith_position: 2
       watermark:
         low: -1
-        high: 80
+        high: 85
     # OID configuration for Memory Usage Percent
-    - table: 'memSysAvail.0'
+    - table: 'memSysAvail'
       label: 'MemoryFreePercent'
       description: '内存使用率'
-      arith_symbol: 'memTotalRealX'
+      read_arith_value_from: 'memTotalRealX'
       arithmetic: '%'
-      arith_pos: 2
+      arith_position: 2
       watermark:
         low: 0
         high: 20
         restricted: True
-    - table: 'ssCpuNumCpus.0'
+    - table: 'ssCpuNumCpus'
       label: 'CpuNum'
       description: 'CPU数量'
       reference: '4'
     - table: 'memAvailSwap.0'
       label: 'SWAPAvailablePercent'
       description: '交换空间使用率'
-      arith_symbol: 'memTotalSwap'
+      read_arith_value_from: 'memTotalSwap'
       arithmetic: '%'
-      arith_pos: 2
+      arith_position: 2
       watermark:
         low: 80
         high: 100
-    - id_range:
-        start: 'diskIOLA15.1'
-        end: 'diskIOLA15.32'
+    - table: 'diskIOLA15'
       label: 'Disk I/O Load 15(min) Avg'
       description: '硬盘I/O负载15分钟平均值'
-      related_symbol: 'diskIODevice'
+      read_name_from: 'diskIODevice'
       severity: '1'
       watermark:
         low: 50
         high: 80
         restricted: True
-    - id_range:
-        start: 'diskIOLA15.1'
-        end: 'diskIOLA15.32'
+    - table: 'diskIOLA15'
       label: 'Disk I/O Load 15(min) Avg'
       description: '硬盘I/O负载15分钟平均值'
       alert: '严重异常，请管理员务必关注！'
-      related_symbol: 'diskIODevice'
+      read_name_from: 'diskIODevice'
       severity: '3'
       watermark:
         low: 80
@@ -90,7 +93,7 @@ snmp:
         # when set to True, an alert will be sent when the value is between 'low' and 'high'
         # otherwise, a value out of the scope will generate an alert
         restricted: True
-    - table: 'ssCpuIdle.0'
+    - table: 'ssCpuIdle'
       label: 'CPU Idle'
       description: 'CPU空闲率'
       severity: '1'
@@ -102,7 +105,7 @@ snmp:
       table_index: 'hrSWRunIndex'
       show_index: True
       label: 'swRunningCpuStat'
-      related_symbol: 'hrSWRunName'
+      read_name_from: 'hrSWRunName'
       unit: 'centi-second'
       perf: True
     - table: 'hrSWRunPerfMem'
@@ -110,7 +113,7 @@ snmp:
       show_index: True
       label: 'swRunningMemStat'
       unit: 'KB'
-      related_symbol: 'hrSWRunName'
+      read_name_from: 'hrSWRunName'
       perf: True
     - group:
         - 'diskIONRead'
@@ -119,7 +122,7 @@ snmp:
         - 'diskIONWrittenX'
       table_index: 'diskIOIndex'
       label: 'diskIoRWStat'
-      related_symbol: 'diskIODevice'
+      read_name_from: 'diskIODevice'
       unit: bytes
       perf: True
     - group:
@@ -127,7 +130,7 @@ snmp:
         - 'diskIOWrites'
       table_index: 'diskIOIndex'
       label: 'diskIoAccessStat'
-      related_symbol: 'diskIODevice'
+      read_name_from: 'diskIODevice'
       unit: number
       perf: True
     - group:
@@ -139,7 +142,7 @@ snmp:
         - loop
         - dm
       label: 'diskIoLoadStat'
-      related_symbol: 'diskIODevice'
+      read_name_from: 'diskIODevice'
       unit: percent
       perf: True
     - group:
@@ -155,8 +158,12 @@ snmp:
         - ifSpeed
       table_index: 'ifIndex'
       label: 'sysInterfaceStat'
-      exclude_value: 'lo, sit0, virbr0, br0'
-      related_symbol: 'ifName'
+      exclude_keywords:
+        - 'lo'
+        - 'sit0'
+        - 'virbr0'
+        - 'br0'
+      read_name_from: 'ifName'
       perf: True
     - group:
         - 'ssSwapIn'

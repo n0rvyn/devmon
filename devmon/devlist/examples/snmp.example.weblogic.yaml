@@ -4,7 +4,7 @@ address: WLS_Address  # the address which been listened to by SNMP Daemon
 region: SomeRegion  # The region of device, e.g., DCA, DCB, DataCenterA...
 area: SomeArea  # the business area
 addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
-rid: 'THis is resource ID'
+rtable: 'THis is resource ID'
 snmp:
   version: '2c'  # the SNMPD version
   community: 'public'  # the SNMPD community
@@ -27,16 +27,16 @@ snmp:
       reference: 'RUNNING'
     - table: '625.361.1.25.16'
       label: 'serverLifeCycleRuntimeState'
-      related_symbol: '625.361.1.15.16'
+      read_name_from: '625.361.1.15.16'
       description: '服务运行时状态'
       reference: 'RUNNING'
     - table: '625.455.1.144.16'
       label: 'connectorConnectionPoolRuntimeConnectionLeakProfileCount'
-      related_symbol: '625.955.1.9.16'
+      read_name_from: '625.955.1.9.16'
       description: 'datasourceLeakedConnection'
       reference: '0'
     - table: '625.455.1.157.16'
       label: 'connectorConnectionPoolRuntimeState'
-      related_symbol: '.625.455.1.30.16'
+      read_name_from: '.625.455.1.30.16'
       description: 'poolRuntimeState'
       reference: 'Running'
