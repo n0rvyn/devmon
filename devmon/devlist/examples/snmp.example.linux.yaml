@@ -225,3 +225,6 @@ snmp:
       unit: 'blocks'
       perf: True
 
+sshd:
+  username: 'root'
+  password: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS54eA=='

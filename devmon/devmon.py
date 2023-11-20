@@ -1077,6 +1077,9 @@ class DevMon(object):
 
         self.show_all_alerts() if show else None
 
+    def ssh_connect_failed_alert(self):
+        config = './devlist/a-side/sshinfo.yaml'
+
     def service_alert(self):
         """
         Running the tool as a Linux service.
