@@ -17,10 +17,10 @@
 """
 import os.path
 from yaml import safe_load
-import sys
 from dataclasses import asdict
 from typing import Optional
 from threading import Thread
+import sys
 
 
 _FILE_ = os.path.abspath(__file__)
@@ -28,9 +28,10 @@ _SRC_ = os.path.abspath(os.path.join(_FILE_, '../../'))
 _CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
 _TYPE_ = os.path.abspath(os.path.join(_SRC_, 'type'))
 sys.path.append(_SRC_)
+#
 
 try:
-    from type import OID, VOID, WaterMark, OIDType, IDRange, SNMPAgent
+    from type import OID, VOID, WaterMark, OIDType, IDRange, SNMPAgent, SSHAgent, Agent
 except Exception as e:
     raise e
 
@@ -67,21 +68,27 @@ def __read_many_yaml(files: list[str] = None, *ignored_files_prefix) -> list[dic
     return data
 
 
-def __pickup_snmp_agent(data: dict = None):
-    agent = SNMPAgent()
+def __pickup_agent(data: dict = None) -> tuple[SNMPAgent, SSHAgent]:
+    agent = Agent()
     agent_detail = {}
+
+    snmp_agent = SNMPAgent()
+    snmp_agent_detail = {}
+
+    ssh_agent = SSHAgent()
+    ssh_agent_detail = {}
 
     """
     Blocks deprecated in the future.
     """
-    try:
-        data['table'] = data['id'] if data['id'] else data['table']
-    except KeyError:
-        pass
-    try:
-        data['table'] = data['id_range'] if data['id_range'] else data['table']
-    except KeyError:
-        pass
+    # try:
+    #     data['snmp']['OIDs']['table'] = data['snmp']['OIDs']['id'] if data['snmp']['OIDs']['id'] else data['snmp']['OIDs']['table']
+    # except KeyError:
+    #     pass
+    # try:
+    #     data['snmp']['OIDs']['table'] = data['snmp']['OIDs']['id_range'] if data['snmp']['OIDs']['id_range'] else data['snmp']['OIDs']['table']
+    # except KeyError:
+    #     pass
 
     # TODO deleting in the future version1
 
@@ -89,70 +96,101 @@ def __pickup_snmp_agent(data: dict = None):
         try:
             agent_detail.update({key: data[key]})
         except KeyError:
-            # input(data['snmp']['OIDs']) if key == 'OIDs' else None
-            try:
-                agent_detail.update({key: data['snmp'][key]})
-            except KeyError:
-                # agent_detail.update({key: None})
-                agent_detail.update({key: asdict(agent)[key]})
+            agent_detail.update({key: asdict(agent)[key]})
 
-    if not agent_detail['OIDs']:
-        return agent
+    for key in asdict(snmp_agent):
+        try:
+            snmp_agent_detail.update({key: data['snmp'][key]})
+        except KeyError:
+            snmp_agent_detail.update({key: asdict(snmp_agent)[key]})
 
-    oids = []
-    for oid_dict in agent_detail['OIDs']:
-        oid = OID()
+    for key in asdict(ssh_agent):
+        try:
+            ssh_agent_detail.update({key: data['ssh'][key]})
+        except KeyError:
+            ssh_agent_detail.update({key: asdict(ssh_agent)[key]})
 
-        for key in asdict(oid):
-            try:
-                oid_dict[key]
-            except KeyError:
-                oid_dict.update({key: asdict(oid)[key]})
+    try:
+        _ = snmp_agent_detail['OIDs']
+        oids = []
+        for oid_dict in snmp_agent_detail['OIDs']:
+            oid = OID()
 
-        if oid_dict['watermark']:
-            watermark_dict = oid_dict['watermark']
-
-            watermark = WaterMark()
-            for key in asdict(watermark):
+            for key in asdict(oid):
                 try:
-                    watermark_dict[key]
+                    oid_dict[key]
                 except KeyError:
-                    watermark_dict.update({key: asdict(watermark)[key]})  # update the default value
+                    oid_dict.update({key: asdict(oid)[key]})
 
-            [watermark.__setattr__(key, value) for (key, value) in watermark_dict.items()]
+            if oid_dict['watermark']:
+                watermark_dict = oid_dict['watermark']
 
-            oid_dict['watermark'] = watermark
-        [oid.__setattr__(key, value) for (key, value) in oid_dict.items()]
-        oids.append(oid)
+                watermark = WaterMark()
+                for key in asdict(watermark):
+                    try:
+                        watermark_dict[key]
+                    except KeyError:
+                        watermark_dict.update({key: asdict(watermark)[key]})  # update the default value
 
-    data['OIDs'] = oids
-    [agent.__setattr__(key, value) for (key, value) in data.items()]
+                [watermark.__setattr__(key, value) for (key, value) in watermark_dict.items()]
 
-    return agent
+                oid_dict['watermark'] = watermark
+            [oid.__setattr__(key, value) for (key, value) in oid_dict.items()]
+            oids.append(oid)
+
+        # data['OIDs'] = oids
+        # data['snmp']['OIDs'] = oids
+        snmp_agent_detail['OIDs'] = oids
+
+    except (KeyError, TypeError):
+        pass
+
+    try:
+        _ = ssh_agent_detail['sshcmd']
+        # add contents in the future version
+        ssh_agent_detail['sshcmd'] = _
+    except (KeyError, TypeError):
+        pass
+
+    [snmp_agent.__setattr__(key, value) for (key, value) in snmp_agent_detail.items()]
+    [ssh_agent.__setattr__(key, value) for (key, value) in ssh_agent_detail.items()]
+    [(snmp_agent.__setattr__(key, value), ssh_agent.__setattr__(key, value)) for (key, value) in agent_detail.items()]
+
+    # return agent
+    return snmp_agent, ssh_agent
 
 
-def __read_snmp_agents(directory: str = None) -> list[SNMPAgent]:
-    agents: list[SNMPAgent] = []
+def __read_agents(directory: str = None) -> tuple[list[SNMPAgent], list[SSHAgent]]:
+    snmp_agents: list[SNMPAgent] = []
+    ssh_agents: list[SSHAgent] = []
+
     abs_path = os.path.abspath(directory)
     files = [os.path.join(abs_path, f) for f in os.listdir(abs_path)]
 
     raw_data = __read_many_yaml(files, 'example', '.git')
 
     def pickup(_data: dict):
-        agents.append(__pickup_snmp_agent(_data))
+        _snmp_agent, _ssh_agent = __pickup_agent(_data)
+        # agents.append(__pickup_snmp_agent(_data))
+        snmp_agents.append(_snmp_agent)
+        ssh_agents.append(_ssh_agent)
 
     threads = [Thread(target=pickup, args=(data, )) for data in raw_data]
     [t.start() for t in threads]
     [t.join() for t in threads]
 
-    return agents
+    return snmp_agents, ssh_agents
 
 
-def read_snmp_agents(*directory) -> tuple:
+def read_agents(*directory) -> tuple:
+    """
+    return: tuple( tuple(snmp_agents, ssh_agents), tuple(snmp_agents, ssh_agents), ... )
+    """
+    # agents: list[tuple[list, list]] = []
     agents: list[list] = []
 
     def read(_dir: str = None):
-        agents.append(__read_snmp_agents(_dir))
+        agents.extend(__read_agents(_dir))
 
     threads = [Thread(target=read, args=(d,)) for d in directory]
     [t.start() for t in threads]

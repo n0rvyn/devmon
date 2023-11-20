@@ -6,19 +6,19 @@ _SRC_ = os.path.abspath(os.path.join(_ROOT_, 'src'))
 
 
 try:
-    from type import (SNMPAgent, VOID, OIDType, OID, ArithPosition,
+    from type import (SNMPAgent, VOID, OIDType, OID, ArithPosition, SSHAgent, Agent,
                       OutOpts, Version, Case, TheSameCasePart,
                       CaseUpdatePart, EventType, Point, PointMeta)
-    from core import (SNMP, ColorLogger, oid_to_case,
+    from core import (SNMP, ColorLogger, oid_to_case, PySSHClient,
                       PushMsg, MongoDB, CMDB, ContextSNMP, HidePass,
-                      MongoPoint, InfluxDB, read_snmp_agents)
+                      MongoPoint, InfluxDB, read_agents)
 except ModuleNotFoundError:
-    from .type import (SNMPAgent, VOID, OIDType, OID, ArithPosition,
+    from .type import (SNMPAgent, VOID, OIDType, OID, ArithPosition, SSHAgent, Agent,
                        OutOpts, Version, Case, TheSameCasePart,
                        CaseUpdatePart, EventType, Point, PointMeta)
-    from .core import (SNMP, ColorLogger, oid_to_case,
+    from .core import (SNMP, ColorLogger, oid_to_case, PySSHClient,
                        PushMsg, MongoDB, CMDB, ContextSNMP, HidePass,
-                       MongoPoint, InfluxDB, read_snmp_agents)
+                       MongoPoint, InfluxDB, read_agents)
 
 
 __all__ = [
@@ -41,8 +41,10 @@ __all__ = [
     'PointMeta',
     'MongoPoint',
     'InfluxDB',
-    'read_snmp_agents',
-    'ArithPosition'
+    'read_agents',
+    'ArithPosition',
+    'SSHAgent',
+    'PySSHClient'
 ]
 
 

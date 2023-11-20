@@ -225,6 +225,6 @@ snmp:
       unit: 'blocks'
       perf: True
 
-sshd:
+ssh:
   username: 'root'
   password: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS54eA=='

@@ -10,8 +10,9 @@ try:
     from cre_case import oid_to_case
     from encrypt import HidePass
     from influx import InfluxDB
+    from ssh import PySSHClient
 except (ModuleNotFoundError, ImportError):
-    from .read_devlist import read_snmp_agents
+    from .read_devlist import read_agents
     from .snmp import SNMP, ContextSNMP
     from .log import ColorLogger
     from .pushmsg import PushMsg
@@ -20,6 +21,7 @@ except (ModuleNotFoundError, ImportError):
     from .cre_case import oid_to_case
     from .encrypt import HidePass
     from .influx import InfluxDB
+    from .ssh import PySSHClient
 
 
 __all__ = [
@@ -33,6 +35,7 @@ __all__ = [
     'HidePass',
     'MongoPoint',
     'InfluxDB',
-    'read_snmp_agents'
+    'read_agents',
+    'PySSHClient'
 ]
 

@@ -58,14 +58,15 @@ class PySSHClient(object):
                            timeout=self.timeout,
                            auth_timeout=self.timeout)
 
+            self.connected = True
         except (paramiko.ssh_exception.NoValidConnectionsError, socket.timeout, OSError) as err:
-            raise err
+            self.connected = False
         except (paramiko.ssh_exception.AuthenticationException, paramiko.ssh_exception.SSHException) as err:
-            raise err
+            self.connected = False
 
         self.client = client
-        self.connected = True
-        return True
+
+        return self.connected
 
     def getoutput(self, cmd, timeout: int = 10) -> str:
         output = ''

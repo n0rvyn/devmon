@@ -32,7 +32,7 @@ from pymongo import errors, timeout
 from src import oid_to_case, SNMP, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
 from src import OID, VOID, SNMPAgent, Case, CaseUpdatePart, EventType
 from src import Point, MongoPoint
-from src import InfluxDB, read_snmp_agents
+from src import InfluxDB, read_agents, SSHAgent, PySSHClient
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
 _ROOT_ = '/etc/devmon' if _ROOT_.startswith('/tmp') else _ROOT_
@@ -66,6 +66,7 @@ notify_start = notify_end = None
 class DevMon(object):
     def __init__(self):
         self.a_side_snmps = self.b_side_snmps = self.all_snmps = None
+        self.a_side_ssh = self.b_side_ssh = self.all_ssh = None
         self.clog = None
         self.pushmsg = None
         self.mongo = self.cmdb_mongo = self.mongots = None
@@ -89,7 +90,7 @@ class DevMon(object):
         try:
             # A_SIDE_SNMPs, B_SIDE_SNMPs, A_SIDE_SSHs, B_SIDE_SSHs = ReadAgents()
 
-            A_SIDE_SNMPs, B_SIDE_SNMPs = read_snmp_agents(A_SIDE, B_SIDE)
+            A_SIDE_SNMPs, A_SIDE_SSHs, B_SIDE_SNMPs, B_SIDE_SSHs= read_agents(A_SIDE, B_SIDE)
         except ValueError as err:
             raise err
 
@@ -97,6 +98,10 @@ class DevMon(object):
         self.a_side_snmps = A_SIDE_SNMPs
         self.b_side_snmps = B_SIDE_SNMPs
         self.all_snmps = self.a_side_snmps + self.b_side_snmps
+
+        self.a_side_ssh = A_SIDE_SSHs
+        self.b_side_ssh = B_SIDE_SSHs
+        self.all_ssh = A_SIDE_SSHs + B_SIDE_SSHs
 
     def _load_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
         # read configuration from file 'ROOT/conf/devmon.yaml'
@@ -591,13 +596,18 @@ class DevMon(object):
             _l_voids = snmp.read(_oid)
             agent_oid_voids.append((agent, _oid, _l_voids)) if _l_voids else ''
 
-        threads = [Thread(target=__read_oid, args=(oid,)) for oid in agent.OIDs]
-        _ = [t.start() for t in threads]
-        _ = [t.join() for t in threads]
+        try:
+            threads = [Thread(target=__read_oid, args=(oid,)) for oid in agent.OIDs]
+        # TODO TypeError: 'NoneType' object is not iterable --> when no 'snmp' symbol found in YAML file.
+            _ = [t.start() for t in threads]
+            _ = [t.join() for t in threads]
+        except TypeError:
+            pass
 
         # for detecting SNMPD stat
         _snmpd_stat_oid = OID(table='sysSnmpdStat', label='sysSnmpdStat', description='SNMPD状态', reference='up')
         agent_oid_voids.append((agent, _snmpd_stat_oid, snmp.read_snmp_stat()))
+        # TODO TypeError but sysSnmpdStat PASSED????
 
         return agent_oid_voids
 
@@ -1077,8 +1087,15 @@ class DevMon(object):
 
         self.show_all_alerts() if show else None
 
-    def ssh_connect_failed_alert(self):
-        config = './devlist/a-side/sshinfo.yaml'
+    @staticmethod
+    def ssh_connect_failed_alert(ssh_agent: SSHAgent = None) -> Case:
+        case = Case()
+
+        ssh_client = PySSHClient(ssh_agent)
+        if not ssh_client.connect():
+            print('ERROR')
+
+        return case
 
     def service_alert(self):
         """
@@ -1338,6 +1355,9 @@ if __name__ == '__main__':
         except IndexError:
             dev = None
         devmon.pm_snmp(device=dev)
+        ## test
+        devmon.ssh_connect_failed_alert(devmon.all_ssh[0])
+        ## test
 
     elif act == 'perf':
         try:

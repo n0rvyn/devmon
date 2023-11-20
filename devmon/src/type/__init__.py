@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from .snmpagent import Version, OutOpts, SNMPAgent
-from .sshagent import SSHAgent
+from .agent import Version, OutOpts, SNMPAgent, SSHAgent, Agent
 from .oid import OID, WaterMark, OIDType, ArithType, VOID, IDRange, ArithPosition
 from .case import Case, CaseType, TheSameCasePart, CaseUpdatePart
 from .sshcmd import LineCmd, DelmtIndexType, KeyValuePair, LineFeature
@@ -13,6 +12,7 @@ __all__ = [
     'OutOpts',
     'SNMPAgent',
     'SSHAgent',
+    'Agent',
     'OID',
     'VOID',
     'WaterMark',
