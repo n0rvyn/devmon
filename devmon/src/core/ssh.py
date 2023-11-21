@@ -19,6 +19,9 @@ import subprocess
 import socket
 import os
 import sys
+from .encrypt import HidePass
+from random import randint
+from threading import Thread
 
 
 _FILE_ = os.path.abspath(__file__)
@@ -43,13 +46,13 @@ class PySSHClient(object):
         self.password = ssh_detail.password
         self.port = ssh_detail.port
         self.timeout = ssh_detail.timeout
+        self.auth_timeout = ssh_detail.auth_timeout
         self.pubkey = ssh_detail.pubkey
 
         self.connected = False
         self.client = None
-        print(agent)
 
-    def connect(self, timeout: int = None):
+    def connect(self, timeout: int = None, auth_timeout: int = None):
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -59,11 +62,12 @@ class PySSHClient(object):
                            username=self.user,
                            password=self.password,
                            timeout=timeout if timeout else self.timeout,
-                           auth_timeout=timeout if timeout else self.timeout)
+                           auth_timeout=auth_timeout if auth_timeout else self.auth_timeout)
 
             self.connected = True
         except (paramiko.ssh_exception.NoValidConnectionsError, socket.timeout, OSError):
             self.connected = False
+            # TODO add exception to ssh output.
         except (paramiko.ssh_exception.AuthenticationException, paramiko.ssh_exception.SSHException):
             self.connected = False
 
@@ -79,6 +83,7 @@ class PySSHClient(object):
 
         try:
             stdin, stdout, stderr = self.client.exec_command(cmd, timeout=timeout)
+            # TODO return '' if not self.connect or client is None
 
             output = ''.join(stdout.readlines())
             error = stderr.readlines()
@@ -105,14 +110,36 @@ class PySSHClient(object):
 
     def read_ssh_stat(self) -> list[EntryValue]:
         ssh_stat_value = 'up' if self.connect(1) else 'down'
-        ssh_stat_void = EntryValue(objectname='sysSnmpdStat',
+        ssh_stat_void = EntryValue(objectname='sysSshdStat',
                                    instance='0',
                                     value=ssh_stat_value,
                                     reference='up')
         return [ssh_stat_void]
 
-    def read_entry(self, cmd, timeout: int = 3) -> EntryValue:
-        pass
+    def _rsh(self, cmd: str = None, timeout: int = 3) -> list[EntryValue]:
+        e_vals = [EntryValue(objectname=cmd, instance=str(randint(0, 100)), subtype='STRING', value=val)
+                 for val in self.getoutput(cmd, timeout=timeout).split('\n')]
+
+        return e_vals
+
+    def read_entry(self, entry: Entry, timeout: int = 3) -> list[EntryValue]:
+        cmd_lines = [entry.table] if entry.table else []
+
+        try:
+            cmd_lines.extend(entry.group)
+        except TypeError:
+            pass  # group is None
+
+        e_vals = []
+
+        def read(_cmd: str):
+            e_vals.extend(self._rsh(_cmd, timeout=timeout))
+
+        threads = [Thread(target=read, args=(cmd, )) for cmd in cmd_lines]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+        return e_vals
 
 
 class OpenSSHClient(object):

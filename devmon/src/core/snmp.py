@@ -395,7 +395,6 @@ class SNMP(object):
     #     else:
     #         desc = self._read_oid_desc(oid)
     #
-    #     # todo verify
     #     # desc = desc if desc else oid.description
     #
     #     if read_ref_from:
@@ -607,7 +606,7 @@ class SNMP(object):
     #     vals_related = None if vals_related == [''] else vals_related
     #     # vals_arith = None if vals_arith == [''] else vals_arith
     #     vals_index = None if vals_index == [''] else vals_index
-    #     vals_ref = None if vals_ref == [''] else vals_ref  # todo verity None type or [''] value
+    #     vals_ref = None if vals_ref == [''] else vals_ref
     #
     #     def _contains(_s: str = None, _keywords: list[str] = None):
     #         for _key in _keywords:

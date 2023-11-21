@@ -51,7 +51,6 @@ class ColorLogger(logging.Logger):
                                    msg=msg, args=(),
                                    exc_info=None)
 
-        # todo pathname???
         msg = formatter.format(record)
         if level == 'debug':
             return self.debug(msg)

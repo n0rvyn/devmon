@@ -62,7 +62,7 @@ class InfluxDB(object):
                  .tag('unit', entry.unit))
 
         for entry_value in l_vals:
-            if not eval:  # todo l_void == [None, None...] ???
+            if not entry_value:
                 continue
 
             k = entry_value.objectname if entry_value.objectname else entry.label

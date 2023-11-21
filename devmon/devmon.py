@@ -82,7 +82,29 @@ class DevMon(object):
         except ValueError as err:
             raise err
 
-        self.all_ssh = self.a_side_agents + self.b_side_agents
+        self.a_side_agents = self._decrypt_many_ssh_pass(self.a_side_agents)
+        self.b_side_agents = self._decrypt_many_ssh_pass(self.b_side_agents)
+
+        self.all_agents = self.a_side_agents + self.b_side_agents
+
+    def _decrypt_ssh_pass(self, agent: Agent = None) -> Agent:
+        coded_pass = agent.ssh_detail.password
+        plain_pass = self.decode_password(coded_pass)
+
+        agent.ssh_detail.password = plain_pass
+        return agent
+
+    def _decrypt_many_ssh_pass(self, agents: list[Agent]) -> list[Agent]:
+        agents_decoded = []
+
+        def decrypt(_agent: Agent):
+            agents_decoded.append(self._decrypt_ssh_pass(_agent))
+
+        threads = [Thread(target=decrypt, args=(agt, )) for agt in agents]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+        return agents_decoded
 
     def _load_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
         # read configuration from file 'ROOT/conf/devmon.yaml'
@@ -270,8 +292,8 @@ class DevMon(object):
         return self.hp.decrypt(password_hide.encode())
 
     def refresh_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
-        self._load_agents()
         self._load_config(init_mongo=init_mongo, service=service, init_influx=init_influx)
+        self._load_agents()
 
     def _debug(self, msg: str = None):
         f_info = currentframe()
@@ -355,7 +377,7 @@ class DevMon(object):
                 self._debug(f'Case [{case}] alert is False, set case.attach.type to 3.')
 
             # new case received, insert it to MongoDB
-            i_rtn = self.mongo.insert_dict(asdict(case), insert_even_exist=True)  # todo
+            i_rtn = self.mongo.insert_dict(asdict(case), insert_even_exist=True)
 
             lvl = 'info' if i_rtn else 'error'
             self.clog.colorlog(f'Insert new case [{case.id}] [{i_rtn}]', lvl)
@@ -428,7 +450,7 @@ class DevMon(object):
 
         flt = {'id': case_id}
         update = {key: value for key, value in asdict(attach).items()}
-        return self.mongo.update_dict(flt, update=update)  # todo do not return True of False
+        return self.mongo.update_dict(flt, update=update)
 
         # rtn = 0
         # for key, value in case_update_part.items():
@@ -444,7 +466,6 @@ class DevMon(object):
         """
         # flt = {'core': asdict(case.core)}
         # flt = {f'core.{key}': value for key, value in asdict(case.core).items()}
-        # todo update exist case failed; case exist and case need to be updated has the different 'core.object'
         flt = {'id': case.id}
 
         case_exist = Case()
@@ -470,13 +491,15 @@ class DevMon(object):
         agent_oid_voids = []
 
         ssh = PySSHClient(agent)
+        _ssh_stat_entry = Entry(table='sysSshStat', label='sysSshStat', description='SSH服务状态', reference='up')
+        agent_oid_voids.append((agent, _ssh_stat_entry, ssh.read_ssh_stat()))
 
         # for oid in agent.OIDs:
         #     l_voids = snmp.read_oid_dc(oid)
         #     # self.snmp_agents.append((agent, oid, l_voids)) if l_voids else ''
         #     agent_oid_voids.append((agent, oid, l_voids)) if l_voids else ''
 
-        def __read_oid(_entry: Entry = None):
+        def __read_entry(_entry: Entry = None, _snmp: bool = False, _ssh: bool = False):
             if perf and not _entry.perf:
                 return None
 
@@ -486,46 +509,49 @@ class DevMon(object):
             if alert and (_entry.perf or _entry.show):
                 return None
 
-            # _l_voids = snmp.read_oid_dc(_oid)
-            _l_evals = snmp.read(_entry)
-            agent_oid_voids.append((agent, _entry, _l_evals)) if _l_evals else ''
+            if _snmp:
+                _l_evals = snmp.read(_entry)
+                agent_oid_voids.append((agent, _entry, _l_evals)) if _l_evals else None
 
-        def __rsh(_entry: Entry = None):
-            pass
+            if _ssh:
+                _l_evals = ssh.read_entry(_entry)
+                agent_oid_voids.append((agent, _entry, _l_evals)) if _l_evals else None
+
+        threads = []
+        try:
+            threads = [Thread(target=__read_entry, args=(entry, True, False, )) for entry in agent.snmp_detail.entries]
+        except TypeError:
+            # agent.snmp_detail does contains 'entries'
+            snmp.snmps[0].down = True
 
         try:
-            threads = [Thread(target=__read_oid, args=(oid,)) for oid in agent.snmp_detail.entries]
-            _ = [t.start() for t in threads]
-            _ = [t.join() for t in threads]
+            threads.extend([Thread(target=__read_entry, args=(entry, False, True)) for entry in agent.ssh_detail.entries])
         except TypeError:
             pass
 
-        # for detecting SNMPD stat
-        _snmpd_stat_oid = Entry(table='sysSnmpdStat', label='sysSnmpdStat', description='SNMPD状态', reference='up')
-        agent_oid_voids.append((agent, _snmpd_stat_oid, snmp.read_snmp_stat()))
-        # TODO TypeError but sysSnmpdStat PASSED????
+        _ = [t.start() for t in threads]
+        _ = [t.join() for t in threads]
 
-        _ssh_stat_entry = Entry(table='', label='sysSshStat', description='', reference='up')
-        agent_oid_voids.append((agent, _ssh_stat_entry, ssh.read_ssh_stat()))
+        # for detecting SNMPD stat
+        _snmpd_stat_entry = Entry(table='sysSnmpdStat', label='sysSnmpdStat', description='SNMPD服务状态', reference='up')
+        agent_oid_voids.append((agent, _snmpd_stat_entry, snmp.read_snmp_stat()))
 
         return agent_oid_voids
 
-    def create_cases(self, side: Side = None,
+    def create_cases(self,
+                     side: Side = None,
                      multithread: bool = True,
                      device: str = None,
                      perf: bool = False,
-                     pm: bool = False,  # todo clean the pm, health, perf...
+                     pm: bool = False,
                      alert: bool = False) -> list[Case]:
-        agents = None
+        agents = self.all_agents
 
         if side == 'a':
             agents = self.a_side_agents
 
         elif side == 'b':
             agents = self.b_side_agents
-
-        elif not side:
-            agents = self.all_agents
 
         elif device:
             for agt in self.all_agents:
@@ -546,7 +572,6 @@ class DevMon(object):
 
         def read_agent(agent: Agent):
             agents_entries_values.extend(self._read_agent(agent, perf, pm, alert))
-            # TODO read SSH agents and append to list 'agents_oids_values'
             # The method already returns a list, so snmp_agents should extend rather than append.
             # The snmp_agent is a list of tuple, not a list of list.
 
@@ -614,7 +639,7 @@ class DevMon(object):
 
         if not val:
             self._debug(f'device [{agent.address} got a None-type OID value [{entry}, {entry_value}].')
-            return Case()  # todo
+            return Case()
 
         if entry.watermark:  # the value of OID has a watermark
             try:
@@ -739,7 +764,7 @@ class DevMon(object):
             elif event_type == 'recovery':
                 r1 = self._update_attach_value_by_id(case_id=case_id, update_key='publish', to_value=2)
                 r2 = self._update_attach_value_by_id(case_id=case_id, update_key='type',
-                                                     to_value='2')  # todo verify !!!
+                                                     to_value='2')
                 return True if r1 and r2 else False
 
         else:
@@ -993,7 +1018,7 @@ class DevMon(object):
         return self.cmdb_mongo.collection.insert_many(mongo_data)
 
     def find_rid(self, addr: str = None) -> str:
-        flt = {'ip': addr}  # todo verifying 'ip_hostname' key
+        flt = {'ip': addr}
         try:
             return self.cmdb_mongo.find_one(flt)
         except AttributeError:
@@ -1063,7 +1088,8 @@ class DevMon(object):
         if device:
             cases = self.create_cases(device=device, pm=True)
         else:
-            cases = self.create_cases('a', pm=True) + self.create_cases('b', pm=True)
+            # cases = self.create_cases('a', pm=True) + self.create_cases('b', pm=True)
+            cases = self.create_cases(pm=True)
 
         all_stats = {}
         for c in cases:
@@ -1081,13 +1107,13 @@ class DevMon(object):
                 name = '阈值区'
 
             if c.alert:
-                err = f'标签{c.entry.label:30s}{c.current_value:25s}{name}{c.threshold:25s}{c.object:20s}'
+                err = f'标签{c.entry.label:30s}{c.current_value:20s}{name}{c.threshold:20s}{c.object:20s}'
                 faulty = 1
             else:
                 err = ''
                 faulty = 0
 
-            if c.entry.show:  # the value is for show  # todo verify the parameter when without a pm method!!!!
+            if c.entry.show:  # the value is for show
                 faulty = -1
                 # err = c.void.value
                 err = f'{c.entry_value.value} {c.entry_value.unit}' if c.entry_value.unit else c.entry_value.value

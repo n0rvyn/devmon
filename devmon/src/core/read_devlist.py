@@ -58,6 +58,45 @@ def __read_many_yaml(files: list[str] = None, *ignored_files_prefix) -> list[dic
     return data
 
 
+def __pickup_entry(detail: dict) -> list[Entry]:  # TODO add option type SNMPDetail or SSHDetail
+    try:
+        _ = detail['entries']
+    except KeyError:
+        return []
+
+    if not detail['entries']:
+        return []
+
+    entries = []
+
+    for entry_dict in detail['entries']:
+        entry = Entry()
+
+        for key in asdict(entry):
+            try:
+                entry_dict[key]
+            except KeyError:
+                entry_dict.update({key: asdict(entry)[key]})
+
+        if entry_dict['watermark']:
+            watermark_dict = entry_dict['watermark']
+
+            watermark = WaterMark()
+            for key in asdict(watermark):
+                try:
+                    watermark_dict[key]
+                except KeyError:
+                    watermark_dict.update({key: asdict(watermark)[key]})  # update the default value
+
+            [watermark.__setattr__(key, value) for (key, value) in watermark_dict.items()]
+
+            entry_dict['watermark'] = watermark
+        [entry.__setattr__(key, value) for (key, value) in entry_dict.items()]
+        entries.append(entry)
+
+    return entries
+
+
 def __pickup_agent(data: dict = None) -> Agent:
     agent = Agent()
     agent_detail = asdict(agent)
@@ -96,47 +135,44 @@ def __pickup_agent(data: dict = None) -> Agent:
     #         ssh_agent_detail.update({key: data['ssh'][key]})
     #     except KeyError:
     #         ssh_agent_detail.update({key: asdict(ssh_agent)[key]})
-    try:
-        _ = snmp_detail_dict['entries']
-        entries = []
-        for oid_dict in snmp_detail_dict['entries']:
-            entry = Entry()
 
-            for key in asdict(entry):
-                try:
-                    oid_dict[key]
-                except KeyError:
-                    oid_dict.update({key: asdict(entry)[key]})
+    # try:
+    #     _ = snmp_detail_dict['entries']
+    #     entries = []
+    #     for oid_dict in snmp_detail_dict['entries']:
+    #         entry = Entry()
+    #
+    #         for key in asdict(entry):
+    #             try:
+    #                 oid_dict[key]
+    #             except KeyError:
+    #                 oid_dict.update({key: asdict(entry)[key]})
+    #
+    #         if oid_dict['watermark']:
+    #             watermark_dict = oid_dict['watermark']
+    #
+    #             watermark = WaterMark()
+    #             for key in asdict(watermark):
+    #                 try:
+    #                     watermark_dict[key]
+    #                 except KeyError:
+    #                     watermark_dict.update({key: asdict(watermark)[key]})  # update the default value
+    #
+    #             [watermark.__setattr__(key, value) for (key, value) in watermark_dict.items()]
+    #
+    #             oid_dict['watermark'] = watermark
+    #         [entry.__setattr__(key, value) for (key, value) in oid_dict.items()]
+    #         entries.append(entry)
+    #
+    #     # data['OIDs'] = oids
+    #     # data['snmp']['OIDs'] = oids
+    #     snmp_detail_dict['entries'] = entries
+    #
+    # except (KeyError, TypeError):
+    #     pass
 
-            if oid_dict['watermark']:
-                watermark_dict = oid_dict['watermark']
-
-                watermark = WaterMark()
-                for key in asdict(watermark):
-                    try:
-                        watermark_dict[key]
-                    except KeyError:
-                        watermark_dict.update({key: asdict(watermark)[key]})  # update the default value
-
-                [watermark.__setattr__(key, value) for (key, value) in watermark_dict.items()]
-
-                oid_dict['watermark'] = watermark
-            [entry.__setattr__(key, value) for (key, value) in oid_dict.items()]
-            entries.append(entry)
-
-        # data['OIDs'] = oids
-        # data['snmp']['OIDs'] = oids
-        snmp_detail_dict['entries'] = entries
-
-    except (KeyError, TypeError):
-        pass
-
-    try:
-        _ = ssh_detail_dict['entries']
-        # add contents in the future version
-        ssh_detail_dict['entries'] = _
-    except (KeyError, TypeError):
-        pass
+    snmp_detail_dict['entries'] = __pickup_entry(snmp_detail_dict)
+    ssh_detail_dict['entries'] = __pickup_entry(ssh_detail_dict)
 
     [snmp_detail.__setattr__(key, value) for (key, value) in snmp_detail_dict.items()]
     [ssh_detail.__setattr__(key, value) for (key, value) in ssh_detail_dict.items()]

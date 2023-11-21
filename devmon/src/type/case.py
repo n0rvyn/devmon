@@ -43,7 +43,7 @@ class CaseUpdatePart:
     alert: bool = False  # the status of object is normal or not
     current_value: str = None
     publish: PublishStat = 0
-    visible: bool = True  # todo add OID
+    visible: bool = True  # todo add to case
 
 
 @dataclass
