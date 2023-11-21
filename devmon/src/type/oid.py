@@ -8,9 +8,9 @@ from dataclasses import dataclass
 from typing import Literal, Any
 
 
-OIDType = Literal[
-    'INTEGER', 'STRING'
-]
+# OIDType = Literal[
+#     'INTEGER', 'STRING'
+# ]
 
 
 CaseServ = Literal[
@@ -25,11 +25,11 @@ class WaterMark:
     restricted: bool = False
 
 
-@dataclass
-class IDRange:
-    start: str = None
-    end:   str = None
-    count: int = 0
+# @dataclass
+# class IDRange:
+#     start: str = None
+#     end:   str = None
+#     count: int = 0
 
 
 ArithType = Literal[
@@ -43,7 +43,7 @@ ArithPosition = Literal[
 
 
 @dataclass
-class OID:
+class Entry:
     """
     Belows will be deprecated in the future version
     """
@@ -117,7 +117,7 @@ class OID:
 
 @dataclass
 # class OIDValue:
-class VOID:
+class EntryValue:
     objectname: str = None
     instance: str = None
     subtype: str = None
@@ -135,7 +135,5 @@ class VOID:
 #     value: str = None
 #     reference: str = None
 #     unit: str = None
-
-
 
 

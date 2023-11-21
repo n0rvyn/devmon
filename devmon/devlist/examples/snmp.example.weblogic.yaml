@@ -12,7 +12,7 @@ snmp:
   retries: 1  # time(s) to retry after failed
   port: 1161  # change the value to suite your environment
   base: '.1.3.6.1.4.1.140'
-  OIDs:
+  entries:
     - table: '625.730.1.120.16'
       label: 'ListenPort'
       description: '监听端口'

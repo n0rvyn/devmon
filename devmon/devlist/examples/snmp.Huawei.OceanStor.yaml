@@ -27,7 +27,7 @@ snmp:
   community: 'public'  # the SNMPD community
   timeout: 2  # second(s) to timeout
   retries: 2  # time(s) to retry after failed  # todo add suport for timeout alert
-  OIDs:
+  entries:
     - table: '1.3.6.1.4.1.34774.4.1.1.4'
       label: 'usedCapacityPercent'
       description: '总容量使用率百分比'

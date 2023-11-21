@@ -6,35 +6,37 @@ _SRC_ = os.path.abspath(os.path.join(_ROOT_, 'src'))
 
 
 try:
-    from type import (SNMPAgent, VOID, OIDType, OID, ArithPosition, SSHAgent, Agent,
-                      OutOpts, Version, Case, TheSameCasePart,
+    from type import (Entry, EntryValue, ArithPosition, Agent, SNMPDetail, SSHDetail,
+                      Version, Case, TheSameCasePart,
                       CaseUpdatePart, EventType, Point, PointMeta)
-    from core import (SNMP, ColorLogger, oid_to_case, PySSHClient,
+    from core import (SNMP, ColorLogger, entry_to_case, PySSHClient,
                       PushMsg, MongoDB, CMDB, ContextSNMP, HidePass,
                       MongoPoint, InfluxDB, read_agents)
 except ModuleNotFoundError:
-    from .type import (SNMPAgent, VOID, OIDType, OID, ArithPosition, SSHAgent, Agent,
-                       OutOpts, Version, Case, TheSameCasePart,
+    from .type import (Entry, EntryValue, ArithPosition, Agent, SNMPDetail, SSHDetail,
+                       Version, Case, TheSameCasePart,
                        CaseUpdatePart, EventType, Point, PointMeta)
-    from .core import (SNMP, ColorLogger, oid_to_case, PySSHClient,
+    from .core import (SNMP, ColorLogger, entry_to_case, PySSHClient,
                        PushMsg, MongoDB, CMDB, ContextSNMP, HidePass,
                        MongoPoint, InfluxDB, read_agents)
 
 
 __all__ = [
-    'SNMPAgent',
+    'SNMPDetail',
+    'SSHDetail',
+    'Agent',
     'SNMP',
     'ColorLogger',
     'PushMsg',
-    'oid_to_case',
+    'entry_to_case',
     'MongoDB',
     'CMDB',
     'ContextSNMP',
     'Case',
     'TheSameCasePart',
     'CaseUpdatePart',
-    'OID',
-    'VOID',
+    'Entry',
+    'EntryValue',
     'EventType',
     'HidePass',
     'Point',
@@ -43,7 +45,6 @@ __all__ = [
     'InfluxDB',
     'read_agents',
     'ArithPosition',
-    'SSHAgent',
     'PySSHClient'
 ]
 

@@ -11,7 +11,7 @@ snmp:
   timeout: 1  # second(s) to timeout
   retries: 1  # time(s) to retry after failed
   mib: 'XIV-MIB'
-  OIDs:
+  entries:
     # Filled Disks
     - table: 'sysName'
       label: 'sysName'

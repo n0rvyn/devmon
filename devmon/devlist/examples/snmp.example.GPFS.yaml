@@ -11,7 +11,7 @@ snmp:
   mib: 'GPFS-MIB'
   timeout: 2  # second(s) to timeout, increase the value in case of reading faulty with busy OS
   retries: 1  # time(s) to retry after failed
-  OIDs:
+  entries:
   # the information of GPFS cluster
     - table: 'gpfsClusterName'
       label: gpfsClusterName

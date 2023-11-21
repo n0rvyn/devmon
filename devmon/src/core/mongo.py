@@ -19,13 +19,14 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo import errors
 from threading import Thread
-from type import PointMeta, Point, SNMPAgent, VOID, OID
+from type import PointMeta, Point, Entry, EntryValue, Agent, SNMPDetail, SSHDetail
 from datetime import datetime
 import pytz
 
 
 class MongoDB(object):
-    def __init__(self, server: str = None, port: int = 27017,
+    def __init__(self,
+                 server: str = None, port: int = 27017,
                  username: str = None, password: str = None,
                  uri: str = None,
                  server_api=ServerApi('1'),
@@ -41,10 +42,10 @@ class MongoDB(object):
         #     self.client = MongoClient(uri, server_api=server_api)
         # else:
         self.client = MongoClient(host=host,
-                                      port=port,
-                                      username=username,
-                                      password=password,
-                                      server_api=server_api)
+                                  port=port,
+                                  username=username,
+                                  password=password,
+                                  server_api=server_api)
 
         db = self.client[database]
 
@@ -63,8 +64,6 @@ class MongoDB(object):
                 pass  # the collection already exists.
 
         self.collection = db[collection]
-        # BSON type Date
-        # datetime.today().replace(microsecond=0)
 
     def insert_dict(self, data: dict, insert_even_exist: bool = False) -> bool:
         """
@@ -110,7 +109,7 @@ class MongoDB(object):
         return self.collection.update_one(filter=flt, update=update)
 
     def insert_dicts(self, data: list[dict]):
-        threads = [Thread(target=self.insert_dict, args=(d, )) for d in data]
+        threads = [Thread(target=self.insert_dict, args=(d,)) for d in data]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -120,24 +119,24 @@ class MongoPoint(object):
         pass
 
     @staticmethod
-    def void_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None) -> Point:
-        if not oid.perf:
+    def void_to_point(agent: Agent = None, entry: Entry = None, l_values: list[EntryValue] = None) -> Point:
+        if not entry.perf:
             return Point()
 
-        point_meta = PointMeta(snmp_agent.address, snmp_agent.region, snmp_agent.area, oid.label)
+        point_meta = PointMeta(agent.address, agent.region, agent.area, entry.label)
         data = {}
 
-        for lv in l_void:
+        for e_val in l_values:
             try:
-                float(lv.value)
+                float(e_val.value)
             except (ValueError, TypeError):
                 continue
 
-            if lv.desc:
-                data.update({lv.desc: float(lv.value)})
+            if e_val.desc:
+                data.update({e_val.desc: float(e_val.value)})
 
-            elif oid.label:
-                data.update({oid.label: float(lv.value)})
+            elif entry.label:
+                data.update({entry.label: float(e_val.value)})
 
         now = datetime.now()
         local_now = pytz.timezone('Asia/Shanghai').localize(now)
@@ -147,14 +146,6 @@ class MongoPoint(object):
                       data=data)
 
         return point
-
-    # @staticmethod
-    # def cal_points_shift(last_point: Point = None, point: Point = None) -> Point:
-    #     pass
-    #
-    # @staticmethod
-    # def cal_many_points_shift(last_points: list[Point] = None, points: list[Point] = None) -> list[Point]:
-    #     pass
 
 
 if __name__ == '__main__':
@@ -166,5 +157,3 @@ if __name__ == '__main__':
                          'attach.visible', False))
     m.update_dict({'id': 'DKmAQW3Ax7q1uf8W8'},
                   {'core.rid': 'rid', 'core.area': 'Sky', 'null': '11111'})
-
-

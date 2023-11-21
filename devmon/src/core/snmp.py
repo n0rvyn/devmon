@@ -17,7 +17,7 @@
 from subprocess import getstatusoutput
 from typing import Literal
 from threading import Thread
-from type import SNMPAgent, OID, VOID, ArithType, Case, ArithPosition
+from type import Entry, EntryValue, ArithType, Case, ArithPosition, Agent, SNMPDetail
 
 Position = Literal[
     1, 2
@@ -38,10 +38,11 @@ SNMPD_DOWN_PREFIX = 'Timeout'
 
 class SNMP(object):
     def __init__(self,
-                 snmp_agent: SNMPAgent = None,
+                 agent: Agent = None,
                  snmpwalk: str = '/usr/bin/snmpwalk',
                  context: str = None):
-        self.agent = snmp_agent
+        self.agent = agent
+        self.snmp_detail = agent.snmp_detail
         self.snmpwalk = snmpwalk
         self.context = context
         self.down = False  # determine if the SNMPD is already down
@@ -62,22 +63,23 @@ class SNMP(object):
         if not oid and self.down:
             return output
 
-        if self.agent.base:
-            l_base = self.agent.base.rstrip('.').split('.')
+        if self.snmp_detail.base:
+            l_base = self.snmp_detail.base.rstrip('.').split('.')
             l_oid = oid.lstrip('.').split('.')
             l_base.extend(l_oid)
             oid = '.'.join(l_base)
 
         opt = ' '.join([f'-O{o}' for o in outopts]) if outopts else '-vQ -vU'
 
-        ver = f'-v {self.agent.version}'
-        retries = f'-r {self.agent.retries}'
-        timeout = f'-t {self.agent.timeout}'
-        comm = f"-c '{self.agent.community}'" if self.agent.version != '3' else ''
-        user = f'-u {self.agent.username}' if self.agent.username else ''
-        mib = f'-m {self.agent.mib}' if self.agent.mib else ''
+        ver = f'-v {self.snmp_detail.version}'
+        retries = f'-r {self.snmp_detail.retries}'
+        timeout = f'-t {self.snmp_detail.timeout}'
+        comm = f"-c '{self.snmp_detail.community}'" if self.snmp_detail.version != '3' else ''
+        user = f'-u {self.snmp_detail.username}' if self.snmp_detail.username else ''
+        mib = f'-m {self.snmp_detail.mib}' if self.snmp_detail.mib else ''
         cont = f'-n VF:{self.context}' if self.context else ''
-        addr_with_port = f'{self.agent.address}:{self.agent.port}' if self.agent.port else self.agent.address
+        addr_with_port = (f'{self.agent.address}:{self.snmp_detail.port}'
+                          if self.snmp_detail.port else self.agent.address)
 
         snmpwalk = f'set -H; {self.snmpwalk}' if '!' in comm else self.snmpwalk
 
@@ -103,55 +105,55 @@ class SNMP(object):
     #     Deprecate in the future version.
     #     """
     #     return self.__snmpwalk(oid, *outopts)
-        # output = ''
-        #
-        # if not self.alive:
-        #     self.timeout_count += 1
-        #     return output
-        #
-        # if not oid:
-        #     return output
-        #
-        # if self.agent.base:
-        #     l_base = self.agent.base.rstrip('.').split('.')
-        #     l_oid = oid.lstrip('.').split('.')
-        #     l_base.extend(l_oid)
-        #     oid = '.'.join(l_base)
-        #
-        # opt = ' '.join([f'-O{o}' for o in outopts]) if outopts else '-vQ -vU'
-        #
-        # ver = f'-v {self.agent.version}'
-        # retries = f'-r {self.agent.retries}'
-        # timeout = f'-t {self.agent.timeout}'
-        # comm = f"-c '{self.agent.community}'" if self.agent.version != '3' else ''
-        # user = f'-u {self.agent.username}' if self.agent.username else ''
-        # mib = f'-m {self.agent.mib}' if self.agent.mib else ''
-        # cont = f'-n VF:{self.context}' if self.context else ''
-        # addr_with_port = f'{self.agent.address}:{self.agent.port}' if self.agent.port else self.agent.address
-        #
-        # self.snmpwalk = f'set -H; {self.snmpwalk}' if '!' in comm else self.snmpwalk
-        #
-        # cmd = f"{self.snmpwalk} {ver} {comm} {mib} " \
-        #       f"{user} {cont} " \
-        #       f"{retries} {timeout} " \
-        #       f"{opt} " \
-        #       f"{addr_with_port} {oid}"  # f"{self.agent.address} {oid}"
-        #
-        # NO_VALUE_ERR = ['No Such Instance currently exists at this OID',
-        #                 'No Such Object available on this agent at this OID',
-        #                 'No log handling enabled']
-        #
-        # NO_VALUE_SUFFIX = ('Unknown Object Identifier',)
-        #
-        # code, output = getstatusoutput(cmd)
-        # code = 1 if output in NO_VALUE_ERR or output.endswith(NO_VALUE_SUFFIX) else code
-        #
-        # # once the snmpd is not reachable, set the parameter to False --> line: 49
-        # if output.startswith('Timeout'):
-        #     self.snmpd_stat = False  # the SNMPD server is not respond
-        #
-        # # return output if code == 0 and value not in NO_VALUE_ERR else None
-        # return output if code == 0 else ''
+    # output = ''
+    #
+    # if not self.alive:
+    #     self.timeout_count += 1
+    #     return output
+    #
+    # if not oid:
+    #     return output
+    #
+    # if self.agent.base:
+    #     l_base = self.agent.base.rstrip('.').split('.')
+    #     l_oid = oid.lstrip('.').split('.')
+    #     l_base.extend(l_oid)
+    #     oid = '.'.join(l_base)
+    #
+    # opt = ' '.join([f'-O{o}' for o in outopts]) if outopts else '-vQ -vU'
+    #
+    # ver = f'-v {self.agent.version}'
+    # retries = f'-r {self.agent.retries}'
+    # timeout = f'-t {self.agent.timeout}'
+    # comm = f"-c '{self.agent.community}'" if self.agent.version != '3' else ''
+    # user = f'-u {self.agent.username}' if self.agent.username else ''
+    # mib = f'-m {self.agent.mib}' if self.agent.mib else ''
+    # cont = f'-n VF:{self.context}' if self.context else ''
+    # addr_with_port = f'{self.agent.address}:{self.agent.port}' if self.agent.port else self.agent.address
+    #
+    # self.snmpwalk = f'set -H; {self.snmpwalk}' if '!' in comm else self.snmpwalk
+    #
+    # cmd = f"{self.snmpwalk} {ver} {comm} {mib} " \
+    #       f"{user} {cont} " \
+    #       f"{retries} {timeout} " \
+    #       f"{opt} " \
+    #       f"{addr_with_port} {oid}"  # f"{self.agent.address} {oid}"
+    #
+    # NO_VALUE_ERR = ['No Such Instance currently exists at this OID',
+    #                 'No Such Object available on this agent at this OID',
+    #                 'No log handling enabled']
+    #
+    # NO_VALUE_SUFFIX = ('Unknown Object Identifier',)
+    #
+    # code, output = getstatusoutput(cmd)
+    # code = 1 if output in NO_VALUE_ERR or output.endswith(NO_VALUE_SUFFIX) else code
+    #
+    # # once the snmpd is not reachable, set the parameter to False --> line: 49
+    # if output.startswith('Timeout'):
+    #     self.snmpd_stat = False  # the SNMPD server is not respond
+    #
+    # # return output if code == 0 and value not in NO_VALUE_ERR else None
+    # return output if code == 0 else ''
 
     # def ____read_oid_val(self, oid: str) -> Optional[str]:
     #     """
@@ -191,7 +193,7 @@ class SNMP(object):
                             arithmetic: ArithType = None,
                             arith_value: any = None,
                             read_arith_value_from: str = None,
-                            arith_position: ArithPosition = 2) -> list[VOID]:
+                            arith_position: ArithPosition = 2) -> list[EntryValue]:
         """
         An OID value is a string like: 'hrSWRunPerfMem.29919 = INTEGER: 288248 KBytes'
 
@@ -232,12 +234,12 @@ class SNMP(object):
 
             unit = _unit if not unit else unit  # unit specified has higher priority than the value read
 
-            vals.append(VOID(objectname=objectname,
-                                 instance=instance.strip(),
-                                 subtype=subtype.strip(),
-                                 value=value.strip().strip('"').strip("'").strip(),
-                                 unit=unit,
-                                 reference=reference))
+            vals.append(EntryValue(objectname=objectname,
+                                   instance=instance.strip(),
+                                   subtype=subtype.strip(),
+                                   value=value.strip().strip('"').strip("'").strip(),
+                                   unit=unit,
+                                   reference=reference))
 
         r_vals = []
 
@@ -266,13 +268,13 @@ class SNMP(object):
                     exclude_value and new_value in exclude_value):
                 continue
 
-            r_vals.append(VOID(name,
-                                   vals[i].instance,
-                                   vals[i].subtype,
-                                   # vals[i].value,
-                                   new_value,
-                                   refs[i] if len(refs) == len(lines) else vals[i].reference,
-                                   vals[i].unit))
+            r_vals.append(EntryValue(name,
+                                     vals[i].instance,
+                                     vals[i].subtype,
+                                     # vals[i].value,
+                                     new_value,
+                                     refs[i] if len(refs) == len(lines) else vals[i].reference,
+                                     vals[i].unit))
         return r_vals
 
     # def __read_many(self, oids: list[str] = None) -> list[VOID]:
@@ -288,11 +290,11 @@ class SNMP(object):
     #
     #     return vals
 
-    def read(self, oid: OID = None) -> list[VOID]:
+    def read(self, entry: Entry = None) -> list[EntryValue]:
         vals = []
 
-        oids: list[str] = [oid.table] if oid.table else []
-        oids.extend(oid.group) if oid.group else None
+        oids: list[str] = [entry.table] if entry.table else []
+        oids.extend(entry.group) if entry.group else None
 
         def _read_target(_oid: str = None,
                          _unit: str = None,
@@ -324,29 +326,29 @@ class SNMP(object):
 
         threads = [Thread(target=_read_target,
                           args=(o,
-                                oid.unit,
-                                oid.reference,
-                                oid.read_ref_from,
-                                oid.read_name_from,
-                                oid.exclude_index,
-                                oid.exclude_value,
-                                oid.exclude_keywords,
-                                oid.arithmetic,
-                                oid.arith_value,
-                                oid.read_arith_value_from,
-                                oid.arith_position)) for o in oids] if oids else []
+                                entry.unit,
+                                entry.reference,
+                                entry.read_ref_from,
+                                entry.read_name_from,
+                                entry.exclude_index,
+                                entry.exclude_value,
+                                entry.exclude_keywords,
+                                entry.arithmetic,
+                                entry.arith_value,
+                                entry.read_arith_value_from,
+                                entry.arith_position)) for o in oids] if oids else []
         [t.start() for t in threads]
         [t.join() for t in threads]
 
         return vals
 
-    def read_snmp_stat(self) -> list[VOID]:
+    def read_snmp_stat(self) -> list[EntryValue]:
         snmp_stat_value = 'down' if self.down else 'up'
 
-        snmp_stat_void = VOID(objectname='sysSnmpdStat',
-                              instance='0',
-                              value=snmp_stat_value,
-                              reference='up')
+        snmp_stat_void = EntryValue(objectname='sysSnmpdStat',
+                                    instance='0',
+                                    value=snmp_stat_value,
+                                    reference='up')
         return [snmp_stat_void]
 
     # def _read_oid_val(self, oid: str) -> str:
@@ -791,28 +793,27 @@ class SNMP(object):
 
 
 class ContextSNMP(object):
-    def __init__(self, snmp_agent: SNMPAgent, snmpwalk: str = '/usr/bin/snmpwalk'):
-        context = snmp_agent.context
+    def __init__(self, agent: Agent, snmpwalk: str = '/usr/bin/snmpwalk'):
+        context = agent.snmp_detail.context
         context = context if context else [None]  # [None] instead of [] because [None] has 1 loop, [] is nothing.
 
-        self.snmps = [SNMP(snmp_agent, snmpwalk, c) for c in context]
+        self.snmps = [SNMP(agent, snmpwalk, c) for c in context]
 
-    def read(self, oid: OID = None) -> list[VOID]:
+    def read(self, entry: Entry = None) -> list[EntryValue]:
         """
         Read OID dataclass: OID
         """
         voids = []
         for s in self.snmps:
             # void = s.read_oid_dc(oid)
-            void = s.read(oid)
+            void = s.read(entry)
             voids.extend(void) if void else []
 
         return voids
 
-    def read_snmp_stat(self) -> list[VOID]:
+    def read_snmp_stat(self) -> list[EntryValue]:
         return self.snmps[0].read_snmp_stat()
 
 
 if __name__ == '__main__':
-    agent = SNMPAgent(address='172.16.10.250', community='public')
-    snmp = SNMP(agent)
+    pass

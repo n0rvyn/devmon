@@ -14,7 +14,7 @@ snmp:
   username: 'user1'
   context:
     - '128'
-  OIDs:
+  entries:
     - table: '1.6'
       label: Firmware
       description: '微码版本'

@@ -16,7 +16,7 @@
 
 """
 from influxdb_client_3 import InfluxDBClient3, Point, InfluxDBError, write_client_options, WriteOptions
-from type import SNMPAgent, OID, VOID, Case, TheSameCasePart, CaseUpdatePart
+from type import Agent, SNMPDetail, SSHDetail, Entry, EntryValue, Case, TheSameCasePart, CaseUpdatePart
 from dataclasses import asdict
 
 
@@ -49,51 +49,27 @@ class InfluxDB(object):
                                       write_client_options=wco)
         self.database = database
 
-    # def ____insert_void(self, snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None):
-    #     if not l_void:
-    #         return False
-    #
-    #     point = (Point(oid.label)
-    #              .tag('address', snmp_agent.address)
-    #              .tag('region', snmp_agent.region)
-    #              .tag('area', snmp_agent.area)
-    #              .tag('label', oid.label))
-    #
-    #     for void in l_void:
-    #         k = void.desc if void.desc else oid.label
-    #
-    #         try:
-    #             v = float(void.value)
-    #         except ValueError:
-    #             continue
-    #
-    #         point.field(k, v)
-    #         print(point)
-    #
-    #     # print(point)
-    #     return self.client.write(database=self.database, record=point)
-
     @staticmethod
-    def void_to_point(snmp_agent: SNMPAgent = None, oid: OID = None, l_void: list[VOID] = None) -> Point:
-        if not l_void:
+    def entry_to_point(agent: Agent = None, entry: Entry = None, l_vals: list[EntryValue] = None) -> Point:
+        if not l_vals:
             return Point('Nul')
 
-        point = (Point(oid.label)
-                 .tag('address', snmp_agent.address)
-                 .tag('region', snmp_agent.region)
-                 .tag('area', snmp_agent.area)
-                 .tag('label', oid.label)
-                 .tag('unit', oid.unit))
+        point = (Point(entry.label)
+                 .tag('address', agent.address)
+                 .tag('region', agent.region)
+                 .tag('area', agent.area)
+                 .tag('label', entry.label)
+                 .tag('unit', entry.unit))
 
-        for void in l_void:
-            if not void:  # todo l_void == [None, None...] ???
+        for entry_value in l_vals:
+            if not eval:  # todo l_void == [None, None...] ???
                 continue
 
-            k = void.objectname if void.objectname else oid.label
-            k = f'{k}.{void.instance}' if oid.show_index else k
+            k = entry_value.objectname if entry_value.objectname else entry.label
+            k = f'{k}.{entry_value.instance}' if entry.show_index else k
 
             try:
-                v = float(void.value)
+                v = float(entry_value.value)
             except (ValueError, TypeError):
                 continue
 

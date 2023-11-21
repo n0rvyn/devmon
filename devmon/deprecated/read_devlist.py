@@ -16,8 +16,9 @@
 
 """
 import os.path
-from yaml import safe_load, parser
+from yaml import safe_load
 from dataclasses import asdict
+from typing import Optional
 from threading import Thread
 import sys
 
@@ -30,18 +31,27 @@ sys.path.append(_SRC_)
 #
 
 try:
-    # from type import OID, VOID, WaterMark, OIDType, IDRange, SNMPAgent, SSHAgent, Agent
-    from type import Entry, EntryValue, WaterMark, Agent, SNMPDetail, SSHDetail
+    from type import OID, VOID, WaterMark, OIDType, SNMPAgent, SSHAgent, Agent
 except Exception as e:
     raise e
 
 
-def __read_yaml(file: str = None) -> dict:
+# def ReadConfig(file: str = None):
+#     config = {}
+#     try:
+#         with open(_CONFIG_, 'r+') as f:
+#             config = safe_load(f)
+#     except Exception as err:
+#         print(err)
+#
+#     return config
+
+def __read_yaml(file: str = None) -> Optional[dict]:
     try:
         with open(file, 'r+', encoding='utf8') as f:
-            return safe_load(f)
-    except (FileNotFoundError, parser.ParserError):
-        return {}
+            return safe_load(f)  # TODO '.localhost.yaml.un~'
+    except FileNotFoundError:
+        return None
 
 
 def __read_many_yaml(files: list[str] = None, *ignored_files_prefix) -> list[dict]:
@@ -58,55 +68,45 @@ def __read_many_yaml(files: list[str] = None, *ignored_files_prefix) -> list[dic
     return data
 
 
-def __pickup_agent(data: dict = None) -> Agent:
+def __pickup_agent(data: dict = None) -> tuple[SNMPAgent, SSHAgent]:
     agent = Agent()
-    agent_detail = asdict(agent)
+    agent_detail = {}
 
-    snmp_detail = SNMPDetail()
-    snmp_detail_dict = asdict(snmp_detail)
-    ssh_detail = SSHDetail()
-    ssh_detail_dict = asdict(ssh_detail)
+    snmp_agent = SNMPAgent()
+    snmp_agent_detail = {}
+
+    ssh_agent = SSHAgent()
+    ssh_agent_detail = {}
 
     for key in asdict(agent):
         try:
             agent_detail.update({key: data[key]})
         except KeyError:
-            # agent_detail.update({key: asdict(agent)[key]})
-            pass
+            agent_detail.update({key: asdict(agent)[key]})
 
-    for k_snmp in asdict(snmp_detail):
+    for key in asdict(snmp_agent):
         try:
-            snmp_detail_dict.update({k_snmp: data['snmp'][k_snmp]})
+            snmp_agent_detail.update({key: data['snmp'][key]})
         except KeyError:
-            pass
+            snmp_agent_detail.update({key: asdict(snmp_agent)[key]})
 
-    for k_ssh in asdict(ssh_detail):
+    for key in asdict(ssh_agent):
         try:
-            ssh_detail_dict.update({k_ssh: data['ssh'][k_ssh]})
+            ssh_agent_detail.update({key: data['ssh'][key]})
         except KeyError:
-            pass
-    # for key in asdict(snmp_agent):
-    #     try:
-    #         snmp_agent_detail.update({key: data['snmp'][key]})
-    #     except KeyError:
-    #         snmp_agent_detail.update({key: asdict(snmp_agent)[key]})
-    #
-    # for key in asdict(ssh_agent):
-    #     try:
-    #         ssh_agent_detail.update({key: data['ssh'][key]})
-    #     except KeyError:
-    #         ssh_agent_detail.update({key: asdict(ssh_agent)[key]})
+            ssh_agent_detail.update({key: asdict(ssh_agent)[key]})
+
     try:
-        _ = snmp_detail_dict['entries']
-        entries = []
-        for oid_dict in snmp_detail_dict['entries']:
-            entry = Entry()
+        _ = snmp_agent_detail['OIDs']
+        oids = []
+        for oid_dict in snmp_agent_detail['OIDs']:
+            oid = OID()
 
-            for key in asdict(entry):
+            for key in asdict(oid):
                 try:
                     oid_dict[key]
                 except KeyError:
-                    oid_dict.update({key: asdict(entry)[key]})
+                    oid_dict.update({key: asdict(oid)[key]})
 
             if oid_dict['watermark']:
                 watermark_dict = oid_dict['watermark']
@@ -121,40 +121,34 @@ def __pickup_agent(data: dict = None) -> Agent:
                 [watermark.__setattr__(key, value) for (key, value) in watermark_dict.items()]
 
                 oid_dict['watermark'] = watermark
-            [entry.__setattr__(key, value) for (key, value) in oid_dict.items()]
-            entries.append(entry)
+            [oid.__setattr__(key, value) for (key, value) in oid_dict.items()]
+            oids.append(oid)
 
         # data['OIDs'] = oids
         # data['snmp']['OIDs'] = oids
-        snmp_detail_dict['entries'] = entries
+        snmp_agent_detail['OIDs'] = oids
 
     except (KeyError, TypeError):
         pass
 
     try:
-        _ = ssh_detail_dict['entries']
+        _ = ssh_agent_detail['sshcmd']
         # add contents in the future version
-        ssh_detail_dict['entries'] = _
+        ssh_agent_detail['sshcmd'] = _
     except (KeyError, TypeError):
         pass
 
-    [snmp_detail.__setattr__(key, value) for (key, value) in snmp_detail_dict.items()]
-    [ssh_detail.__setattr__(key, value) for (key, value) in ssh_detail_dict.items()]
-
-    agent_detail['snmp_detail'] = snmp_detail
-    agent_detail['ssh_detail'] = ssh_detail
-
-    [agent.__setattr__(key, value) for (key, value) in agent_detail.items()]
+    [snmp_agent.__setattr__(key, value) for (key, value) in snmp_agent_detail.items()]
+    [ssh_agent.__setattr__(key, value) for (key, value) in ssh_agent_detail.items()]
+    [(snmp_agent.__setattr__(key, value), ssh_agent.__setattr__(key, value)) for (key, value) in agent_detail.items()]
 
     # return agent
-    # return snmp_agent, ssh_agent
-    return agent
+    return snmp_agent, ssh_agent
 
 
-def __read_agents(directory: str = None) -> list[Agent]:
-    # snmp_agents: list[SNMPAgent] = []
-    # ssh_agents: list[SSHAgent] = []
-    agents: list[Agent] = []
+def __read_agents(directory: str = None) -> tuple[list[SNMPAgent], list[SSHAgent]]:
+    snmp_agents: list[SNMPAgent] = []
+    ssh_agents: list[SSHAgent] = []
 
     abs_path = os.path.abspath(directory)
     files = [os.path.join(abs_path, f) for f in os.listdir(abs_path)]
@@ -162,29 +156,27 @@ def __read_agents(directory: str = None) -> list[Agent]:
     raw_data = __read_many_yaml(files, 'example', '.git')
 
     def pickup(_data: dict):
-        # _snmp_agent, _ssh_agent = __pickup_agent(_data)
-        agents.append(__pickup_agent(_data))
-        # snmp_agents.append(_snmp_agent)
-        # ssh_agents.append(_ssh_agent)
+        _snmp_agent, _ssh_agent = __pickup_agent(_data)
+        # agents.append(__pickup_snmp_agent(_data))
+        snmp_agents.append(_snmp_agent)
+        ssh_agents.append(_ssh_agent)
 
     threads = [Thread(target=pickup, args=(data, )) for data in raw_data]
     [t.start() for t in threads]
     [t.join() for t in threads]
 
-    return agents
-    # return snmp_agents, ssh_agents
+    return snmp_agents, ssh_agents
 
 
-def read_agents(*directory) -> tuple[list[Agent], ...]:
+def read_agents(*directory) -> tuple:
     """
     return: tuple( tuple(snmp_agents, ssh_agents), tuple(snmp_agents, ssh_agents), ... )
     """
     # agents: list[tuple[list, list]] = []
-    agents: list[list[Agent]] = []
+    agents: list[list] = []
 
     def read(_dir: str = None):
-        # agents.extend(__read_agents(_dir))
-        agents.append(__read_agents(_dir))
+        agents.extend(__read_agents(_dir))
 
     threads = [Thread(target=read, args=(d,)) for d in directory]
     [t.start() for t in threads]
@@ -241,7 +233,7 @@ def read_agents(*directory) -> tuple[list[Agent], ...]:
 #                 # snmp_agent = SNMPAgent(address=address, region=region, area=area, addr_in_cmdb=addr_in_cmdb)
 #                 d_snmp_agent = asdict(snmp_agent)
 #
-#                 l_oids = []  # a list of all entry's details for a single snmp agent
+#                 l_oids = []  # a list of all OIDs' details for a single snmp agent
 #                 for oid_detail in snmp_detail['OIDs']:
 #                     oid = OID()  # creating an OID dataclass 'oid'
 #                     d_oid = asdict(oid)  # creating a dict based on dataclass 'oid'
@@ -325,8 +317,7 @@ def read_agents(*directory) -> tuple[list[Agent], ...]:
 
 
 if __name__ == '__main__':
-    print(read_agents('../../devlist/a-side'))
-    print(read_agents('../../devlist/b-side'))
+    pass
 
 
 
