@@ -100,7 +100,7 @@ class DevMon(object):
         def decrypt(_agent: Agent):
             agents_decoded.append(self._decrypt_ssh_pass(_agent))
 
-        threads = [Thread(target=decrypt, args=(agt, )) for agt in agents if agt.ssh_detail]
+        threads = [Thread(target=decrypt, args=(agt,)) for agt in agents if agt.ssh_detail]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -172,7 +172,6 @@ class DevMon(object):
             cmdb_col = 'cmdb'
 
         try:
-            ts_db = config['mongo_ts_db']
             ts_col = config['mongo_ts_col']
         except KeyError:
             ts_col = 'perf'
@@ -331,12 +330,12 @@ class DevMon(object):
     def _notify(self):
         pass
 
-    def oid_to_case(self,
-                    agent: Agent = None,
-                    entry: Entry = None,
-                    alert: bool = None,
-                    threshold: str = None,
-                    entry_value: EntryValue = None) -> Case:
+    def entry_to_case(self,
+                      agent: Agent = None,
+                      entry: Entry = None,
+                      alert: bool = None,
+                      threshold: str = None,
+                      entry_value: EntryValue = None) -> Case:
         rid = agent.rid if agent.rid else self.find_rid(agent.addr_in_cmdb)
         rid = rid if rid else 'Null_Resource_ID'
 
@@ -489,13 +488,13 @@ class DevMon(object):
                     perf: bool = False,
                     pm: bool = False,
                     alert: bool = False) -> list[tuple[Agent, Entry, list[EntryValue]]]:
-        # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
-        snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
         agent_oid_voids = []
 
+        # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
+        snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
         ssh = PySSHClient(agent)
 
-        if agent.ssh_detail.password:  # only check ssh stat when the ssh entries are defined
+        if agent.ssh_detail.password:  # only check ssh stat when the ssh server's password is available
             _ssh_stat_entry = Entry(table='sysSshStat', label='sysSshStat', description='SSH服务状态', reference='up')
             agent_oid_voids.append((agent, _ssh_stat_entry, ssh.read_ssh_stat()))
 
@@ -524,15 +523,15 @@ class DevMon(object):
 
         threads = []
         try:
-            threads = [Thread(target=__read_entry, args=(entry, True, False, ))
-                       for entry in agent.snmp_detail.entries]
+            threads = [Thread(target=__read_entry, args=(entry, True, False,))
+                       for entry in agent.snmp_detail.entries if entry is not None]
         except TypeError:
             # agent.snmp_detail does contains 'entries'
             snmp.snmps[0].down = True
 
         try:
             threads.extend([Thread(target=__read_entry, args=(entry, False, True))
-                            for entry in agent.ssh_detail.entries])
+                            for entry in agent.ssh_detail.entries if entry is not None])
         except TypeError:
             pass
 
@@ -540,8 +539,11 @@ class DevMon(object):
         _ = [t.join() for t in threads]
 
         # for detecting SNMPD stat
-        _snmpd_stat_entry = Entry(table='sysSnmpdStat', label='sysSnmpdStat', description='SNMPD服务状态', reference='up')
-        agent_oid_voids.append((agent, _snmpd_stat_entry, snmp.read_snmp_stat()))
+        if agent.snmp_detail.version:
+            _snmpd_stat_entry = Entry(table='sysSnmpdStat', label='sysSnmpdStat',
+                                      description='SNMPD服务状态',
+                                      reference='up')
+            agent_oid_voids.append((agent, _snmpd_stat_entry, snmp.read_snmp_stat()))
 
         return agent_oid_voids
 
@@ -692,11 +694,11 @@ class DevMon(object):
                    f'value: {val}, related symbol: {related_val}, threshold: {threshold}]')
             self._info(msg)
 
-        case = self.oid_to_case(agent=agent,
-                                entry=entry,
-                                alert=alert,
-                                entry_value=entry_value,
-                                threshold=threshold)
+        case = self.entry_to_case(agent=agent,
+                                  entry=entry,
+                                  alert=alert,
+                                  entry_value=entry_value,
+                                  threshold=threshold)
         return case
 
     def filter_alerts_not_published(self) -> list[dict]:
@@ -1118,7 +1120,7 @@ class DevMon(object):
                 name = '阈值区'
 
             if c.alert:
-                err = f'标签{c.entry.label:30s}{c.current_value:20s}{name}{c.threshold:20s}{c.object:20s}'
+                err = f'标签{c.entry.label:25s}{c.current_value:25s}{name}{c.threshold:25s}{c.object:20s}'
                 faulty = 1
             else:
                 err = ''

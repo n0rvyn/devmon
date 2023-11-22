@@ -15,9 +15,7 @@ mongo_uri: 'mongodb://localhost:27017'
 # Default MongoDB database & collection name
 mongo_db: devmon
 mongo_col: devmon
-
 # Configuration for Time Series Objects for Devices' Performance Observability
-mongo_ts_db: devmon
 mongo_ts_col: perf
 
 # Definition for InfluxDB

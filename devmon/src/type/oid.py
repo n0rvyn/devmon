@@ -25,13 +25,6 @@ class WaterMark:
     restricted: bool = False
 
 
-# @dataclass
-# class IDRange:
-#     start: str = None
-#     end:   str = None
-#     count: int = 0
-
-
 ArithType = Literal[
     '+', '-', '*', '/', '%'
 ]

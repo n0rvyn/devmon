@@ -17,7 +17,8 @@ Version = Literal[
 @dataclass
 class SNMPDetail:
     community:    str = 'public'
-    version:  Version = '2c'
+    version:  Version = None
+    # version:  Version = '2c'
     username:     str = None
     context:     list = None
     mib:          str = None
