@@ -100,7 +100,7 @@ class DevMon(object):
         def decrypt(_agent: Agent):
             agents_decoded.append(self._decrypt_ssh_pass(_agent))
 
-        threads = [Thread(target=decrypt, args=(agt, )) for agt in agents]
+        threads = [Thread(target=decrypt, args=(agt, )) for agt in agents if agt.ssh_detail]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -289,7 +289,10 @@ class DevMon(object):
         return self.hp.encrypt(password)
 
     def decode_password(self, password_hide: str = None) -> str:
-        return self.hp.decrypt(password_hide.encode())
+        try:
+            return self.hp.decrypt(password_hide.encode())
+        except (UnicodeEncodeError, AttributeError):
+            return ''
 
     def refresh_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
         self._load_config(init_mongo=init_mongo, service=service, init_influx=init_influx)
@@ -491,8 +494,10 @@ class DevMon(object):
         agent_oid_voids = []
 
         ssh = PySSHClient(agent)
-        _ssh_stat_entry = Entry(table='sysSshStat', label='sysSshStat', description='SSH服务状态', reference='up')
-        agent_oid_voids.append((agent, _ssh_stat_entry, ssh.read_ssh_stat()))
+
+        if agent.ssh_detail.password:  # only check ssh stat when the ssh entries are defined
+            _ssh_stat_entry = Entry(table='sysSshStat', label='sysSshStat', description='SSH服务状态', reference='up')
+            agent_oid_voids.append((agent, _ssh_stat_entry, ssh.read_ssh_stat()))
 
         # for oid in agent.OIDs:
         #     l_voids = snmp.read_oid_dc(oid)
@@ -519,13 +524,15 @@ class DevMon(object):
 
         threads = []
         try:
-            threads = [Thread(target=__read_entry, args=(entry, True, False, )) for entry in agent.snmp_detail.entries]
+            threads = [Thread(target=__read_entry, args=(entry, True, False, ))
+                       for entry in agent.snmp_detail.entries]
         except TypeError:
             # agent.snmp_detail does contains 'entries'
             snmp.snmps[0].down = True
 
         try:
-            threads.extend([Thread(target=__read_entry, args=(entry, False, True)) for entry in agent.ssh_detail.entries])
+            threads.extend([Thread(target=__read_entry, args=(entry, False, True))
+                            for entry in agent.ssh_detail.entries])
         except TypeError:
             pass
 
@@ -554,6 +561,7 @@ class DevMon(object):
             agents = self.b_side_agents
 
         elif device:
+            agents = []
             for agt in self.all_agents:
                 if agt.address == device:
                     agents = [agt]
@@ -1078,7 +1086,7 @@ class DevMon(object):
         [points.append(self.influx.case_to_point(case)) for case in cases]
         self.influx.insert_points(points)
 
-    def pm_snmp(self, device: str = None):
+    def pm(self, device: str = None):
         """
         Preventive maintenance for SNMP agents
         :return:
@@ -1095,6 +1103,9 @@ class DevMon(object):
         for c in cases:
             if not c.entry:
                 continue
+
+            if not c.address:
+                continue  # TODO find out where the case been created.
 
             # if c.void.desc:
             #     obj = f'{c.void.desc}'
@@ -1209,7 +1220,7 @@ if __name__ == '__main__':
             dev = sys.argv[2]
         except IndexError:
             dev = None
-        devmon.pm_snmp(device=dev)
+        devmon.pm(device=dev)
 
     elif act == 'perf':
         try:

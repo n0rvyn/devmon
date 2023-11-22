@@ -37,8 +37,11 @@ def entry_to_case(agent: Agent = None,
     snmp_detail = agent.snmp_detail
     ssh_detail = agent.ssh_detail
 
-    identifier = entry_value.objectname if entry_value.objectname else ''
+    objectname = entry_value.objectname if entry_value.objectname else ''
     description = entry.description
+    instance = entry_value.instance
+
+    case_object = f'{objectname} {instance}' if entry.show_index else f'{objectname}'
 
     def _trans_enum(_agent: Agent = None, _entry: Entry = None, _source: str = None, delimiter: str = ','):
         _rtn_val = []
@@ -74,7 +77,7 @@ def entry_to_case(agent: Agent = None,
 
     # TODO device only has index, no name available.
     # content = f'{identifier}，{description}{oid.alert}，阈值{threshold}，当前值{value}。'
-    content = f'{identifier}，{description}{msg}，阈值{threshold}，当前值{value}。'
+    content = f'{objectname}，{description}{msg}，阈值{threshold}，当前值{value}。'
     current_val = f'当前值{value}'
 
     # rid = snmp_agent.rid if snmp_agent.rid else self.find_rid(snmp_agent.addr_in_cmdb)
@@ -85,7 +88,7 @@ def entry_to_case(agent: Agent = None,
                            area=agent.area,
                            addr_in_cmdb=agent.addr_in_cmdb,
                            severity=entry.severity,
-                           object=f'{description}{identifier}',
+                           object=case_object,
                            sources=source,
                            description=description,
                            threshold=f'{threshold}',

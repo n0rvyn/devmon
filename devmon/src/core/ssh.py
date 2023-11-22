@@ -70,6 +70,8 @@ class PySSHClient(object):
             # TODO add exception to ssh output.
         except (paramiko.ssh_exception.AuthenticationException, paramiko.ssh_exception.SSHException):
             self.connected = False
+        except TypeError:
+            self.connected = False
 
         self.client = client
 
@@ -79,6 +81,9 @@ class PySSHClient(object):
         output = ''
 
         if cmd.endswith('&') or cmd.startswith('setcontext'):
+            return output
+
+        if not self.connected:
             return output
 
         try:

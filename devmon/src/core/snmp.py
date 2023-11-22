@@ -187,6 +187,7 @@ class SNMP(object):
                             unit: str = None,
                             read_ref_from: str = None,
                             read_name_from: str = None,
+                            name_prefix: str = None,
                             exclude_index: str = None,
                             exclude_value: str = None,
                             exclude_keywords: list = None,
@@ -219,11 +220,10 @@ class SNMP(object):
             except ValueError:
                 continue
 
-            try:
-                objectname, instance = object_part.split('.')  # todo need verify if the instance is the last one
-            except ValueError:
-                objectname = object_part
-                instance = str(0)
+            _oid = object_part.split('.')
+            instance = _oid[-1]
+            objectname = _oid[0] if not name_prefix else name_prefix
+            # objectname, instance = object_part.split('.')
 
             subtype = value_part.split(':')[0]
             try:
@@ -234,7 +234,7 @@ class SNMP(object):
 
             unit = _unit if not unit else unit  # unit specified has higher priority than the value read
 
-            vals.append(EntryValue(objectname=objectname,
+            vals.append(EntryValue(objectname=objectname.strip().strip('"').strip("'").strip(),
                                    instance=instance.strip(),
                                    subtype=subtype.strip(),
                                    value=value.strip().strip('"').strip("'").strip(),
@@ -301,6 +301,7 @@ class SNMP(object):
                          _reference: str = None,
                          _read_ref_from: str = None,
                          _read_name_from: str = None,
+                         _name_prefix: str = None,
                          _exclude_index: str = None,
                          _exclude_value: str = None,
                          _exclude_keywords: list = None,
@@ -314,6 +315,7 @@ class SNMP(object):
                                            unit=_unit,
                                            read_ref_from=_read_ref_from,
                                            read_name_from=_read_name_from,
+                                           name_prefix=_name_prefix,
                                            exclude_index=_exclude_index,
                                            exclude_value=_exclude_value,
                                            exclude_keywords=_exclude_keywords,
@@ -330,6 +332,7 @@ class SNMP(object):
                                 entry.reference,
                                 entry.read_ref_from,
                                 entry.read_name_from,
+                                entry.name_prefix,
                                 entry.exclude_index,
                                 entry.exclude_value,
                                 entry.exclude_keywords,

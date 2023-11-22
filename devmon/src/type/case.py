@@ -48,10 +48,11 @@ class CaseUpdatePart:
 
 @dataclass
 class TheSameCasePart:
+    address: str = None
     rid: str = None  # resource ID from CMDB
     region: str = None  # DCA, DCB, DCC
     area: str = None  # CBP, MBA, IFA...
-    addr_in_cmdb: str = None  # an address related with Resource ID in CMDB
+    addr_in_cmdb: str = address  # an address related with Resource ID in CMDB
     sources: str = None
     severity: CaseServ = '1'  # 1, 3, 5
     description: str = None
@@ -60,7 +61,6 @@ class TheSameCasePart:
     index: str = None  # the index of OID and VOID; this parameter makes the OID table or OID range cases been separated
     # the SNMPD listened address;
     # make sure the different hosts those have the same OIDs configuration will be created to different cases.
-    address: str = None
 
 
 @dataclass

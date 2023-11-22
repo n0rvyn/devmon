@@ -59,12 +59,13 @@ class Entry:
     group: list[str] = None   # A set of OIDs; when collecting perf data, insert these values in one document.
 
     # a single OID or OID table for reading the last subidentifier (index) from
-    read_index_from: str = None   # An oid table for reading index from  # todo add or not ??
-    # Adding index value as oid name's suffix. It's useful when determining a PID number with oid 'hrSWRunName'.
-    show_index: bool = False
+    read_index_from: str = None   # An oid table for reading index from  # TODO to use or not to use, it's a question.
 
     # a single OID or OID table for reading the names or descriptions from
     read_name_from: str = None
+    name_prefix: str = None
+    # Adding index value as oid name's suffix. It's useful when determining a PID number with oid 'hrSWRunName'.
+    show_index: bool = False
 
     # parameters for excluding index, value or keywords from OID(s) or OID values
     exclude_index: str = None  # OIDs' index excluded for some discontinuous OID table; for oid -> snmp.py line: 214
