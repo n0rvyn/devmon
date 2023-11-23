@@ -61,7 +61,8 @@ class PySSHClient(object):
                            username=self.user,
                            password=self.password,
                            timeout=timeout if timeout else self.timeout,
-                           auth_timeout=auth_timeout if auth_timeout else self.auth_timeout)
+                           auth_timeout=auth_timeout if auth_timeout else self.auth_timeout,
+                           banner_timeout=10)
 
             self.connected = True
         except (paramiko.ssh_exception.NoValidConnectionsError, socket.timeout, OSError):
@@ -70,6 +71,8 @@ class PySSHClient(object):
         except (paramiko.ssh_exception.AuthenticationException, paramiko.ssh_exception.SSHException):
             self.connected = False
         except TypeError:
+            self.connected = False
+        except socket.error:
             self.connected = False
 
         self.client = client

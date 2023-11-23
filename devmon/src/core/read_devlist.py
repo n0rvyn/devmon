@@ -30,8 +30,7 @@ sys.path.append(_SRC_)
 #
 
 try:
-    # from type import OID, VOID, WaterMark, OIDType, IDRange, SNMPAgent, SSHAgent, Agent
-    from type import Entry, EntryValue, WaterMark, Agent, SNMPDetail, SSHDetail
+    from type import Entry, EntryValue, WaterMark, Agent, SNMPDetail, SSHDetail, Host
 except Exception as e:
     raise e
 
@@ -97,79 +96,92 @@ def __pickup_entry(detail: dict) -> list[Entry]:  # TODO add option type SNMPDet
     return entries
 
 
-def __pickup_agent(data: dict = None) -> Agent:
-    agent = Agent()
-    agent_detail = asdict(agent)
+def __pickup_hosts(host_data: list[dict] = None) -> list[Host]:
+    if not host_data:
+        return []
+
+    hosts = []
+    for h in host_data:
+        host = Host()
+        host_dict = asdict(host)
+        for key in host_dict:
+            try:
+                host_dict.update({key: h[key]})
+            except KeyError:
+                pass
+        [host.__setattr__(key, value) for (key, value) in host_dict.items()]
+        hosts.append(host)
+
+    return hosts
+
+
+def __pickup_agent(data: dict = None) -> list[Agent]:
+    # try:
+    #     data['host']
+    # except KeyError:
+    #     return []
+
+    # agent = Agent()
+    # agent_detail = asdict(agent)
 
     snmp_detail = SNMPDetail()
     snmp_detail_dict = asdict(snmp_detail)
     ssh_detail = SSHDetail()
     ssh_detail_dict = asdict(ssh_detail)
 
-    for key in asdict(agent):
-        try:
-            agent_detail.update({key: data[key]})
-        except KeyError:
-            # agent_detail.update({key: asdict(agent)[key]})
-            pass
+    # for key in agent_detail:
+    #     try:
+    #         agent_detail.update({key: data[key]})
+    #     except KeyError:
+    #         # agent_detail.update({key: asdict(agent)[key]})
+    #         pass
 
-    for k_snmp in asdict(snmp_detail):
+    try:
+        host_list = data['host']
+    except KeyError:
+        host_list = [data]
+
+    hosts = __pickup_hosts(host_list)
+
+    # hosts = []
+    # try:
+    #     for h in data['host']:
+    #         host_dict = asdict(Host())
+    #
+    #         for key in host_dict:
+    #             try:
+    #                 host_dict.update({key: h[key]})
+    #             except KeyError:
+    #                 pass
+    #
+    #         host = Host()
+    #         [host.__setattr__(key, value) for (key, value) in host_dict.items()]
+    #         hosts.append(host)
+    #
+    # except KeyError:
+    #     host_dict = asdict(Host())
+    #
+    #     for key in host_dict:
+    #         try:
+    #             host_dict.update({key: data[key]})
+    #         except KeyError:
+    #             pass
+    #
+    #     host = Host()
+    #     [host.__setattr__(key, value) for (key, value) in host_dict.items()]
+    #     hosts.append(host)
+
+    for k_snmp in snmp_detail_dict:
         try:
             snmp_detail_dict.update({k_snmp: data['snmp'][k_snmp]})
         except KeyError:
             pass
 
-    for k_ssh in asdict(ssh_detail):
+    for k_ssh in ssh_detail_dict:
         try:
             ssh_detail_dict.update({k_ssh: data['ssh'][k_ssh]})
         except KeyError:
             pass
-    # for key in asdict(snmp_agent):
-    #     try:
-    #         snmp_agent_detail.update({key: data['snmp'][key]})
-    #     except KeyError:
-    #         snmp_agent_detail.update({key: asdict(snmp_agent)[key]})
-    #
-    # for key in asdict(ssh_agent):
-    #     try:
-    #         ssh_agent_detail.update({key: data['ssh'][key]})
-    #     except KeyError:
-    #         ssh_agent_detail.update({key: asdict(ssh_agent)[key]})
-
-    # try:
-    #     _ = snmp_detail_dict['entries']
-    #     entries = []
-    #     for oid_dict in snmp_detail_dict['entries']:
-    #         entry = Entry()
-    #
-    #         for key in asdict(entry):
-    #             try:
-    #                 oid_dict[key]
-    #             except KeyError:
-    #                 oid_dict.update({key: asdict(entry)[key]})
-    #
-    #         if oid_dict['watermark']:
-    #             watermark_dict = oid_dict['watermark']
-    #
-    #             watermark = WaterMark()
-    #             for key in asdict(watermark):
-    #                 try:
-    #                     watermark_dict[key]
-    #                 except KeyError:
-    #                     watermark_dict.update({key: asdict(watermark)[key]})  # update the default value
-    #
-    #             [watermark.__setattr__(key, value) for (key, value) in watermark_dict.items()]
-    #
-    #             oid_dict['watermark'] = watermark
-    #         [entry.__setattr__(key, value) for (key, value) in oid_dict.items()]
-    #         entries.append(entry)
-    #
-    #     # data['OIDs'] = oids
-    #     # data['snmp']['OIDs'] = oids
-    #     snmp_detail_dict['entries'] = entries
-    #
-    # except (KeyError, TypeError):
-    #     pass
 
     snmp_detail_dict['entries'] = __pickup_entry(snmp_detail_dict)
     ssh_detail_dict['entries'] = __pickup_entry(ssh_detail_dict)
@@ -177,14 +189,19 @@ def __pickup_agent(data: dict = None) -> Agent:
     [snmp_detail.__setattr__(key, value) for (key, value) in snmp_detail_dict.items()]
     [ssh_detail.__setattr__(key, value) for (key, value) in ssh_detail_dict.items()]
 
-    agent_detail['snmp_detail'] = snmp_detail
-    agent_detail['ssh_detail'] = ssh_detail
+    # agent_detail['snmp_detail'] = snmp_detail
+    # agent_detail['ssh_detail'] = ssh_detail
+    #
+    # [agent.__setattr__(key, value) for (key, value) in agent_detail.items()]
+    agents: list[Agent] = []
+    for host in hosts:
+        agent = Agent()
+        [agent.__setattr__(key, value) for (key, value) in asdict(host).items()]
+        agent.snmp_detail = snmp_detail
+        agent.ssh_detail = ssh_detail
+        agents.append(agent)
 
-    [agent.__setattr__(key, value) for (key, value) in agent_detail.items()]
-
-    # return agent
-    # return snmp_agent, ssh_agent
-    return agent
+    return agents
 
 
 def __read_agents(directory: str = None) -> list[Agent]:
@@ -199,7 +216,8 @@ def __read_agents(directory: str = None) -> list[Agent]:
 
     def pickup(_data: dict):
         # _snmp_agent, _ssh_agent = __pickup_agent(_data)
-        agents.append(__pickup_agent(_data))
+        # agents.append(__pickup_agent(_data))
+        agents.extend(__pickup_agent(_data))
         # snmp_agents.append(_snmp_agent)
         # ssh_agents.append(_ssh_agent)
 

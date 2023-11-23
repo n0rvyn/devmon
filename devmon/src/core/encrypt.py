@@ -48,7 +48,10 @@ class HidePass(object):
         l_mixed_pass = list(mixed_pass)
 
         for i in range(0, len(self.secret)):
-            l_mixed_pass.pop(self.position)
+            try:
+                l_mixed_pass.pop(self.position)
+            except IndexError:
+                pass  # TODO why got a empty value>??????  IndexError: pop from empty list
 
         return ''.join(l_mixed_pass)
 

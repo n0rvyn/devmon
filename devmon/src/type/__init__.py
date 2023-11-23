@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # from .agent import Version, OutOpts, SNMPAgent, SSHAgent, Agent
-from .agent import Version, Agent, SNMPDetail, SSHDetail
+from .agent import Version, Agent, SNMPDetail, SSHDetail, Host
 from .entry import Entry, WaterMark, ArithType, EntryValue, ArithPosition
 from .case import Case, CaseType, TheSameCasePart, CaseUpdatePart
 from .event import EventType
@@ -12,6 +12,7 @@ __all__ = [
     'SNMPDetail',
     'SSHDetail',
     'Agent',
+    'Host',
     'Entry',
     'EntryValue',
     'WaterMark',

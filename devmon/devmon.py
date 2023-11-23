@@ -288,6 +288,8 @@ class DevMon(object):
         return self.hp.encrypt(password)
 
     def decode_password(self, password_hide: str = None) -> str:
+        if password_hide == '':
+            input('empty!!!')
         try:
             return self.hp.decrypt(password_hide.encode())
         except (UnicodeEncodeError, AttributeError):

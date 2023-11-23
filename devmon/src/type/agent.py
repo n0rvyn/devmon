@@ -42,11 +42,27 @@ class SSHDetail:
 
 
 @dataclass
-class Agent:
-    address:      str = None  # the address of the device
-    region:       str = None  # Data Center, e.g. DCA, DCB...
-    area:         str = None  # Business area, e.g. CBP, MBA...
+class Host:
+    address: str = None  # the address of the device
+    region: str = None  # Data Center, e.g. DCA, DCB...
+    area: str = None  # Business area, e.g. CBP, MBA...
     addr_in_cmdb: str = address  # an address related with CMDB resource ID
-    rid:          str = None  # the device resource ID in CMDB
+    rid: str = None  # the device resource ID in CMDB
+
+
+@dataclass
+class Agent(Host):
+    # address:      str = None  # the address of the device
+    # region:       str = None  # Data Center, e.g. DCA, DCB...
+    # area:         str = None  # Business area, e.g. CBP, MBA...
+    # addr_in_cmdb: str = address  # an address related with CMDB resource ID
+    # rid:          str = None  # the device resource ID in CMDB
     snmp_detail: SNMPDetail = None
     ssh_detail:   SSHDetail = None
+
+
+@dataclass
+class AgentGroup:
+    agent: list[Host] = None
+    snmp_detail: SNMPDetail = None
+    ssh_detail: SSHDetail = None
