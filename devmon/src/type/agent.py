@@ -6,7 +6,7 @@
 """
 from dataclasses import dataclass
 from typing import Literal
-from .oid import EntryValue, Entry
+from .entry import EntryValue, Entry
 
 
 Version = Literal[

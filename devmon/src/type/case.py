@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
 from typing import Literal
-from .oid import Entry, EntryValue
+from .entry import Entry, EntryValue
 
 # 1: alert
 # 2: recovery

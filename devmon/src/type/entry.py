@@ -108,6 +108,11 @@ class Entry:
     # specifying a unit for the OID value
     unit: str = None
 
+    # regular expressions support for ssh commands
+
+
+    regexp: str = None
+
 
 @dataclass
 # class OIDValue:

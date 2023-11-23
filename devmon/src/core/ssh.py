@@ -23,7 +23,6 @@ from .encrypt import HidePass
 from random import randint
 from threading import Thread
 
-
 _FILE_ = os.path.abspath(__file__)
 _SRC_ = os.path.abspath(os.path.join(_FILE_, '../../'))
 _CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
@@ -83,12 +82,11 @@ class PySSHClient(object):
         if cmd.endswith('&') or cmd.startswith('setcontext'):
             return output
 
-        if not self.connected:
+        if not self.connected or not self.client:
             return output
 
         try:
             stdin, stdout, stderr = self.client.exec_command(cmd, timeout=timeout)
-            # TODO return '' if not self.connect or client is None
 
             output = ''.join(stdout.readlines())
             error = stderr.readlines()
@@ -117,14 +115,17 @@ class PySSHClient(object):
         ssh_stat_value = 'up' if self.connect(1) else 'down'
         ssh_stat_void = EntryValue(objectname='sysSshdStat',
                                    instance='0',
-                                    value=ssh_stat_value,
-                                    reference='up')
+                                   value=ssh_stat_value,
+                                   reference='up')
         return [ssh_stat_void]
 
-    def _rsh(self, cmd: str = None, timeout: int = 3) -> list[EntryValue]:
-        e_vals = [EntryValue(objectname=cmd, instance=str(randint(0, 100)), subtype='STRING', value=val)
-                 for val in self.getoutput(cmd, timeout=timeout).split('\n')]
-
+    def _rsh(self, cmd: str = None, regexp: str = None, timeout: int = 3) -> list[EntryValue]:
+        e_vals = [EntryValue(objectname=cmd,
+                             instance=str(randint(0, 100)),
+                             subtype='STRING',
+                             value=val if not regexp else subprocess.getoutput(f'''echo {val} | {regexp}''')
+                             )
+                  for val in self.getoutput(cmd, timeout=timeout).strip('\n').split('\n')]
         return e_vals
 
     def read_entry(self, entry: Entry, timeout: int = 3) -> list[EntryValue]:
@@ -137,10 +138,10 @@ class PySSHClient(object):
 
         e_vals = []
 
-        def read(_cmd: str):
-            e_vals.extend(self._rsh(_cmd, timeout=timeout))
+        def read(_cmd: str, _regexp: str = None):
+            e_vals.extend(self._rsh(_cmd, _regexp, timeout=timeout))
 
-        threads = [Thread(target=read, args=(cmd, )) for cmd in cmd_lines]
+        threads = [Thread(target=read, args=(cmd, entry.regexp, )) for cmd in cmd_lines]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -245,4 +246,3 @@ class OpenSSHClient(object):
 
 if __name__ == '__main__':
     pass
-
