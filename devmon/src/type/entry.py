@@ -109,8 +109,6 @@ class Entry:
     unit: str = None
 
     # regular expressions support for ssh commands
-
-
     regexp: str = None
 
 

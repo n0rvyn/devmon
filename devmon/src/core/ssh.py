@@ -94,8 +94,12 @@ class PySSHClient(object):
             if error:
                 output += ''.join(error)
 
-        except (AttributeError, paramiko.ssh_exception.SSHException, EOFError, ValueError) as err:
-            raise err
+        except (AttributeError,
+                paramiko.ssh_exception.SSHException,
+                paramiko.ssh_exception.ChannelException,
+                EOFError, ValueError):
+            # raise err
+            return output
 
         return output
 
@@ -120,13 +124,13 @@ class PySSHClient(object):
         return [ssh_stat_void]
 
     def _rsh(self, cmd: str = None, regexp: str = None, timeout: int = 3) -> list[EntryValue]:
-        e_vals = [EntryValue(objectname=cmd,
+        e_vals = [EntryValue(objectname=f'''"{cmd}"''',
                              instance=str(randint(0, 100)),
                              subtype='STRING',
                              value=val if not regexp else subprocess.getoutput(f'''echo {val} | {regexp}''')
                              )
                   for val in self.getoutput(cmd, timeout=timeout).strip('\n').split('\n')]
-        return e_vals
+        return e_vals  # TODO add support for 'read_name_from' --> regexp
 
     def read_entry(self, entry: Entry, timeout: int = 3) -> list[EntryValue]:
         cmd_lines = [entry.table] if entry.table else []

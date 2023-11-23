@@ -28,10 +28,12 @@ Position = Literal[
 # ]
 
 
-NO_VALUE_ERR = ['No Such Instance currently exists at this OID',
-                'No Such Object available on this agent at this OID',
-                'No log handling enabled']
-NO_VALUE_SUFFIX = ('Unknown Object Identifier',)
+NO_VALUE_PREFIX = ('No log handling enabled')
+
+NO_VALUE_SUFFIX = ('Unknown Object Identifier',
+                   'No Such Instance currently exists at this OID',
+                   'No Such Object available on this agent at this OID',
+                   )
 # SNMPD_DOWN_PREFIX = ('Timeout', 'No log handling enabled')
 SNMPD_DOWN_PREFIX = 'Timeout'
 
@@ -91,7 +93,7 @@ class SNMP(object):
 
         code, output = getstatusoutput(cmd)
         # in some case, read a wrong value but exit code is 0.
-        code = 1 if output in NO_VALUE_ERR or output.endswith(NO_VALUE_SUFFIX) else code
+        code = 1 if output.startswith(NO_VALUE_PREFIX) or output.endswith(NO_VALUE_SUFFIX) else code
 
         # once the snmpd is not reachable, set the parameter to False --> line: 49
         if output.startswith(SNMPD_DOWN_PREFIX):

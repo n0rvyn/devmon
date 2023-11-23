@@ -31,8 +31,14 @@ def entry_to_case(agent: Agent = None,
     # h = hashlib.shake_256(a.encode())
     # h.hex digest(10)
     """
-    if not entry_value.value:
+    # if not entry_value.value:
+    #     return Case()
+
+    if entry_value.value is None:  # TODO verity not or 'is None'???
         return Case()
+
+    # if entry_value.value is None and entry_value.objectname is None:
+    #     return Case()
 
     snmp_detail = agent.snmp_detail
     ssh_detail = agent.ssh_detail

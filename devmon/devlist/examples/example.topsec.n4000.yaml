@@ -27,6 +27,15 @@ snmp:
       watermark:
         low: 0
         high: 80
+ssh:
+  username: 'user1'
+  password: 'password1'
+  entries:
+    - table: 'ha show status'
+      regexp: grep -o "established" || echo 'disabled'
+      label: 'haStatus'
+      description: ''
+      reference: 'established'
 
 
 
