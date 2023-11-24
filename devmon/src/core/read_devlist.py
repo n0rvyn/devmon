@@ -71,7 +71,7 @@ def __pickup_entry(detail: dict) -> list[Entry]:  # TODO add option type SNMPDet
     for entry_dict in detail['entries']:
         entry = Entry()
 
-        for key in asdict(entry):
+        for key in asdict(entry).keys():
             try:
                 entry_dict[key]
             except KeyError:
@@ -79,9 +79,8 @@ def __pickup_entry(detail: dict) -> list[Entry]:  # TODO add option type SNMPDet
 
         if entry_dict['watermark']:
             watermark_dict = entry_dict['watermark']
-
             watermark = WaterMark()
-            for key in asdict(watermark):
+            for key in asdict(watermark).keys():
                 try:
                     watermark_dict[key]
                 except KeyError:
@@ -104,7 +103,7 @@ def __pickup_hosts(host_data: list[dict] = None) -> list[Host]:
     for h in host_data:
         host = Host()
         host_dict = asdict(host)
-        for key in host_dict:
+        for key in host_dict.keys():
             try:
                 host_dict.update({key: h[key]})
             except KeyError:
@@ -171,13 +170,13 @@ def __pickup_agent(data: dict = None) -> list[Agent]:
     #     [host.__setattr__(key, value) for (key, value) in host_dict.items()]
     #     hosts.append(host)
 
-    for k_snmp in snmp_detail_dict:
+    for k_snmp in snmp_detail_dict.keys():
         try:
             snmp_detail_dict.update({k_snmp: data['snmp'][k_snmp]})
         except KeyError:
             pass
 
-    for k_ssh in ssh_detail_dict:
+    for k_ssh in ssh_detail_dict.keys():
         try:
             ssh_detail_dict.update({k_ssh: data['ssh'][k_ssh]})
         except KeyError:

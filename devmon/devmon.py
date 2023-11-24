@@ -15,6 +15,7 @@
 ---Short description of this Python module---
 
 """
+import random
 import time
 import influxdb_client_3
 from yaml import safe_load
@@ -82,15 +83,14 @@ class DevMon(object):
         except ValueError as err:
             raise err
 
-        self.a_side_agents = self._decrypt_many_ssh_pass(self.a_side_agents)
-        self.b_side_agents = self._decrypt_many_ssh_pass(self.b_side_agents)
+        # self.a_side_agents = self._decrypt_many_ssh_pass(self.a_side_agents)
+        # self.b_side_agents = self._decrypt_many_ssh_pass(self.b_side_agents)
 
         self.all_agents = self.a_side_agents + self.b_side_agents
 
     def _decrypt_ssh_pass(self, agent: Agent = None) -> Agent:
         coded_pass = agent.ssh_detail.password
         plain_pass = self.decode_password(coded_pass)
-
         agent.ssh_detail.password = plain_pass
         return agent
 
@@ -100,7 +100,7 @@ class DevMon(object):
         def decrypt(_agent: Agent):
             agents_decoded.append(self._decrypt_ssh_pass(_agent))
 
-        threads = [Thread(target=decrypt, args=(agt,)) for agt in agents if agt.ssh_detail]
+        threads = [Thread(target=decrypt, args=(agt,)) for agt in agents if agt.ssh_detail.password]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -288,11 +288,10 @@ class DevMon(object):
         return self.hp.encrypt(password)
 
     def decode_password(self, password_hide: str = None) -> str:
-        if password_hide == '':
-            input('empty!!!')
         try:
             return self.hp.decrypt(password_hide.encode())
-        except (UnicodeEncodeError, AttributeError):
+        except (UnicodeEncodeError, AttributeError, UnicodeDecodeError):
+            # TODO got empty password.
             return ''
 
     def refresh_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
@@ -494,6 +493,12 @@ class DevMon(object):
 
         # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
         snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
+
+        # agent = self._decrypt_ssh_pass(agent) if agent.ssh_detail.password else agent
+        # bype_pass = agent.ssh_detail.password
+        # plain_pass = self.decode_password(bype_pass) if bype_pass else None
+        # agent.ssh_detail.password = plain_pass
+
         ssh = PySSHClient(agent)
 
         if agent.ssh_detail.password:  # only check ssh stat when the ssh server's password is available

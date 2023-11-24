@@ -16,6 +16,7 @@
 """
 import paramiko
 import subprocess
+import time
 import socket
 import os
 import sys
@@ -86,16 +87,18 @@ class PySSHClient(object):
         output = ''
         invoke_shell = self.invoke_shell if not invoke_shell else invoke_shell
 
-        if cmd.endswith('&') or cmd.startswith('setcontext'):
+        if not self.connected or not self.client:
             return output
 
-        if not self.connected or not self.client:
+        if cmd.endswith('&') or cmd.startswith('setcontext'):
             return output
 
         try:
             if invoke_shell:
                 rsh = self.client.invoke_shell()
-                rsh.send(f'''{cmd}\n''')
+                time.sleep(5)
+                rsh.send(f'''\n{cmd}\n''')
+                time.sleep(5)
                 output = rsh.recv(self.buff_size).decode()
 
             else:
@@ -138,15 +141,20 @@ class PySSHClient(object):
     def _rsh(self,
              cmd: str = None,
              regexp: str = None,
-             timeout: int = 3) -> list[EntryValue]:
-        e_vals = [EntryValue(objectname=f'''"{cmd}"''',
-                             instance=str(randint(0, 100)),
-                             subtype='STRING',
-                             value=val if not regexp else subprocess.getoutput(f'''echo {val} | {regexp}''')
-                             )
-                  for val in self.getoutput(cmd,
-                                            timeout=timeout).strip('\n').split('\n')]
-        return e_vals  # TODO add support for 'read_name_from' --> regexp
+             timeout: int = 3) -> EntryValue:
+        # e_vals = [EntryValue(objectname=f'''"{cmd}"''',
+        #                      instance=str(randint(0, 100)),
+        #                      subtype='STRING',
+        #                      value=val if not regexp else subprocess.getoutput(f'''echo {val} | {regexp}''')
+        #                      )
+        #           for val in self.getoutput(cmd,
+        #                                     timeout=timeout).strip('\n').split('\n')]
+        # return e_vals  # TODO add support for 'read_name_from' --> regexp
+        val = self.getoutput(cmd, timeout=timeout).strip('\n')
+        return EntryValue(objectname=f'''"{cmd}"''',
+                          instance=str(randint(0, 100)),
+                          subtype='STRING',
+                          value=val if not regexp else subprocess.getoutput(f'''echo "{val}" | {regexp}'''))
 
     def read_entry(self, entry: Entry, timeout: int = 3) -> list[EntryValue]:
         cmd_lines = [entry.table] if entry.table else []
@@ -159,7 +167,8 @@ class PySSHClient(object):
         e_vals = []
 
         def read(_cmd: str, _regexp: str = None):
-            e_vals.extend(self._rsh(_cmd, _regexp, timeout=timeout))
+            # e_vals.extend(self._rsh(_cmd, _regexp, timeout=timeout))
+            e_vals.append(self._rsh(_cmd, _regexp, timeout=timeout))
 
         threads = [Thread(target=read, args=(cmd, entry.regexp, )) for cmd in cmd_lines]
         [t.start() for t in threads]
