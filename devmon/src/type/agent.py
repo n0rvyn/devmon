@@ -32,12 +32,13 @@ class SNMPDetail:
 
 @dataclass
 class SSHDetail:
-    username:     str = 'root'
-    password:     str = None
-    pubkey:       str = None
-    port:         int = 22
-    timeout:      int = 3
-    auth_timeout: int = 1
+    username:      str = 'root'
+    password:      str = None
+    pubkey:        str = None
+    port:          int = 22
+    timeout:       int = 3
+    auth_timeout:  int = 1
+    invoke_shell: bool = False
     entries: list[Entry] = None
 
 

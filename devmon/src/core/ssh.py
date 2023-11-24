@@ -51,6 +51,9 @@ class PySSHClient(object):
         self.connected = False
         self.client = None
 
+        self.buff_size = 10240
+        self.invoke_shell = ssh_detail.invoke_shell
+
     def connect(self, timeout: int = None, auth_timeout: int = None):
         client = paramiko.SSHClient()
         client.load_system_host_keys()
@@ -79,8 +82,9 @@ class PySSHClient(object):
 
         return self.connected
 
-    def getoutput(self, cmd, timeout: int = 10) -> str:
+    def getoutput(self, cmd, timeout: int = 10, invoke_shell: bool = None) -> str:
         output = ''
+        invoke_shell = self.invoke_shell if not invoke_shell else invoke_shell
 
         if cmd.endswith('&') or cmd.startswith('setcontext'):
             return output
@@ -89,13 +93,18 @@ class PySSHClient(object):
             return output
 
         try:
-            stdin, stdout, stderr = self.client.exec_command(cmd, timeout=timeout)
+            if invoke_shell:
+                rsh = self.client.invoke_shell()
+                rsh.send(f'''{cmd}\n''')
+                output = rsh.recv(self.buff_size).decode()
 
-            output = ''.join(stdout.readlines())
-            error = stderr.readlines()
+            else:
+                stdin, stdout, stderr = self.client.exec_command(cmd, timeout=timeout)
 
-            if error:
-                output += ''.join(error)
+                output = ''.join(stdout.readlines())
+                error = stderr.readlines()
+
+                output += ''.join(error) if error else ''
 
         except (AttributeError,
                 paramiko.ssh_exception.SSHException,
@@ -126,13 +135,17 @@ class PySSHClient(object):
                                    reference='up')
         return [ssh_stat_void]
 
-    def _rsh(self, cmd: str = None, regexp: str = None, timeout: int = 3) -> list[EntryValue]:
+    def _rsh(self,
+             cmd: str = None,
+             regexp: str = None,
+             timeout: int = 3) -> list[EntryValue]:
         e_vals = [EntryValue(objectname=f'''"{cmd}"''',
                              instance=str(randint(0, 100)),
                              subtype='STRING',
                              value=val if not regexp else subprocess.getoutput(f'''echo {val} | {regexp}''')
                              )
-                  for val in self.getoutput(cmd, timeout=timeout).strip('\n').split('\n')]
+                  for val in self.getoutput(cmd,
+                                            timeout=timeout).strip('\n').split('\n')]
         return e_vals  # TODO add support for 'read_name_from' --> regexp
 
     def read_entry(self, entry: Entry, timeout: int = 3) -> list[EntryValue]:
