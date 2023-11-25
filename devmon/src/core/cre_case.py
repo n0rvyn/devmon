@@ -34,7 +34,7 @@ def entry_to_case(agent: Agent = None,
     # if not entry_value.value:
     #     return Case()
 
-    if entry_value.value is None:  # TODO verity not or 'is None'???
+    if entry_value.value is None:
         return Case()
 
     # if entry_value.value is None and entry_value.objectname is None:

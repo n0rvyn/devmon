@@ -91,20 +91,27 @@ class DevMon(object):
     def _decrypt_ssh_pass(self, agent: Agent = None) -> Agent:
         coded_pass = agent.ssh_detail.password
         plain_pass = self.decode_password(coded_pass)
+
         agent.ssh_detail.password = plain_pass
+
         return agent
 
     def _decrypt_many_ssh_pass(self, agents: list[Agent]) -> list[Agent]:
-        agents_decoded = []
+        """
+        :return: a list of Agent(s)
+        """
 
+        """
+        agents_decoded = []
         def decrypt(_agent: Agent):
             agents_decoded.append(self._decrypt_ssh_pass(_agent))
+            
+        # threads = [Thread(target=decrypt, args=(agt,)) for agt in agents if agt.ssh_detail.password]
+        # [t.start() for t in threads]
+        # [t.join() for t in threads]
+        """
 
-        threads = [Thread(target=decrypt, args=(agt,)) for agt in agents if agt.ssh_detail.password]
-        [t.start() for t in threads]
-        [t.join() for t in threads]
-
-        return agents_decoded
+        return [self._decrypt_ssh_pass(agt) for agt in agents]
 
     def _load_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
         # read configuration from file 'ROOT/conf/devmon.yaml'
@@ -264,18 +271,32 @@ class DevMon(object):
     def read_secret(self, service: bool = False):
         _secret_ = None
         _pos_code_ = 0
-        if service:
-            try:
-                _secret_ = os.environ['DEVMON_SECRET']
-                _pos_code_ = os.environ['DEVMON_POS_CODE']
-            except KeyError:
-                pass
 
-        else:
-            _secret_ = getpass('Please enter your secret code '
-                               'to encrypt and decrypt the password strings '
-                               'in the config file: ')
-            _pos_code_ = getpass('Please enter another position code for this function: ')
+        try:
+            _secret_ = os.environ['DEVMON_SECRET']
+            _pos_code_ = os.environ['DEVMON_POS_CODE']
+
+        except KeyError:
+            _secret_, _pos_code_ = (None, 0) if service else (
+                getpass('Please enter your secret code '
+                        'to encrypt and decrypt the password strings '
+                        'in the config file: '),
+                getpass('Please enter another position code for this function: ')
+
+            )
+
+        # if service:
+        #     try:
+        #         _secret_ = os.environ['DEVMON_SECRET']
+        #         _pos_code_ = os.environ['DEVMON_POS_CODE']
+        #     except KeyError:
+        #         pass
+        #
+        # else:
+        #     _secret_ = getpass('Please enter your secret code '
+        #                        'to encrypt and decrypt the password strings '
+        #                        'in the config file: ')
+        #     _pos_code_ = getpass('Please enter another position code for this function: ')
 
         try:
             _pos_code_ = int(_pos_code_)
@@ -290,7 +311,7 @@ class DevMon(object):
     def decode_password(self, password_hide: str = None) -> str:
         try:
             return self.hp.decrypt(password_hide.encode())
-        except (UnicodeEncodeError, AttributeError, UnicodeDecodeError):
+        except (UnicodeEncodeError, AttributeError, UnicodeDecodeError) as err:
             # TODO got empty password.
             return ''
 
@@ -355,6 +376,9 @@ class DevMon(object):
                              source=self.source)
 
     def _insert_case(self, case: Case = None):
+        if not case.address:
+            return None
+
         # the 'core' part of the case exist in MongoDB
         case_mongo: Case = self.is_case_exist(case)
 
@@ -494,12 +518,7 @@ class DevMon(object):
         # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
         snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
 
-        # agent = self._decrypt_ssh_pass(agent) if agent.ssh_detail.password else agent
-        # bype_pass = agent.ssh_detail.password
-        # plain_pass = self.decode_password(bype_pass) if bype_pass else None
-        # agent.ssh_detail.password = plain_pass
-
-        ssh = PySSHClient(agent)
+        ssh = PySSHClient(agent, self.hp)
 
         if agent.ssh_detail.password:  # only check ssh stat when the ssh server's password is available
             _ssh_stat_entry = Entry(table='sysSshStat', label='sysSshStat', description='SSH服务状态', reference='up')
@@ -654,7 +673,9 @@ class DevMon(object):
         alert: bool = False
         threshold = None
 
-        if not val:
+        # if not val:
+        # `not val` includes unexpected situation: val is ''
+        if val is None:
             self._debug(f'device [{agent.address} got a None-type OID value [{entry}, {entry_value}].')
             return Case()
 
@@ -694,7 +715,8 @@ class DevMon(object):
         # the value of OID has a reference
         elif reference:
             threshold = reference
-            if not str(val) in str(threshold):  # abnormal
+            # `if val in threshold: ` always True if val is ''
+            if not val or (str(val) not in str(threshold)):  # abnormal
                 alert = True  # alert has a default value 'False'
 
             msg = (f'Read OID: [table: {entry.table} or group: {entry.group}, index {index}, '
@@ -1196,14 +1218,15 @@ if __name__ == '__main__':
              f'  {sys.argv[0]} alert [-s | --service]  # one-time alert or as a service \n'
              f'  {sys.argv[0]} query \n'
              f'  {sys.argv[0]} sync  # syncing resources ID from CMDB to MongoDB \n'
-             f'  {sys.argv[0]} close <CASE(id)> <content(field 4)> <current value(field 7)>\n'
-
+             f'  {sys.argv[0]} close <CASE ID> <content (field 4)> <current value (field 7)>\n'
              f'  {sys.argv[0]} pm [device] \n'
-
              f'  {sys.argv[0]} perf [-s | --service] # run performance checking\n'
-
-             f'  {sys.argv[0]} hide PASSWORD  # converting password to strings \n'
-             f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.')
+             f'  {sys.argv[0]} hide <PASSWORD>  # converting password to strings \n'
+             f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.\n'
+             f'e.g., \n'
+             f'  export DEVMON_SECRET=""\n'
+             f'  export DEVMON_POS_CODE=0'
+             )
 
     devmon = DevMon()
     act = opt = None

@@ -20,6 +20,7 @@ from yaml import safe_load, parser
 from dataclasses import asdict
 from threading import Thread
 import sys
+from .encrypt import HidePass
 
 
 _FILE_ = os.path.abspath(__file__)
@@ -115,25 +116,10 @@ def __pickup_hosts(host_data: list[dict] = None) -> list[Host]:
 
 
 def __pickup_agent(data: dict = None) -> list[Agent]:
-    # try:
-    #     data['host']
-    # except KeyError:
-    #     return []
-
-    # agent = Agent()
-    # agent_detail = asdict(agent)
-
     snmp_detail = SNMPDetail()
     snmp_detail_dict = asdict(snmp_detail)
     ssh_detail = SSHDetail()
     ssh_detail_dict = asdict(ssh_detail)
-
-    # for key in agent_detail:
-    #     try:
-    #         agent_detail.update({key: data[key]})
-    #     except KeyError:
-    #         # agent_detail.update({key: asdict(agent)[key]})
-    #         pass
 
     try:
         host_list = data['host']
@@ -141,34 +127,6 @@ def __pickup_agent(data: dict = None) -> list[Agent]:
         host_list = [data]
 
     hosts = __pickup_hosts(host_list)
-
-    # hosts = []
-    # try:
-    #     for h in data['host']:
-    #         host_dict = asdict(Host())
-    #
-    #         for key in host_dict:
-    #             try:
-    #                 host_dict.update({key: h[key]})
-    #             except KeyError:
-    #                 pass
-    #
-    #         host = Host()
-    #         [host.__setattr__(key, value) for (key, value) in host_dict.items()]
-    #         hosts.append(host)
-    #
-    # except KeyError:
-    #     host_dict = asdict(Host())
-    #
-    #     for key in host_dict:
-    #         try:
-    #             host_dict.update({key: data[key]})
-    #         except KeyError:
-    #             pass
-    #
-    #     host = Host()
-    #     [host.__setattr__(key, value) for (key, value) in host_dict.items()]
-    #     hosts.append(host)
 
     for k_snmp in snmp_detail_dict.keys():
         try:
@@ -244,137 +202,6 @@ def read_agents(*directory) -> tuple[list[Agent], ...]:
     [t.join() for t in threads]
 
     return tuple(agents)
-
-
-# def ReadAgents() -> tuple[list, list, list, list]:
-#     a_side_snmp_agents = []
-#     b_side_snmp_agents = []
-#
-#     a_side_ssh_agents = []
-#     b_side_ssh_agents = []
-#
-#     for d in [_A_SIDE_, _B_SIDE_, _M_ING_]:
-#         try:
-#             os.path.isdir(d)
-#         except FileNotFoundError:
-#             raise
-#
-#         for fl in os.listdir(d):
-#             if fl.startswith(('example', '.git')):  # ignore .gitignore
-#                 continue
-#             if not fl.endswith('yaml'):
-#                 continue
-#             try:
-#                 p = os.path.join(d, fl)
-#                 with open(p, 'r+', encoding='utf8') as f:
-#                     dev_detail: dict = safe_load(f)
-#             except parser.ParserError as err:
-#                 raise err
-#
-#             try:
-#                 address = dev_detail['address']
-#             except KeyError:
-#                 continue
-#             except TypeError:
-#                 continue
-#
-#             try:
-#                 if not dev_detail['addr_in_cmdb']:
-#                     dev_detail['addr_in_cmdb'] = address
-#             except KeyError:
-#                 dev_detail['addr_in_cmdb'] = address
-#
-#             snmp_agent = SNMPAgent()
-#             for key, val in dev_detail.items():  # modify from line: 120 snmp_agent = ...
-#                 snmp_agent.__setattr__(key, val)
-#
-#             try:
-#                 snmp_detail = dev_detail['snmp']
-#
-#                 # snmp_agent = SNMPAgent(address=address, region=region, area=area, addr_in_cmdb=addr_in_cmdb)
-#                 d_snmp_agent = asdict(snmp_agent)
-#
-#                 l_oids = []  # a list of all entry's details for a single snmp agent
-#                 for oid_detail in snmp_detail['OIDs']:
-#                     oid = OID()  # creating an OID dataclass 'oid'
-#                     d_oid = asdict(oid)  # creating a dict based on dataclass 'oid'
-#
-#                     for key in oid_detail.keys():  # trying to assign exist 'value's to 'key's
-#                         try:
-#                             if key == 'watermark':
-#                                 try:
-#                                     low = oid_detail[key]['low']
-#                                     high = oid_detail[key]['high']
-#                                 except KeyError:
-#                                     continue  # a 'watermark' must have attributes: low & high
-#
-#                                 try:
-#                                     restr = oid_detail[key]['restricted']
-#                                 except KeyError:
-#                                     restr = False  # but restricted is an option, the default value is 'False'
-#
-#                                 watermark = WaterMark(low=low, high=high, restricted=restr)
-#                                 d_oid[key] = watermark
-#
-#                                 continue
-#                             if key == 'id_range':
-#                                 try:
-#                                     o_start = oid_detail[key]['start']
-#                                 except KeyError:
-#                                     continue
-#
-#                                 try:
-#                                     o_end = oid_detail[key]['end']
-#                                 except KeyError:
-#                                     o_end = None
-#                                 try:
-#                                     o_count = oid_detail[key]['count']
-#                                 except KeyError:
-#                                     o_count = None
-#
-#                                 id_range = IDRange(start=o_start,
-#                                                    end=o_end,
-#                                                    count=o_count)
-#                                 d_oid[key] = id_range
-#                                 continue
-#
-#                             d_oid[key] = oid_detail[key]
-#                         except KeyError:
-#                             continue
-#
-#                     for key, value in d_oid.items():  # assigning values to attributes of dataclass 'oid'
-#                         oid.__setattr__(key, value)
-#
-#                     if (not oid.perf and not oid.show) and (not oid.read_ref_from and not oid.reference and not oid.watermark):
-#                         # oid.perf does not need 'read_ref_from' or 'reference' or 'watermark'
-#                         continue
-#
-#                     l_oids.append(oid)  # appending the dataclass 'oid' to a list
-#
-#                 for key in d_snmp_agent.keys():
-#                     try:
-#                         d_snmp_agent[key] = snmp_detail[key]
-#                     except KeyError:
-#                         continue
-#
-#                 for key, value in d_snmp_agent.items():
-#                     snmp_agent.__setattr__(key, value)
-#
-#                 snmp_agent.OIDs = l_oids
-#
-#                 if d is _A_SIDE_:
-#                     a_side_snmp_agents.append(snmp_agent)
-#                 if d is _B_SIDE_:
-#                     b_side_snmp_agents.append(snmp_agent)
-#
-#             except KeyError:  # 'snmp' key not in dict, maybe this is an SSH agent detail
-#                 try:
-#                     ssh_detail = dev_detail['ssh']
-#
-#                 except KeyError as err:
-#                     raise err
-#
-#     return a_side_snmp_agents, b_side_snmp_agents, a_side_ssh_agents, b_side_ssh_agents
 
 
 if __name__ == '__main__':

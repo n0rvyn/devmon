@@ -16,6 +16,7 @@
 """
 import base64
 import binascii
+from threading import Thread
 
 
 class HidePass(object):
@@ -60,6 +61,11 @@ if __name__ == '__main__':
     hp = HidePass(secret='I love China', position=1)
     print(hp.encrypt('loveShangHai%1998'))
     print(hp.decrypt(hp.encrypt('loveChina.com')))
+
+
+
+
+
 
 
 

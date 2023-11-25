@@ -111,6 +111,9 @@ class Entry:
     # regular expressions support for ssh commands
     regexp: str = None
 
+    # time out to read an output for the command
+    timeout: int = 5
+
 
 @dataclass
 # class OIDValue:

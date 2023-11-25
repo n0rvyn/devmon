@@ -24,6 +24,7 @@ from .encrypt import HidePass
 from random import randint
 from threading import Thread
 
+
 _FILE_ = os.path.abspath(__file__)
 _SRC_ = os.path.abspath(os.path.join(_FILE_, '../../'))
 _CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
@@ -37,17 +38,23 @@ except ImportError as e:
 
 
 class PySSHClient(object):
-    def __init__(self, agent: Agent = None):
+    def __init__(self, agent: Agent = None, hide_pass: HidePass = None):
         self.host = agent.address
 
         ssh_detail = agent.ssh_detail
 
+        _password = ssh_detail.password
+        _password = hide_pass.decrypt(_password.encode()) if _password and hide_pass else _password
+
         self.user = ssh_detail.username
-        self.password = ssh_detail.password
+        # self.password = ssh_detail.password if not hide_pass else hide_pass.decrypt(ssh_detail.password.encode())
+        self.password = _password
         self.port = ssh_detail.port
+        self.pubkey = ssh_detail.pubkey
+
         self.timeout = ssh_detail.timeout
         self.auth_timeout = ssh_detail.auth_timeout
-        self.pubkey = ssh_detail.pubkey
+        self.banner_timeout = ssh_detail.banner_timeout
 
         self.connected = False
         self.client = None
@@ -55,10 +62,13 @@ class PySSHClient(object):
         self.buff_size = 10240
         self.invoke_shell = ssh_detail.invoke_shell
 
-    def connect(self, timeout: int = None, auth_timeout: int = None):
+        self.conn_error = None
+
+    def connect(self, timeout: int = None, auth_timeout: int = None, banner_timeout: int = None):
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
         try:
             client.connect(hostname=self.host,
                            port=self.port,
@@ -66,43 +76,42 @@ class PySSHClient(object):
                            password=self.password,
                            timeout=timeout if timeout else self.timeout,
                            auth_timeout=auth_timeout if auth_timeout else self.auth_timeout,
-                           banner_timeout=10)
+                           banner_timeout=banner_timeout if banner_timeout else self.banner_timeout)
 
             self.connected = True
-        except (paramiko.ssh_exception.NoValidConnectionsError, socket.timeout, OSError):
-            self.connected = False
-            # TODO add exception to ssh output.
-        except (paramiko.ssh_exception.AuthenticationException, paramiko.ssh_exception.SSHException):
-            self.connected = False
-        except TypeError:
-            self.connected = False
-        except socket.error:
-            self.connected = False
+
+        except (paramiko.ssh_exception.SSHException,
+                paramiko.ssh_exception.NoValidConnectionsError,
+                paramiko.ssh_exception.AuthenticationException,
+                TypeError, OSError, TimeoutError, ConnectionResetError,
+                Exception, EOFError,
+                socket.error, socket.timeout) as err:
+
+            self.conn_error = f'CONN_SSHD_ERROR: {err}'
 
         self.client = client
-
         return self.connected
 
-    def getoutput(self, cmd, timeout: int = 10, invoke_shell: bool = None) -> str:
+    def getoutput(self, cmd, timeout: int = 10, invoke_shell: bool = None, get_pty: bool = False) -> str:
         output = ''
-        invoke_shell = self.invoke_shell if not invoke_shell else invoke_shell
 
         if not self.connected or not self.client:
-            return output
+            return self.conn_error
 
         if cmd.endswith('&') or cmd.startswith('setcontext'):
             return output
 
+        invoke_shell = self.invoke_shell if not invoke_shell else invoke_shell
         try:
             if invoke_shell:
                 rsh = self.client.invoke_shell()
-                time.sleep(5)
-                rsh.send(f'''\n{cmd}\n''')
-                time.sleep(5)
+                # time.sleep(1)
+                rsh.send(f'''{cmd}\n''')
+                time.sleep(timeout)
                 output = rsh.recv(self.buff_size).decode()
 
             else:
-                stdin, stdout, stderr = self.client.exec_command(cmd, timeout=timeout)
+                stdin, stdout, stderr = self.client.exec_command(cmd, timeout=timeout, get_pty=get_pty)
 
                 output = ''.join(stdout.readlines())
                 error = stderr.readlines()
@@ -112,9 +121,10 @@ class PySSHClient(object):
         except (AttributeError,
                 paramiko.ssh_exception.SSHException,
                 paramiko.ssh_exception.ChannelException,
-                EOFError, ValueError):
-            # raise err
-            return output
+                EOFError, ValueError,
+                # paramiko.buffered_pipe.PipeTimeout,
+                TimeoutError) as err:
+            output = f'EXEC_CMD__ERROR {err}'
 
         return output
 
@@ -141,7 +151,7 @@ class PySSHClient(object):
     def _rsh(self,
              cmd: str = None,
              regexp: str = None,
-             timeout: int = 3) -> EntryValue:
+             timeout: int = 300) -> EntryValue:
         # e_vals = [EntryValue(objectname=f'''"{cmd}"''',
         #                      instance=str(randint(0, 100)),
         #                      subtype='STRING',
@@ -150,13 +160,16 @@ class PySSHClient(object):
         #           for val in self.getoutput(cmd,
         #                                     timeout=timeout).strip('\n').split('\n')]
         # return e_vals  # TODO add support for 'read_name_from' --> regexp
-        val = self.getoutput(cmd, timeout=timeout).strip('\n')
+        val = self.getoutput(cmd, timeout=timeout).replace('\r', '').strip('\n ')
+
         return EntryValue(objectname=f'''"{cmd}"''',
                           instance=str(randint(0, 100)),
                           subtype='STRING',
-                          value=val if not regexp else subprocess.getoutput(f'''echo "{val}" | {regexp}'''))
+                          value=(val
+                                 if not regexp
+                                 else subprocess.getoutput(f'''printf "{val}" | {regexp}''').strip('\n ')))
 
-    def read_entry(self, entry: Entry, timeout: int = 3) -> list[EntryValue]:
+    def read_entry(self, entry: Entry) -> list[EntryValue]:
         cmd_lines = [entry.table] if entry.table else []
 
         try:
@@ -168,9 +181,13 @@ class PySSHClient(object):
 
         def read(_cmd: str, _regexp: str = None):
             # e_vals.extend(self._rsh(_cmd, _regexp, timeout=timeout))
-            e_vals.append(self._rsh(_cmd, _regexp, timeout=timeout))
+            e_vals.append(self._rsh(_cmd, _regexp, timeout=entry.timeout))
 
-        threads = [Thread(target=read, args=(cmd, entry.regexp, )) for cmd in cmd_lines]
+        threads = [Thread(target=read,
+                          args=(cmd, entry.regexp, ),
+                          name=f'T-{self.host}-{entry.label}'
+                          ) for cmd in cmd_lines]
+
         [t.start() for t in threads]
         [t.join() for t in threads]
 

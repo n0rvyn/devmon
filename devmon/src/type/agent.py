@@ -27,17 +27,18 @@ class SNMPDetail:
     port:         int = None
     base:         str = None  # file: snmp.py line: 59
     enum:        dict = None  # the same as file: oid.py line: 63; file: devmon.py line: 278
-    entries:   list[Entry] = None
+    entries: list[Entry] = None
 
 
 @dataclass
 class SSHDetail:
-    username:      str = 'root'
-    password:      str = None
-    pubkey:        str = None
-    port:          int = 22
-    timeout:       int = 3
-    auth_timeout:  int = 1
+    username:       str = 'root'
+    password:       str = None
+    pubkey:         str = None
+    port:           int = 22
+    timeout:        int = 10  # timeout (in seconds) for TCP connection
+    auth_timeout:   int = 10  # timeout (in seconds) to want for SSH authorization
+    banner_timeout: int = 10  # timeout (in seconds) for SSH banner to be present
     invoke_shell: bool = False
     entries: list[Entry] = None
 
@@ -45,10 +46,10 @@ class SSHDetail:
 @dataclass
 class Host:
     address: str = None  # the address of the device
-    region: str = None  # Data Center, e.g. DCA, DCB...
-    area: str = None  # Business area, e.g. CBP, MBA...
-    addr_in_cmdb: str = address  # an address related with CMDB resource ID
-    rid: str = None  # the device resource ID in CMDB
+    region:  str = 'Default Region'  # Data Center, e.g. DCA, DCB...
+    area:    str = 'Default Area'    # Business area, e.g. CBP, MBA...
+    addr_in_cmdb: str = address      # an address related with CMDB resource ID
+    rid: str = 'NO_RESOURCE_ID_ERROR'  # the device resource ID in CMDB
 
 
 @dataclass
