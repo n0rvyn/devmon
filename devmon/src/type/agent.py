@@ -36,9 +36,9 @@ class SSHDetail:
     password:       str = None
     pubkey:         str = None
     port:           int = 22
-    timeout:        int = 10  # timeout (in seconds) for TCP connection
-    auth_timeout:   int = 10  # timeout (in seconds) to want for SSH authorization
-    banner_timeout: int = 10  # timeout (in seconds) for SSH banner to be present
+    timeout:        int = 60  # timeout (in seconds) for TCP connection
+    auth_timeout:   int = 60  # timeout (in seconds) to want for SSH authorization
+    banner_timeout: int = 60  # timeout (in seconds) for SSH banner to be present
     invoke_shell: bool = False
     entries: list[Entry] = None
 

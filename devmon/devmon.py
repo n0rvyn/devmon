@@ -644,17 +644,15 @@ class DevMon(object):
             _ = [t.join() for t in v_threads]
 
         else:
-            for agent in agents:
-                # self._read_snmp_agent(agent)
-                read_agent(agent)  # result already appended
+            [read_agent(agent) for agent in agents]
+            [[cre_cases(agent, oid, void) for void in l_voids] for (agent, oid, l_voids) in agents_entries_values]
 
-            # for agent, snmp, oid, l_voids, exclude_index in self.snmp_agents:
-            for agent, oid, l_voids in agents_entries_values:
-                for void in l_voids:
-                    # self._cre_snmp_case(agent, oid, void)
-                    cre_cases(agent, oid, void)  # the result already been appended
+            # # for agent, snmp, oid, l_voids, exclude_index in self.snmp_agents:
+            # for agent, oid, l_voids in agents_entries_values:
+            #     for void in l_voids:
+            #         # self._cre_snmp_case(agent, oid, void)
+            #         cre_cases(agent, oid, void)  # the result already been appended
 
-        # return self.snmp_cases
         return cases
 
     def _cre_case(self,
@@ -700,11 +698,11 @@ class DevMon(object):
             threshold = f'{entry.watermark.low}-{entry.watermark.high}'
 
             if not entry.watermark.restricted:
-                if val <= low or val > high:  # abnormal
+                if val < low or val >= high:  # abnormal
                     alert = True
 
             else:  # oid.watermark.restricted is not specified or set to False
-                if low <= val < high:  # abnormal
+                if low < val <= high:  # abnormal
                     alert = True
 
             msg = (f'Read OID: [table: {entry.table} or group: {entry.group}], '

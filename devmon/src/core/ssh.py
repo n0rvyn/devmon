@@ -24,7 +24,6 @@ from .encrypt import HidePass
 from random import randint
 from threading import Thread
 
-
 _FILE_ = os.path.abspath(__file__)
 _SRC_ = os.path.abspath(os.path.join(_FILE_, '../../'))
 _CORE_ = os.path.abspath(os.path.join(_SRC_, 'core'))
@@ -98,7 +97,7 @@ class PySSHClient(object):
         if not self.connected or not self.client:
             return self.conn_error
 
-        if cmd.endswith('&') or cmd.startswith('setcontext'):
+        if not cmd or cmd.endswith('&') or cmd.startswith('setcontext'):
             return output
 
         invoke_shell = self.invoke_shell if not invoke_shell else invoke_shell
@@ -124,7 +123,9 @@ class PySSHClient(object):
                 EOFError, ValueError,
                 # paramiko.buffered_pipe.PipeTimeout,
                 TimeoutError) as err:
-            output = f'EXEC_CMD__ERROR {err}'
+            output = f'EXEC_CMD_ERROR {err}'
+
+        output = output.replace('\r', '').strip('\n ')
 
         return output
 
@@ -151,25 +152,26 @@ class PySSHClient(object):
     def _rsh(self,
              cmd: str = None,
              regexp: str = None,
-             timeout: int = 300) -> EntryValue:
-        # e_vals = [EntryValue(objectname=f'''"{cmd}"''',
-        #                      instance=str(randint(0, 100)),
-        #                      subtype='STRING',
-        #                      value=val if not regexp else subprocess.getoutput(f'''echo {val} | {regexp}''')
-        #                      )
-        #           for val in self.getoutput(cmd,
-        #                                     timeout=timeout).strip('\n').split('\n')]
-        # return e_vals  # TODO add support for 'read_name_from' --> regexp
-        val = self.getoutput(cmd, timeout=timeout).replace('\r', '').strip('\n ')
+             read_name_from: str = None,
+             name_regexp: str = None,
+             timeout: int = 300) -> list[EntryValue]:
+        vals = self.getoutput(cmd, timeout=timeout)
+        time.sleep(timeout)
+        names = self.getoutput(read_name_from, timeout) if read_name_from else ''
 
-        return EntryValue(objectname=f'''"{cmd}"''',
-                          instance=str(randint(0, 100)),
-                          subtype='STRING',
-                          value=(val
-                                 if not regexp
-                                 else subprocess.getoutput(f'''printf "{val}" | {regexp}''').strip('\n ')))
+        def run_regexp(_value: str = None, _regexp: str = None) -> str:
+            return subprocess.getoutput(f'''echo "{_value}" | {_regexp}''').strip('\n ')
 
-    def read_entry(self, entry: Entry) -> list[EntryValue]:
+        l_vals = vals.split('\n') if not regexp else run_regexp(vals, regexp).split('\n')
+        l_names = names.split('\n') if not name_regexp else run_regexp(names, name_regexp).split('\n')
+
+        return [EntryValue(objectname=l_names[i] if len(l_vals) == len(l_names) and read_name_from else cmd,
+                           instance=str(randint(0, 100)),
+                           subtype='STRING',
+                           value=l_vals[i]) for i in range(len(l_vals))]
+
+    def read_entry(self, entry: Entry, multithread: bool = True) -> list[EntryValue]:
+        e_vals = []
         cmd_lines = [entry.table] if entry.table else []
 
         try:
@@ -177,19 +179,25 @@ class PySSHClient(object):
         except TypeError:
             pass  # group is None
 
-        e_vals = []
+        if multithread:
+            def read(_cmd: str, _regexp: str = None, _read_name_from: str = None, _name_regexp: str = None):
+                e_vals.extend(self._rsh(_cmd, _regexp, _read_name_from, _name_regexp, timeout=entry.timeout))
+                # e_vals.append(self._rsh(_cmd, _regexp, timeout=entry.timeout))
 
-        def read(_cmd: str, _regexp: str = None):
-            # e_vals.extend(self._rsh(_cmd, _regexp, timeout=timeout))
-            e_vals.append(self._rsh(_cmd, _regexp, timeout=entry.timeout))
+            threads = [Thread(target=read,
+                              args=(cmd, entry.regexp, entry.read_name_from, entry.name_regexp,),
+                              name=f'T-{self.host}-{entry.label}'
+                              ) for cmd in cmd_lines]
 
-        threads = [Thread(target=read,
-                          args=(cmd, entry.regexp, ),
-                          name=f'T-{self.host}-{entry.label}'
-                          ) for cmd in cmd_lines]
+            [t.start() for t in threads]
+            [t.join() for t in threads]
 
-        [t.start() for t in threads]
-        [t.join() for t in threads]
+        else:
+            [e_vals.extend(self._rsh(cmd,
+                                     entry.regexp,
+                                     entry.read_name_from,
+                                     entry.name_regexp,
+                                     timeout=entry.timeout)) for cmd in cmd_lines]
 
         return e_vals
 

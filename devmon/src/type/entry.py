@@ -59,6 +59,7 @@ class Entry:
     name_prefix: str = None
     # Adding index value as oid name's suffix. It's useful when determining a PID number with oid 'hrSWRunName'.
     show_index: bool = False
+    name_regexp: str = None
 
     # parameters for excluding index, value or keywords from OID(s) or OID values
     exclude_index: str = None  # OIDs' index excluded for some discontinuous OID table; for oid -> snmp.py line: 214
@@ -111,8 +112,8 @@ class Entry:
     # regular expressions support for ssh commands
     regexp: str = None
 
-    # time out to read an output for the command
-    timeout: int = 5
+    # timeout in seconds to read the command output from a remote host
+    timeout: int = 300
 
 
 @dataclass
