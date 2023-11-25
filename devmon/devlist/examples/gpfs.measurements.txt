@@ -1,0 +1,71 @@
+gpfsClusterConfigName	The cluster name.
+gpfsClusterUidDomain	The UID domain name for the cluster.
+gpfsClusterRemoteShellCommand	The remote shell command being used.
+gpfsClusterRemoteFileCopyCommand	The remote file copy command being used.
+gpfsClusterPrimaryServer	The primary GPFS cluster configuration server.
+gpfsClusterSecondaryServer	The secondary GPFS cluster configuration server.
+gpfsClusterMaxBlockSize	The maximum file system block size.
+gpfsClusterDistributedTokenServer	Indicates whether the distributed token server is enabled.
+gpfsClusterFailureDetectionTime	The desired time for GPFS to react to a node failure.
+gpfsClusterTCPPort	The TCP port number.
+gpfsClusterMinMissedPingTimeout	The lower bound on a missed ping timeout (seconds).
+gpfsClusterMaxMissedPingTimeout	The upper bound on missed ping timeout (seconds).
+gpfsNodeName	The node name used by the GPFS daemon.
+gpfsNodeIp	The node IP address.
+gpfsNodePlatform	The operating system being used.
+gpfsNodeStatus	The node status (for example, up or down).
+gpfsNodeFailureCount	The number of node failures.
+gpfsNodeThreadWait	The longest hung thread's wait time (milliseconds).
+gpfsNodeHealthy	Indicates whether the node is healthy in terms of hung threads. If there are hung threads, the value is no.
+gpfsNodeDiagnosis	Shows the number of hung threads and detail on the longest hung thread.
+gpfsNodeVersion	The GPFS product version of the currently running daemon.
+gpfsNodeConfigName	The node name used by the GPFS daemon.
+gpfsNodeType	The node type (for example, manager/client or quorum/nonquorum).
+gpfsNodeAdmin	Indicates whether the node is one of the preferred admin nodes.
+gpfsNodePagePoolL	The size of the cache (low 32 bits).
+gpfsNodePagePoolH	The size of the cache (high 32 bits).
+gpfsNodePrefetchThreads	The number of prefetch threads.
+gpfsNodeMaxMbps	An estimate of how many megabytes of data can be transferred per second.
+gpfsNodeMaxFilesToCache	The number of inodes to cache for recently-used files that have been closed.
+gpfsNodeMaxStatCache	The number of inodes to keep in the stat cache.
+gpfsNodeWorker1Threads	The maximum number of worker threads that can be started.
+gpfsNodeDmapiEventTimeout	The maximum time the file operation threads block while waiting for a DMAPI synchronous event (milliseconds).
+gpfsNodeDmapiMountTimeout	The maximum time that the mount operation waits for a disposition for the mount event to be set (seconds).
+gpfsNodeDmapiSessFailureTimeout	The maximum time the file operation threads wait for the recovery of the failed DMAPI session (seconds).
+gpfsNodeNsdServerWaitTimeWindowOnMount	Specifies a window of time during which a mount can wait for NSD servers to come up (seconds).
+gpfsNodeNsdServerWaitTimeForMount	The maximum time that the mount operation waits for NSD servers to come up (seconds).
+gpfsNodeUnmountOnDiskFail	Indicates how the GPFS daemon responds when a disk failure is detected. If it is "true", any disk failure causes only the local node to forcibly unmount the file system that contains the failed disk.
+gpfsFileSystemName	The file system name.
+gpfsFileSystemStatus	The status of the file system.
+gpfsFileSystemXstatus	The executable status of the file system.
+gpfsFileSystemTotalSpaceL	The total disk space of the file system in kilobytes (low 32 bits).
+gpfsFileSystemTotalSpaceH	The total disk space of the file system in kilobytes (high 32 bits).
+gpfsFileSystemNumTotalInodesL	The total number of file system inodes (low 32 bits).
+gpfsFileSystemNumTotalInodesH	The total number of file system inodes (high 32 bits).
+gpfsFileSystemFreeSpaceL	The free disk space of the file system in kilobytes (low 32 bits).
+gpfsFileSystemFreeSpaceH	The free disk space of the file system in kilobytes (high 32 bits).
+gpfsFileSystemNumFreeInodesL	The number of free file system inodes (low 32 bits).
+gpfsFileSystemNumFreeInodesH	The number of free file system inodes (high 32 bits).
+gpfsStgPoolName	The name of the storage pool.
+gpfsStgPoolFSName	The name of the file system to which the storage pool belongs.
+gpfsStgPoolTotalSpaceL	The total disk space in the storage pool in kilobytes (low 32 bits).
+gpfsStgPoolTotalSpaceH	The total disk space in the storage pool in kilobytes (high 32 bits).
+gpfsStgPoolFreeSpaceL	The free disk space in the storage pool in kilobytes (low 32 bits).
+gpfsStgPoolFreeSpaceH	The free disk space in the storage pool in kilobytes (high 32 bits).
+gpfsStgPoolNumDisks	The number of disks in the storage pool.
+gpfsDiskName	The disk name.
+gpfsDiskFSName	The name of the file system to which the disk belongs.
+gpfsDiskStgPoolName	The name of the storage pool to which the disk belongs.
+gpfsDiskStatus	The status of a disk (values: NotInUse, InUse, Suspended, BeingFormatted, BeingAdded, To Be Emptied, Being Emptied, Emptied, BeingDeleted, BeingDeleted-p, ReferencesBeingRemoved, BeingReplaced or Replacement).
+gpfsDiskAvailability	The availability of the disk (Unchanged, OK, Unavailable, Recovering).
+gpfsDiskTotalSpaceL	The total disk space in kilobytes (low 32 bits).
+gpfsDiskTotalSpaceH	The total disk space in kilobytes (high 32 bits).
+gpfsDiskFullBlockFreeSpaceL	The full block (unfragmented) free space in kilobytes (low 32 bits).
+gpfsDiskFullBlockFreeSpaceH	The full block (unfragmented) free space in kilobytes (high 32 bits).
+gpfsDiskSubBlockFreeSpaceL	The sub-block (fragmented) free space in kilobytes (low 32 bits).
+gpfsDiskSubBlockFreeSpaceH	The sub-block (fragmented) free space in kilobytes (high 32 bits).
+gpfsDiskConfigName	The disk name.
+gpfsDiskConfigFSName	The name of the file system to which the disk belongs.
+gpfsDiskConfigStgPoolName	The name of the storage pool to which the disk belongs.
+gpfsDiskMetadata	Indicates whether the disk holds metadata.
+gpfsDiskData	Indicates whether the disk holds data.
