@@ -23,6 +23,7 @@ import sys
 from .encrypt import HidePass
 from random import randint
 from threading import Thread
+from random import random
 
 _FILE_ = os.path.abspath(__file__)
 _SRC_ = os.path.abspath(os.path.join(_FILE_, '../../'))
@@ -93,6 +94,7 @@ class PySSHClient(object):
 
     def getoutput(self, cmd, timeout: int = 10, invoke_shell: bool = None, get_pty: bool = False) -> str:
         output = ''
+        time.sleep(random())
 
         if not self.connected or not self.client:
             return self.conn_error
@@ -156,7 +158,9 @@ class PySSHClient(object):
              name_regexp: str = None,
              timeout: int = 300) -> list[EntryValue]:
         vals = self.getoutput(cmd, timeout=timeout)
-        time.sleep(timeout)
+        # time.sleep(timeout)
+        time.sleep(random())
+        # TODO no sleep cause Secsh channel 11 open FAILED: open failed: Connect failed
         names = self.getoutput(read_name_from, timeout) if read_name_from else ''
 
         def run_regexp(_value: str = None, _regexp: str = None) -> str:

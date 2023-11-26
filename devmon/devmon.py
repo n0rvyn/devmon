@@ -38,14 +38,10 @@ from src import Agent, SSHDetail, SNMPDetail, read_agents
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
 _ROOT_ = '/etc/devmon' if _ROOT_.startswith('/tmp') else _ROOT_
-_CONF_ = os.path.abspath(os.path.join(_ROOT_, 'conf/devmon.yaml'))
+
 _LOG_ = os.path.abspath(os.path.join(_ROOT_, 'log/devmon.log'))
-
-# if _ROOT_.startswith('/tmp') or _ROOT_ == '/':
-#     _ROOT_ = '/etc/devmon'
-
-# _CONFIG_DIR_ = os.path.join(_ROOT_, 'conf')
-_DEVLIST_DIR_ = os.path.join(_ROOT_, 'devlist')
+_CONF_ = os.path.abspath(os.path.join(_ROOT_, 'etc/conf/devmon.yaml'))
+_DEVLIST_DIR_ = os.path.join(_ROOT_, 'etc/devlist/')
 
 A_SIDE = os.path.abspath(os.path.join(_DEVLIST_DIR_, 'a-side'))
 B_SIDE = os.path.abspath(os.path.join(_DEVLIST_DIR_, 'b-side'))
