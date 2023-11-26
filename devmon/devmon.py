@@ -308,7 +308,6 @@ class DevMon(object):
         try:
             return self.hp.decrypt(password_hide.encode())
         except (UnicodeEncodeError, AttributeError, UnicodeDecodeError) as err:
-            # TODO got empty password.
             return ''
 
     def refresh_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
@@ -1130,7 +1129,7 @@ class DevMon(object):
                 continue
 
             if not c.address:
-                continue  # TODO find out where the case been created.
+                continue
 
             # if c.void.desc:
             #     obj = f'{c.void.desc}'

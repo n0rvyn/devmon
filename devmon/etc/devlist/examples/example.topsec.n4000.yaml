@@ -1,10 +1,10 @@
 ---
-# device address which runs SNMP agent
-address: TopSec_MGMT_ADDR  # the address which been listened to by SNMP Daemon
-region: DataCenter  # The region of device, e.g., DCA, DCB, DataCenterA...
-area: TopSec_N4000  # the business area
-addr_in_cmdb: ADDRESS_IN_CMDB  # the address which related with Resource ID in CMDB
-rid: 'This is resource ID'
+host:
+  - address: TopSec_MGMT_ADDR  # the address which been listened to by SNMP Daemon
+    region: DataCenter  # The region of device, e.g., DCA, DCB, DataCenterA...
+    area: TopSec_N4000  # the business area
+    addr_in_cmdb: ADDRESS_IN_CMDB  # the address which related with Resource ID in CMDB
+    rid: 'This is resource ID'
 snmp:
   version: '2c'  # the SNMPD version
   community: 'public'  # the SNMPD community
@@ -33,8 +33,9 @@ ssh:
   entries:
     - table: 'ha show status'
       regexp: grep -o "established" || echo 'disabled'
+      timeout: 10
       label: 'haStatus'
-      description: ''
+      description: 'HA状态'
       reference: 'established'
 
 

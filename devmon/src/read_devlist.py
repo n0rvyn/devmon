@@ -46,7 +46,7 @@ def __read_many_yaml(files: list[str] = None, *ignored_files_prefix) -> list[dic
     return data
 
 
-def __pickup_entry(detail: dict) -> list[Entry]:  # TODO add option type SNMPDetail or SSHDetail
+def __pickup_entry(detail: dict) -> list[Entry]:
     try:
         _ = detail['entries']
     except KeyError:

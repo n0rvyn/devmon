@@ -1,10 +1,11 @@
 ---
+host:
 # device address which runs SNMP agent
-address: GPFS_Collector_Node_Address  # the address which been listened to by SNMP Daemon
-region: SomeRegion  # The region of device, e.g., DCA, DCB, DataCenterA...
-area: SomeArea  # the business area
-addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
-rid: 'THis is resource ID'
+  - address: GPFS_Collector_Node_Address  # the address which been listened to by SNMP Daemon
+    region: SomeRegion  # The region of device, e.g., DCA, DCB, DataCenterA...
+    area: SomeArea  # the business area
+    addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
+    rid: 'THis is resource ID'
 snmp:
   version: '2c'  # the SNMPD version
   community: 'public'  # the SNMPD community

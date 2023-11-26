@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [https://norvyn.com](https://norvyn.com).
 
 ## [Unreleased]
+
+### [0.6.0] - 2023-11-26
+- Change files structure, put all these to one directory for optimizing import performance
+- Add random sleep time for paramiko 'exec_command' method
+- Add support for multiple devices that have the same attributes can be defined in one YAML file
+
 ### [0.0.8] - 2023-11-06
 - Add support for OID group (a set of OIDs related by name or value)
 - Add support for MongoDB Time Series collection reading and writing

@@ -1,19 +1,15 @@
-# the most simple configuration for Linux SNMPD.
-# exposing all the OIDs to the agent.
-
-# view	all		included		.1
-# rocommunity 	public			default
 ---
-# 设备IP，SNMP Daemon接口地址，必选项
-address: SomeAddress
-# 设备物理区域， 如：DCA，DataCenterA...，必选项
-region: SomeRegion
-# 设备业务区域，如Dev, Prod...， 必选项
-area: SomeArea
-# 设备在CMDB中录入IP，用于关联CMDB中资源ID，必选项
-addr_in_cmdb: SomeAddr
-# 手动指定资源ID，如无此字段，则尝试在MongoDB(需先同步) 对应表中查找，可选项，数量少建议手动查找指定。
-rid: 'THis is resource ID'
+host:
+    # 设备IP，SNMP Daemon接口地址，必选项
+  - address: SomeAddress
+    # 设备物理区域， 如：DCA，DataCenterA...，必选项
+    region: SomeRegion
+    # 设备业务区域，如Dev, Prod...， 必选项
+    area: SomeArea
+    # 设备在CMDB中录入IP，用于关联CMDB中资源ID，必选项
+    addr_in_cmdb: SomeAddr
+    # 手动指定资源ID，如无此字段，则尝试在MongoDB(需先同步) 对应表中查找，可选项，数量少建议手动查找指定。
+    rid: 'THis is resource ID'
 # SNMP客户端配置
 snmp:
   # SNMP版本，2c或者3，必选项
@@ -119,3 +115,16 @@ snmp:
       label: SystemName
       description: '主机名'
       show: True  # 为True，则该OID定义仅作为PM时展示用
+ssh:
+  entries:
+    - table: ''
+      label: ''
+      regexp: ''
+      read_name_from: ''
+      name_regexp: ''
+      reference: ''
+
+    - group:
+        - 'group command 1'
+        - 'group command 2'
+      label: ''

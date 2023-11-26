@@ -83,7 +83,6 @@ def entry_to_case(agent: Agent = None,
 
     msg = entry.alert if alert else entry.recovery
 
-    # TODO device only has index, no name available.
     # content = f'{identifier}，{description}{oid.alert}，阈值{threshold}，当前值{value}。'
     content = f'{objectname}，{description}{msg}，阈值{threshold}，当前值{value}。'
     current_val = f'当前值{value}'

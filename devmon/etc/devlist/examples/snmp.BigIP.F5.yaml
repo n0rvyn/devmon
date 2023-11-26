@@ -1,10 +1,11 @@
 ---
+host:
 # device address which runs SNMP agent
-address: F5_MGMT_ADDR  # the address which been listened by SNMP Daemon
-region: DataCenter  # the region of device, e.g. DCA, DCB, DataCenterA...
-area: Prod  # the business area
-addr_in_cmdb: Address  # the address which related with Resource ID in CMDB
-rid: 'This is Resource ID'
+  - address: F5_MGMT_ADDR  # the address which been listened by SNMP Daemon
+    region: DataCenter  # the region of device, e.g. DCA, DCB, DataCenterA...
+    area: Prod  # the business area
+    addr_in_cmdb: Address  # the address which related with Resource ID in CMDB
+    rid: 'This is Resource ID'
 enum:
   '0': bad
   '1': good
