@@ -61,6 +61,7 @@ class PySSHClient(object):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
+            time.sleep(random()*10 + random()*10)
             client.connect(hostname=self.host,
                            port=self.port,
                            username=self.user,
@@ -98,6 +99,7 @@ class PySSHClient(object):
             if invoke_shell:
                 rsh = self.client.invoke_shell()
                 # time.sleep(1)
+                time.sleep(random())
                 rsh.send(f'''{cmd}\n''')
                 time.sleep(timeout)
                 output = rsh.recv(self.buff_size).decode()
@@ -147,6 +149,7 @@ class PySSHClient(object):
              regexp: str = None,
              read_name_from: str = None,
              name_regexp: str = None,
+             name_prefix: str = None,
              timeout: int = 300) -> list[EntryValue]:
         vals = self.getoutput(cmd, timeout=timeout)
         # time.sleep(timeout)
@@ -154,13 +157,15 @@ class PySSHClient(object):
         # TODO no sleep cause Secsh channel 11 open FAILED: open failed: Connect failed
         names = self.getoutput(read_name_from, timeout) if read_name_from else ''
 
+        pre_name = name_prefix if name_prefix else cmd
+
         def run_regexp(_value: str = None, _regexp: str = None) -> str:
             return subprocess.getoutput(f'''echo "{_value}" | {_regexp}''').strip('\n ')
 
         l_vals = vals.split('\n') if not regexp else run_regexp(vals, regexp).split('\n')
         l_names = names.split('\n') if not name_regexp else run_regexp(names, name_regexp).split('\n')
 
-        return [EntryValue(objectname=l_names[i] if len(l_vals) == len(l_names) and read_name_from else cmd,
+        return [EntryValue(objectname=l_names[i] if len(l_vals) == len(l_names) and read_name_from else pre_name,
                            instance=str(randint(0, 100)),
                            subtype='STRING',
                            value=l_vals[i]) for i in range(len(l_vals))]
@@ -175,12 +180,25 @@ class PySSHClient(object):
             pass  # group is None
 
         if multithread:
-            def read(_cmd: str, _regexp: str = None, _read_name_from: str = None, _name_regexp: str = None):
-                e_vals.extend(self._rsh(_cmd, _regexp, _read_name_from, _name_regexp, timeout=entry.timeout))
+            def read(_cmd: str,
+                     _regexp: str = None,
+                     _read_name_from: str = None,
+                     _name_regexp: str = None,
+                     _name_prefix: str = None):
+                e_vals.extend(self._rsh(_cmd,
+                                        _regexp,
+                                        _read_name_from,
+                                        _name_regexp,
+                                        _name_prefix,
+                                        timeout=entry.timeout))
                 # e_vals.append(self._rsh(_cmd, _regexp, timeout=entry.timeout))
 
             threads = [Thread(target=read,
-                              args=(cmd, entry.regexp, entry.read_name_from, entry.name_regexp,),
+                              args=(cmd,
+                                    entry.regexp,
+                                    entry.read_name_from,
+                                    entry.name_regexp,
+                                    entry.name_prefix, ),
                               name=f'T-{self.host}-{entry.label}'
                               ) for cmd in cmd_lines]
 

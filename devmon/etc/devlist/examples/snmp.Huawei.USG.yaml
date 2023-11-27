@@ -29,10 +29,7 @@ snmp:
       severity: '1'
       name_prefix: 'hwHrpSwitchOverTimes'
       show_index: False
-      watermark:
-        low: 0
-        high: 1
-        # restricted: True
+      reference: '0'
     # Online Power Supply number
     - table: '5.25.31.1.1.1.1.41'
       label: 'hwEntityNomalPwrNum'
