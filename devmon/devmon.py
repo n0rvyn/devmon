@@ -566,6 +566,9 @@ class DevMon(object):
                                       reference='up')
             agent_oid_voids.append((agent, _snmpd_stat_entry, snmp.read_snmp_stat()))
 
+        # for closing the connection
+        ssh.shutdown()
+
         return agent_oid_voids
 
     def create_cases(self,

@@ -14,6 +14,8 @@
 """
 ---An SSH Client based on 'paramiko' and OpenSSH
 """
+import threading
+
 import paramiko
 import subprocess
 import time
@@ -99,7 +101,7 @@ class PySSHClient(object):
             if invoke_shell:
                 rsh = self.client.invoke_shell()
                 # time.sleep(1)
-                time.sleep(random())
+                # time.sleep(random())
                 rsh.send(f'''{cmd}\n''')
                 time.sleep(timeout)
                 output = rsh.recv(self.buff_size).decode()
@@ -152,7 +154,6 @@ class PySSHClient(object):
              name_prefix: str = None,
              timeout: int = 300) -> list[EntryValue]:
         vals = self.getoutput(cmd, timeout=timeout)
-        # time.sleep(timeout)
         time.sleep(random())
         # TODO no sleep cause Secsh channel 11 open FAILED: open failed: Connect failed
         names = self.getoutput(read_name_from, timeout) if read_name_from else ''
@@ -213,6 +214,9 @@ class PySSHClient(object):
                                      timeout=entry.timeout)) for cmd in cmd_lines]
 
         return e_vals
+
+    def shutdown(self):
+        return self.client.close()
 
 
 class OpenSSHClient(object):
