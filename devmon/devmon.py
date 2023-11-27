@@ -27,6 +27,8 @@ from getpass import getpass
 # from random import choices
 # from string import ascii_letters, digits
 from threading import Thread
+from multiprocessing import Process
+# from multiprocess import Process
 from time import perf_counter
 from inspect import currentframe
 from pymongo import errors, timeout
@@ -543,9 +545,16 @@ class DevMon(object):
                 agent_oid_voids.append((agent, _entry, _l_evals)) if _l_evals else None
 
         threads = []
+        # procs = []
         try:
             threads = [Thread(target=__read_entry, args=(entry, True, False,))
                        for entry in agent.snmp_detail.entries if entry is not None]
+
+            # """
+            # For test
+            # """
+            # procs = [Process(target=__read_entry, args=(entry, True, False,)) for entry in agent.snmp_detail.entries if
+            #          entry is not None]
         except TypeError:
             # agent.snmp_detail does contains 'entries'
             snmp.snmps[0].down = True
@@ -553,11 +562,22 @@ class DevMon(object):
         try:
             threads.extend([Thread(target=__read_entry, args=(entry, False, True))
                             for entry in agent.ssh_detail.entries if entry is not None])
+
+            # procs.extend(
+            #     [Process(target=__read_entry, args=(entry, False, True)) for entry in agent.ssh_detail.entries if
+            #      entry is not None])
         except TypeError:
             pass
 
+        # start = time.perf_counter()
         _ = [t.start() for t in threads]
         _ = [t.join() for t in threads]
+        # print(f'MultiThreading: {time.perf_counter() - start}')
+
+        # start = time.perf_counter()
+        # _ = [t.start() for t in procs]
+        # _ = [t.join() for t in procs]
+        # print(f'MultiProcess: {time.perf_counter() - start}')
 
         # for detecting SNMPD stat
         if agent.snmp_detail.version:
@@ -635,11 +655,26 @@ class DevMon(object):
                 in each 'snmp_agents' loop, v_threads is initiated with the new list value.
                 which means, it should be extended, NOT appended or initiated.
                 """
+            start = time.perf_counter()
             [v_threads.extend([Thread(target=cre_cases, args=(agent, oid, void,))
                                for void in l_voids]) for (agent, oid, l_voids) in agents_entries_values]
 
             _ = [t.start() for t in v_threads]
             _ = [t.join() for t in v_threads]
+            print(f'Multiple threading: {time.perf_counter() - start}')
+
+            """
+            testing multiple processing
+            """
+
+            start = time.perf_counter()
+            v_procs = []
+            [v_procs.extend([Process(target=self._cre_case, args=(agent, oid, void,))
+                             for void in l_voids]) for (agent, oid, l_voids) in agents_entries_values]
+
+            _ = [t.start() for t in v_procs]
+            _ = [t.join() for t in v_procs]
+            print(f'Multiple processing: {time.perf_counter() - start}')
 
         else:
             [read_agent(agent) for agent in agents]
