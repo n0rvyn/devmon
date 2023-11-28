@@ -16,10 +16,12 @@
 
 """
 import os.path
+# import time
 from yaml import safe_load, parser
 from dataclasses import asdict
 from threading import Thread
-from .encrypt import HidePass
+from multiprocessing import Process
+# from .encrypt import HidePass
 from .entry import Entry, EntryValue, WaterMark
 from .agent import Agent, SNMPDetail, SSHDetail, Host
 
@@ -42,6 +44,12 @@ def __read_many_yaml(files: list[str] = None, *ignored_files_prefix) -> list[dic
     threads = [Thread(target=_read, args=(f,)) for f in files]
     [t.start() for t in threads]
     [t.join() for t in threads]
+
+    # proces = [Process(target=__read_yaml, args=(os.path.basename(f), )) for f in files]
+    # proces = [Process(target=_read, args=(f, )) for f in files]
+    # [t.start() for t in proces]
+    # [t.join() for t in proces]
+    # print(data)
 
     return data
 

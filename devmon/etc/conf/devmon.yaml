@@ -38,8 +38,8 @@ influx_database: 'devmon'
 
 # Remote log server (str) and port (int)
 rlog_server: 'localhost'
-# rlog_port: 514
-rlog_port: 10514
+rlog_port: 514
+# rlog_port: 10514
 
 # Notify windows, format: HH:MM-HH:MM
 notify_window: 8:00-18:00

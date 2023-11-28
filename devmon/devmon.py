@@ -38,6 +38,7 @@ from src import Point, MongoPoint
 from src import InfluxDB, PySSHClient
 from src import Agent, SSHDetail, SNMPDetail, read_agents
 
+
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
 _ROOT_ = '/etc/devmon' if _ROOT_.startswith('/tmp') else _ROOT_
 
@@ -655,26 +656,26 @@ class DevMon(object):
                 in each 'snmp_agents' loop, v_threads is initiated with the new list value.
                 which means, it should be extended, NOT appended or initiated.
                 """
-            start = time.perf_counter()
             [v_threads.extend([Thread(target=cre_cases, args=(agent, oid, void,))
                                for void in l_voids]) for (agent, oid, l_voids) in agents_entries_values]
 
+            # start = time.perf_counter()
             _ = [t.start() for t in v_threads]
             _ = [t.join() for t in v_threads]
-            print(f'Multiple threading: {time.perf_counter() - start}')
+            # print(f'Multiple threading: side: {side} {time.perf_counter() - start}')
 
             """
             testing multiple processing
             """
 
-            start = time.perf_counter()
-            v_procs = []
-            [v_procs.extend([Process(target=self._cre_case, args=(agent, oid, void,))
-                             for void in l_voids]) for (agent, oid, l_voids) in agents_entries_values]
-
-            _ = [t.start() for t in v_procs]
-            _ = [t.join() for t in v_procs]
-            print(f'Multiple processing: {time.perf_counter() - start}')
+            # v_procs = []
+            # [v_procs.extend([Process(target=self._cre_case, args=(agent, oid, void,))
+            #                  for void in l_voids]) for (agent, oid, l_voids) in agents_entries_values]
+            #
+            # start = time.perf_counter()
+            # _ = [t.start() for t in v_procs]
+            # _ = [t.join() for t in v_procs]
+            # print(f'Multiple processing: side: {side} {time.perf_counter() - start}')
 
         else:
             [read_agent(agent) for agent in agents]
@@ -784,7 +785,7 @@ class DevMon(object):
 
     def filter_failed_recovery(self) -> list[dict]:
         """
-        find all 'dict(s)' in MongoDB those 'type' equal to '2', alert message pushed, recovery not pushed.
+        Find all 'dict(s)' in MongoDB those 'type' equal to '2', alert message pushed, recovery not pushed.
         """
         # flt = {'type': '2', 'recovery_published': False, 'alert_published': True}
         # 1. attach.publish equals 0 --> alert not pushed
@@ -1254,9 +1255,8 @@ if __name__ == '__main__':
              f'  {sys.argv[0]} perf [-s | --service] # run performance checking\n'
              f'  {sys.argv[0]} hide <PASSWORD>  # converting password to strings \n'
              f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.\n'
-             f'e.g., \n'
-             f'  export DEVMON_SECRET=""\n'
-             f'  export DEVMON_POS_CODE=0'
+             f'\ne.g., \n'
+             f'  export DEVMON_SECRET=""; export DEVMON_POS_CODE=0'
              )
 
     devmon = DevMon()

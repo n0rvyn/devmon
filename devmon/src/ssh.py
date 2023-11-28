@@ -63,7 +63,7 @@ class PySSHClient(object):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
-            time.sleep(random()*10 + random()*10)
+            time.sleep(random()*10 + random()*10)  # TODO necessary???
             client.connect(hostname=self.host,
                            port=self.port,
                            username=self.user,
@@ -216,7 +216,7 @@ class PySSHClient(object):
         return e_vals
 
     def shutdown(self):
-        return self.client.close()
+        return self.client.close() if self.client else False
 
 
 class OpenSSHClient(object):
