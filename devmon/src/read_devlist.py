@@ -184,7 +184,7 @@ def __read_agents(directory: str = None) -> list[Agent]:
 
 def read_agents(*directory) -> tuple[list[Agent], ...]:
     """
-    return: tuple( tuple(snmp_agents, ssh_agents), tuple(snmp_agents, ssh_agents), ... )
+    return: tuple( tuple(snmp_agents, ssh_agents), tuple(snmp_agents, ssh_agents), ...)
     """
     # agents: list[tuple[list, list]] = []
     agents: list[list[Agent]] = []

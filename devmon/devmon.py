@@ -15,10 +15,9 @@
 ---Short description of this Python module---
 
 """
-import random
 import time
 import influxdb_client_3
-from yaml import safe_load
+# from yaml import safe_load
 import os
 import sys
 from typing import Literal
@@ -27,17 +26,19 @@ from getpass import getpass
 # from random import choices
 # from string import ascii_letters, digits
 from threading import Thread
-from multiprocessing import Process
+# from multiprocessing import Process
 # from multiprocess import Process
 from time import perf_counter
 from inspect import currentframe
 from pymongo import errors, timeout
-from src import entry_to_case, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
+from src import ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
+# from src import entry_to_case, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
 from src import Entry, EntryValue, Case, CaseUpdatePart, EventType
 from src import Point, MongoPoint
 from src import InfluxDB, PySSHClient
-from src import Agent, SSHDetail, SNMPDetail, read_agents
-
+from src import Agent, read_agents
+# from src import SSHDetail, SNMPDetail
+from src import load_config, Config, build_case
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
 _ROOT_ = '/etc/devmon' if _ROOT_.startswith('/tmp') else _ROOT_
@@ -62,19 +63,24 @@ class DevMon(object):
         self.clog = None
         self.pushmsg = None
         self.mongo = self.cmdb_mongo = self.mongots = None
-        self.event_keys = None
-        self.event_delimiter = None
-        self.multithread = None
-        self.interval = None
-        self.snmpwalk = None
-        self.source = None
-        self.patrol = None
-        self.notify_window = None
-        self.cmdb_server = self.cmdb_user = self.cmdb_pass = self.cmdb_db = None
+        # self.event_keys = None
+        # self.event_delimiter = None
+        # self.multithread = None
+        # self.interval = None
+        # self.snmpwalk = None
+        # self.source = None
+        # self.patrol = None
+        # self.notify_window = None
+        # self.cmdb_server = self.cmdb_user = self.cmdb_pass = self.cmdb_db = None
         self.hp = None
-        self.influx_token = self.influx_org = self.influx_url = None
-        self.last_idb_points = None
+        # self.influx_token = self.influx_org = self.influx_url = None
+
+        # self.last_idb_points = None
         self.mongo_point = MongoPoint
+
+        self.config = Config()
+
+        self.cases: list[Case] = []
 
     def _load_agents(self):
         try:
@@ -87,185 +93,221 @@ class DevMon(object):
 
         self.all_agents = self.a_side_agents + self.b_side_agents
 
-    def _decrypt_ssh_pass(self, agent: Agent = None) -> Agent:
-        coded_pass = agent.ssh_detail.password
-        plain_pass = self.decode_password(coded_pass)
+    # def _decrypt_ssh_pass(self, agent: Agent = None) -> Agent:
+    #     coded_pass = agent.ssh_detail.password
+    #     plain_pass = self.decode_password(coded_pass)
+    #
+    #     agent.ssh_detail.password = plain_pass
+    #
+    #     return agent
 
-        agent.ssh_detail.password = plain_pass
-
-        return agent
-
-    def _decrypt_many_ssh_pass(self, agents: list[Agent]) -> list[Agent]:
-        """
-        :return: a list of Agent(s)
-        """
-
-        """
-        agents_decoded = []
-        def decrypt(_agent: Agent):
-            agents_decoded.append(self._decrypt_ssh_pass(_agent))
-            
-        # threads = [Thread(target=decrypt, args=(agt,)) for agt in agents if agt.ssh_detail.password]
-        # [t.start() for t in threads]
-        # [t.join() for t in threads]
-        """
-
-        return [self._decrypt_ssh_pass(agt) for agt in agents]
+    # def ____decrypt_many_ssh_pass(self, agents: list[Agent]) -> list[Agent]:
+    #     """
+    #     :return: a list of Agent(s)
+    #     """
+    #
+    #     """
+    #     agents_decoded = []
+    #     def decrypt(_agent: Agent):
+    #         agents_decoded.append(self._decrypt_ssh_pass(_agent))
+    #
+    #     # threads = [Thread(target=decrypt, args=(agt,)) for agt in agents if agt.ssh_detail.password]
+    #     # [t.start() for t in threads]
+    #     # [t.join() for t in threads]
+    #     """
+    #
+    #     return [self._decrypt_ssh_pass(agt) for agt in agents]
 
     def _load_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
-        # read configuration from file 'ROOT/conf/devmon.yaml'
-        # config = read_config()
         self.read_secret(service=service)
 
-        try:
-            with open(_CONF_, 'r+') as f:
-                config = safe_load(f)
-        except FileNotFoundError as err:
-            raise err
+        self.config = load_config(_CONF_)
 
-        # read logger configuration
-        name = f'devmon'
-        try:
-            log_level = config['log_level']
-        except KeyError:
-            log_level = 'WARNING'
-        try:
-            log_display = config['log_display']
-        except KeyError:
-            log_display = False
+        self.clog = ColorLogger(name=self.config.log_name, filename=_LOG_,
+                                level=self.config.log_level, display=self.config.log_show)
 
-        self.clog = ColorLogger(name=name, filename=_LOG_, level=log_level, display=log_display)
-        self._debug(f'Loading configuration finished.\n'
-                    f'Logger name {name}, file {_LOG_}, level {log_level}, display {log_display}.')
+        self._debug(f'loading configuration from file finished, here is the data [{self.config}]')
 
-        try:
-            rlog_server = config['rlog_server']
-            rlog_port = config['rlog_port']
-            # nc = config['nc']
-        except KeyError:
-            raise f'rsyslog server/port configuration error.'
+        self.pushmsg = PushMsg(server=self.config.rlog_server, port=self.config.rlog_port)
 
-        # self.pushmsg = PushMsg(server=rlog_server, nc_path=nc, port=rlog_port)
-        self.pushmsg = PushMsg(server=rlog_server, port=rlog_port)
-        self._debug(f'Read rsyslog server {rlog_server} port {rlog_port}.')
-
-        try:
-            mongo_uri = config['mongo_uri']
-        except KeyError:
-            mongo_uri = None
-
-        try:
-            mongo_server = config['mongo_server']
-            mongo_user = config['mongo_user']
-            mongo_pass = self.decode_password(config['mongo_pass'])
-        except KeyError:
-            mongo_user = mongo_pass = mongo_server = None
-
-        try:
-            mongo_port = config['mongo_port']
-        except KeyError:
-            mongo_port = 27017
-
-        try:
-            mongo_db = config['mongo_db']
-            mongo_col = config['mongo_col']
-        except KeyError:
-            mongo_db = mongo_col = 'devmon'
-
-        try:
-            cmdb_col = config['cmdb_mongo_col']
-        except KeyError:
-            cmdb_col = 'cmdb'
-
-        try:
-            ts_col = config['mongo_ts_col']
-        except KeyError:
-            ts_col = 'perf'
-
+        mongo_pass = self.decode_password(self.config.mongo_pass)
         if init_mongo:
-            self.mongo = MongoDB(server=mongo_server, uri=mongo_uri,
-                                 username=mongo_user, password=mongo_pass, port=mongo_port,
-                                 database=mongo_db, collection=mongo_col)
+            self.mongo = MongoDB(server=self.config.mongo_server, uri=self.config.mongo_uri,
+                                 username=self.config.mongo_user, password=mongo_pass, port=self.config.mongo_port,
+                                 database=self.config.mongo_db, collection=self.config.mongo_db)
 
-            self.cmdb_mongo = self.mongo.client[mongo_db][cmdb_col]
-            self.mongots = self.mongo.client[mongo_db][ts_col]
+            self.cmdb_mongo = self.mongo.client[self.config.mongo_db][self.config.mongo_cmdb_col]
+            self.mongots = self.mongo.client[self.config.mongo_db][self.config.mongo_ts_col]
 
             try:
                 with timeout(2):
                     self.mongo.client.admin.command('ping')
             except errors.ServerSelectionTimeoutError:
-                print('MongoDB connection timeout after 2 seconds.')
+                print('MongoDB server timeout after 2 seconds.')
                 self._critical(f'MongoDB enabled but server not respond, exit with error.')
                 exit(1)
 
-            self._debug(f'Initiated MongoDB client finished.\n'
-                        f'Mongo Server {mongo_server}, uri {mongo_uri}, '
-                        f'user {mongo_user}, port {mongo_port}, db {mongo_db}, collection {mongo_col}')
+            self._info(f'Initiated MongoDB client finished.\n')
 
-        try:
-            self.event_keys = config['event_key']
-            self.event_delimiter = config['event_delimiter']
-        except KeyError:
-            self.event_keys = ['sources', 'severity', 'situation_desc',
-                               'content', 'type', 'threshold',
-                               'current_value', 'rid', 'addr_in_cmdb']
-            self.event_delimiter = '||'
-        self._debug(f'Read event keys {self.event_keys}, delimiter {self.event_delimiter}.')
+        self.influx = InfluxDB(host=self.config.influx_url,
+                               token=self.config.influx_token,
+                               org=self.config.influx_org,
+                               database=self.config.influx_db) if init_influx else None
 
-        try:
-            self.multithread = config['multithread']
-        except KeyError:
-            self.multithread = False
-
-        try:
-            self.interval = config['interval']
-        except KeyError:
-            self.interval = 300
-
-        try:
-            self.snmpwalk = config['snmpwalk']
-        except KeyError:
-            self.snmpwalk = '/usr/bin/snmpwalk'
-
-        try:
-            self.source = config['source']
-        except KeyError:
-            self.source = 'SNMP Console'
-
-        try:
-            self.patrol = config['patrol']
-        except KeyError:
-            self.patrol = 5
-
-        try:
-            self.notify_window = config['notify_window']
-        except KeyError:
-            self.notify_window = '8:00-18:00'
-
-        try:
-            self.cmdb_server = config['cmdb_server']
-            self.cmdb_user = config['cmdb_user']
-            self.cmdb_db = config['cmdb_db']
-            self.cmdb_pass = config['cmdb_pass']
-        except KeyError:
-            pass
-
-        try:
-            self.influx_url = config['influx_url']
-            self.influx_token = self.decode_password(config['influx_token'])
-            self.influx_org = config['influx_org']
-        except KeyError:
-            pass
-
-        try:
-            self.influx_db = config['influx_database']
-        except KeyError:
-            self.influx_db = 'devmon'
-
-        self.influx = InfluxDB(host=self.influx_url,
-                               token=self.influx_token,
-                               org=self.influx_org,
-                               database=self.influx_db) if init_influx else None
+    # def ____load_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
+    #     # read configuration from file 'ROOT/conf/devmon.yaml'
+    #     # config = read_config()
+    #     self.read_secret(service=service)
+    #
+    #     try:
+    #         with open(_CONF_, 'r+') as f:
+    #             config = safe_load(f)
+    #     except FileNotFoundError as err:
+    #         raise err
+    #
+    #     # read logger configuration
+    #     name = f'devmon'
+    #     try:
+    #         log_level = config['log_level']
+    #     except KeyError:
+    #         log_level = 'WARNING'
+    #     try:
+    #         log_display = config['log_display']
+    #     except KeyError:
+    #         log_display = False
+    #
+    #     self.clog = ColorLogger(name=name, filename=_LOG_, level=log_level, display=log_display)
+    #     self._debug(f'Loading configuration finished.\n'
+    #                 f'Logger name {name}, file {_LOG_}, level {log_level}, display {log_display}.')
+    #
+    #     try:
+    #         rlog_server = config['rlog_server']
+    #         rlog_port = config['rlog_port']
+    #         # nc = config['nc']
+    #     except KeyError:
+    #         raise f'rsyslog server/port configuration error.'
+    #
+    #     # self.pushmsg = PushMsg(server=rlog_server, nc_path=nc, port=rlog_port)
+    #     self.pushmsg = PushMsg(server=rlog_server, port=rlog_port)
+    #     self._debug(f'Read rsyslog server {rlog_server} port {rlog_port}.')
+    #
+    #     try:
+    #         mongo_uri = config['mongo_uri']
+    #     except KeyError:
+    #         mongo_uri = None
+    #
+    #     try:
+    #         mongo_server = config['mongo_server']
+    #         mongo_user = config['mongo_user']
+    #         mongo_pass = self.decode_password(config['mongo_pass'])
+    #     except KeyError:
+    #         mongo_user = mongo_pass = mongo_server = None
+    #
+    #     try:
+    #         mongo_port = config['mongo_port']
+    #     except KeyError:
+    #         mongo_port = 27017
+    #
+    #     try:
+    #         mongo_db = config['mongo_db']
+    #         mongo_col = config['mongo_col']
+    #     except KeyError:
+    #         mongo_db = mongo_col = 'devmon'
+    #
+    #     try:
+    #         cmdb_col = config['cmdb_mongo_col']
+    #     except KeyError:
+    #         cmdb_col = 'cmdb'
+    #
+    #     try:
+    #         ts_col = config['mongo_ts_col']
+    #     except KeyError:
+    #         ts_col = 'perf'
+    #
+    #     if init_mongo:
+    #         self.mongo = MongoDB(server=mongo_server, uri=mongo_uri,
+    #                              username=mongo_user, password=mongo_pass, port=mongo_port,
+    #                              database=mongo_db, collection=mongo_col)
+    #
+    #         self.cmdb_mongo = self.mongo.client[mongo_db][cmdb_col]
+    #         self.mongots = self.mongo.client[mongo_db][ts_col]
+    #
+    #         try:
+    #             with timeout(2):
+    #                 self.mongo.client.admin.command('ping')
+    #         except errors.ServerSelectionTimeoutError:
+    #             print('MongoDB connection timeout after 2 seconds.')
+    #             self._critical(f'MongoDB enabled but server not respond, exit with error.')
+    #             exit(1)
+    #
+    #         self._debug(f'Initiated MongoDB client finished.\n'
+    #                     f'Mongo Server {mongo_server}, uri {mongo_uri}, '
+    #                     f'user {mongo_user}, port {mongo_port}, db {mongo_db}, collection {mongo_col}')
+    #
+    #     try:
+    #         self.event_keys = config['event_key']
+    #         self.event_delimiter = config['event_delimiter']
+    #     except KeyError:
+    #         self.event_keys = ['sources', 'severity', 'situation_desc',
+    #                            'content', 'type', 'threshold',
+    #                            'current_value', 'rid', 'addr_in_cmdb']
+    #         self.event_delimiter = '||'
+    #     self._debug(f'Read event keys {self.event_keys}, delimiter {self.event_delimiter}.')
+    #
+    #     try:
+    #         self.multithread = config['multithread']
+    #     except KeyError:
+    #         self.multithread = False
+    #
+    #     try:
+    #         self.interval = config['interval']
+    #     except KeyError:
+    #         self.interval = 300
+    #
+    #     try:
+    #         self.snmpwalk = config['snmpwalk']
+    #     except KeyError:
+    #         self.snmpwalk = '/usr/bin/snmpwalk'
+    #
+    #     try:
+    #         self.source = config['source']
+    #     except KeyError:
+    #         self.source = 'SNMP Console'
+    #
+    #     try:
+    #         self.patrol = config['patrol']
+    #     except KeyError:
+    #         self.patrol = 5
+    #
+    #     try:
+    #         self.notify_window = config['notify_window']
+    #     except KeyError:
+    #         self.notify_window = '8:00-18:00'
+    #
+    #     try:
+    #         self.cmdb_server = config['cmdb_server']
+    #         self.cmdb_user = config['cmdb_user']
+    #         self.cmdb_db = config['cmdb_db']
+    #         self.cmdb_pass = config['cmdb_pass']
+    #     except KeyError:
+    #         pass
+    #
+    #     try:
+    #         self.influx_url = config['influx_url']
+    #         self.influx_token = self.decode_password(config['influx_token'])
+    #         self.influx_org = config['influx_org']
+    #     except KeyError:
+    #         pass
+    #
+    #     try:
+    #         self.influx_db = config['influx_database']
+    #     except KeyError:
+    #         self.influx_db = 'devmon'
+    #
+    #     self.influx = InfluxDB(host=self.influx_url,
+    #                            token=self.influx_token,
+    #                            org=self.influx_org,
+    #                            database=self.influx_db) if init_influx else None
 
     def read_secret(self, service: bool = False):
         _secret_ = None
@@ -311,67 +353,59 @@ class DevMon(object):
         try:
             return self.hp.decrypt(password_hide.encode())
         except (UnicodeEncodeError, AttributeError, UnicodeDecodeError) as err:
+            self._error(f'decoding password failed from the code [{password_hide}, [{err}].')
             return ''
 
     def refresh_config(self, init_mongo: bool = False, service: bool = False, init_influx: bool = False):
         self._load_config(init_mongo=init_mongo, service=service, init_influx=init_influx)
         self._load_agents()
 
-    def _debug(self, msg: str = None):
+    def __logger(self, msg: str = None, level: str = None):
         f_info = currentframe()
         lineno = f_info.f_back.f_lineno
         msg = f'[line: {lineno:3d}] {msg}'
-        return self.clog.colorlog(msg, 'debug')
+        return self.clog.colorlog(msg, level)
+
+    def _debug(self, msg: str = None):
+        return self.__logger(msg, 'debug')
 
     def _info(self, msg: str = None):
-        f_info = currentframe()
-        lineno = f_info.f_back.f_lineno
-        msg = f'[line: {lineno:3d}] {msg}'
-        return self.clog.colorlog(msg, 'info')
+        return self.__logger(msg, 'info')
 
     def _warn(self, msg: str = None):
-        f_info = currentframe()
-        lineno = f_info.f_back.f_lineno
-        msg = f'[line: {lineno:3d}] {msg}'
-        return self.clog.colorlog(msg, 'warn')
+        return self.__logger(msg, 'warn')
 
     def _error(self, msg: str = None):
-        f_info = currentframe()
-        lineno = f_info.f_back.f_lineno
-        msg = f'[line: {lineno:3d}] {msg}'
-        return self.clog.colorlog(msg, 'error')
+        return self.__logger(msg, 'error')
 
     def _critical(self, msg: str = None):
-        f_info = currentframe()
-        lineno = f_info.f_back.f_lineno
-        msg = f'[line: {lineno:3d}] {msg}'
-        return self.clog.colorlog(msg, 'critical')
+        return self.__logger(msg, 'critical')
 
     def _notify(self):
         pass
 
-    def entry_to_case(self,
-                      agent: Agent = None,
-                      entry: Entry = None,
-                      alert: bool = None,
-                      threshold: str = None,
-                      entry_value: EntryValue = None) -> Case:
-        rid = agent.rid if agent.rid else self.find_rid(agent.addr_in_cmdb)
-        rid = rid if rid else 'Null_Resource_ID'
-
-        dbg = (f'Met snmp details waiting to be convert to case, agent: '
-               f'[{agent}], entry: [{entry}], '
-               f'alert [{alert}], threshold: [{threshold}],'
-               f'void: [{entry_value}], rid: [{rid}, source: [{self.source}')
-        self._debug(f'{dbg}')
-
-        return entry_to_case(agent=agent,
-                             entry=entry,
-                             alert=alert,
-                             threshold=threshold,
-                             entry_value=entry_value,
-                             add_rid=rid,
-                             source=self.source)
+    # def entry_to_case(self,
+    #                   agent: Agent = None,
+    #                   entry: Entry = None,
+    #                   alert: bool = None,
+    #                   threshold: str = None,
+    #                   entry_value: EntryValue = None) -> Case:
+    #     rid = agent.rid if agent.rid else self.find_rid(agent.addr_in_cmdb)
+    #     rid = rid if rid else 'Null_Resource_ID'
+    #
+    #     dbg = (f'Met snmp details waiting to be convert to case, agent: '
+    #            f'[{agent}], entry: [{entry}], '
+    #            f'alert [{alert}], threshold: [{threshold}],'
+    #            f'void: [{entry_value}], rid: [{rid}, source: [{self.config.source}')
+    #     self._debug(f'{dbg}')
+    #
+    #     return entry_to_case(agent=agent,
+    #                          entry=entry,
+    #                          alert=alert,
+    #                          threshold=threshold,
+    #                          entry_value=entry_value,
+    #                          add_rid=rid,
+    #                          source=self.config.source)
 
     def _insert_case(self, case: Case = None):
         if not case.address:
@@ -514,7 +548,7 @@ class DevMon(object):
         agent_oid_voids = []
 
         # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
-        snmp = ContextSNMP(agent, snmpwalk=self.snmpwalk)
+        snmp = ContextSNMP(agent, snmpwalk=self.config.snmpwalk)
 
         ssh = PySSHClient(agent, self.hp)
 
@@ -592,7 +626,7 @@ class DevMon(object):
 
         return agent_oid_voids
 
-    def create_cases(self,
+    def build_cases(self,
                      side: Side = None,
                      multithread: bool = True,
                      device: str = None,
@@ -631,7 +665,7 @@ class DevMon(object):
             # The snmp_agent is a list of tuple, not a list of list.
 
         def cre_cases(_agent: Agent, _entry: Entry, _entry_value: EntryValue):
-            cases.append(self._cre_case(_agent, _entry, _entry_value))
+            cases.append(self._build_case(_agent, _entry, _entry_value))
 
         if multithread:
             """
@@ -689,78 +723,90 @@ class DevMon(object):
 
         return cases
 
-    def _cre_case(self,
-                  agent: Agent,
-                  entry: Entry = None,
-                  entry_value: EntryValue = None) -> Case:
-        """
-        A threading target for creating case, based on SNMP agent, OID, and value of OID.
-        """
-        self._debug(f'Read agent: [{agent.address}], entry: [{entry}], value: [{entry_value}]')
+    def _build_case(self, agent: Agent,
+                     entry: Entry = None,
+                     entry_value: EntryValue = None,
+                    # rid: str = None,
+                     # source: str = None,
+                    ) -> Case:
 
-        index = entry_value.instance
-        val = entry_value.value
-        related_val = entry_value.objectname
-        reference = entry_value.reference if entry_value.reference else entry.reference
-        alert: bool = False
-        threshold = None
+        rid = agent.rid if agent.rid else self.find_rid(agent.addr_in_cmdb)
+        rid = rid if rid else 'Null_Resource_ID'
 
-        # if not val:
-        # `not val` includes unexpected situation: val is ''
-        if val is None:
-            self._debug(f'device [{agent.address} got a None-type OID value [{entry}, {entry_value}].')
-            return Case()
+        return build_case(agent, entry, entry_value, rid, self.config.source)
 
-        if entry.watermark:  # the value of OID has a watermark
-            try:
-                val = float(val)
-            except (TypeError, ValueError):
-                # oid.watermark is specified, but the value fetched is not countable.
-                err = f"The OID has a watermark [{entry.watermark}], " \
-                      f"but the value fetched [{val}] is not float-able." \
-                      f"The OID is ignored."
-                self._error(err)
-                return Case()
-
-            try:
-                low = float(entry.watermark.low)
-                high = float(entry.watermark.high)
-            except TypeError:
-                self._error(f'The watermark specified {entry.watermark} is not integrable.')
-                return Case()
-
-            threshold = f'{entry.watermark.low}-{entry.watermark.high}'
-
-            if not entry.watermark.restricted:
-                if val < low or val >= high:  # abnormal
-                    alert = True
-
-            else:  # oid.watermark.restricted is not specified or set to False
-                if low < val <= high:  # abnormal
-                    alert = True
-
-            msg = (f'Read OID: [table: {entry.table} or group: {entry.group}], '
-                   f'index: [{index}], value: [{val}], watermark: [{entry.watermark}]')
-            self._info(msg)
-
-        # elif oid.reference or oid.read_ref_from:
-        # the value of OID has a reference
-        elif reference:
-            threshold = reference
-            # `if val in threshold: ` always True if val is ''
-            if not val or (str(val) not in str(threshold)):  # abnormal
-                alert = True  # alert has a default value 'False'
-
-            msg = (f'Read OID: [table: {entry.table} or group: {entry.group}, index {index}, '
-                   f'value: {val}, related symbol: {related_val}, threshold: {threshold}]')
-            self._info(msg)
-
-        case = self.entry_to_case(agent=agent,
-                                  entry=entry,
-                                  alert=alert,
-                                  entry_value=entry_value,
-                                  threshold=threshold)
-        return case
+    # def _cre_case(self,
+    #               agent: Agent,
+    #               entry: Entry = None,
+    #               entry_value: EntryValue = None) -> Case:
+    #     """
+    #     A threading target for creating case, based on SNMP agent, OID, and value of OID.
+    #     """
+    #     self._debug(f'Read agent: [{agent.address}], entry: [{entry}], value: [{entry_value}]')
+    #
+    #     index = entry_value.instance
+    #     val = entry_value.value
+    #     related_val = entry_value.objectname
+    #     reference = entry_value.reference if entry_value.reference else entry.reference
+    #     alert: bool = False
+    #     threshold = None
+    #
+    #     # if not val:
+    #     # `not val` includes unexpected situation: val is ''
+    #     if val is None:
+    #         self._debug(f'device [{agent.address} got a None-type OID value [{entry}, {entry_value}].')
+    #         return Case()
+    #
+    #     if entry.watermark:  # the value of OID has a watermark
+    #         try:
+    #             val = float(val)
+    #         except (TypeError, ValueError):
+    #             # oid.watermark is specified, but the value fetched is not countable.
+    #             err = f"The OID has a watermark [{entry.watermark}], " \
+    #                   f"but the value fetched [{val}] is not float-able." \
+    #                   f"The OID is ignored."
+    #             self._error(err)
+    #             return Case()
+    #
+    #         try:
+    #             low = float(entry.watermark.low)
+    #             high = float(entry.watermark.high)
+    #         except TypeError:
+    #             self._error(f'The watermark specified {entry.watermark} is not integrable.')
+    #             return Case()
+    #
+    #         threshold = f'{entry.watermark.low}-{entry.watermark.high}'
+    #
+    #         if not entry.watermark.restricted:
+    #             if val < low or val >= high:  # abnormal
+    #                 alert = True
+    #
+    #         else:  # oid.watermark.restricted is not specified or set to False
+    #             if low < val <= high:  # abnormal
+    #                 alert = True
+    #
+    #         msg = (f'Read OID: [table: {entry.table} or group: {entry.group}], '
+    #                f'index: [{index}], value: [{val}], watermark: [{entry.watermark}]')
+    #         self._info(msg)
+    #
+    #     # elif oid.reference or oid.read_ref_from:
+    #     # the value of OID has a reference
+    #     elif reference:
+    #         threshold = reference
+    #         # `if val in threshold: ` always True if val is ''
+    #         if not val or (str(val) not in str(threshold)):  # abnormal
+    #             alert = True  # alert has a default value 'False'
+    #
+    #         msg = (f'Read OID: [table: {entry.table} or group: {entry.group}, index {index}, '
+    #                f'value: {val}, related symbol: {related_val}, threshold: {threshold}]')
+    #         self._info(msg)
+    #
+    #     case = self.entry_to_case(agent=agent,
+    #                               entry=entry,
+    #                               alert=alert,
+    #                               entry_value=entry_value,
+    #                               threshold=threshold)
+    #     return case
 
     def filter_alerts_not_published(self) -> list[dict]:
         """
@@ -787,12 +833,6 @@ class DevMon(object):
         """
         Find all 'dict(s)' in MongoDB those 'type' equal to '2', alert message pushed, recovery not pushed.
         """
-        # flt = {'type': '2', 'recovery_published': False, 'alert_published': True}
-        # 1. attach.publish equals 0 --> alert not pushed
-        # 2. attach.publish equals 1 --> alert pushed, recovery not pushed
-        # 3. attach.publish equals 2 --> recovery pushed
-        # alert pushed, recovery not pushed, but the case is closed due to type already set to 2
-        # flt = {'attach.type': '2', 'attach.publish': 1}
         flt = {'type': '2', 'publish': 1}
         return self.mongo.find_many(flt)
 
@@ -801,13 +841,13 @@ class DevMon(object):
         l_event = []
 
         try:
-            for key in self.event_keys:
+            for key in self.config.event_keys:
                 try:
                     l_event.append(case_in_mongo[key])
                 except KeyError:
                     l_event.append('')
 
-            event = f'{self.event_delimiter}'.join(l_event)
+            event = f'{self.config.event_delimiter}'.join(l_event)
 
         except TypeError:  # case_in_mongo not exist or met wrong input
             event = ''
@@ -816,12 +856,11 @@ class DevMon(object):
         return case_in_mongo['id'], event
 
     def create_events(self, cases_in_mongo: list[dict]) -> list[tuple]:
-        events = []
-
-        for case in cases_in_mongo:
-            events.append(self.create_event(case))
-
-        return events
+        # events = []
+        # for case in cases_in_mongo:
+        #     events.append(self.create_event(case))
+        return [self.create_event(case) for case in cases_in_mongo]
+        # return events
 
     def _push_event(self, case_id, event: str = None, event_type: EventType = None) -> bool:
         """
@@ -892,39 +931,10 @@ class DevMon(object):
 
         print_alert(self.filter_alerts_published())
 
-        # # for alert in self.filter_alerts_all():
-        # for alert in self.filter_alerts_published():
-        #     cid, event = self.create_event(alert)
-        #     count += 1
-        #
-        #     # al_pub = alert['attach']['publish']
-        #     al_pub = alert['publish']
-        #     if al_pub == 1:
-        #         pub_stat = 'Alerted'
-        #     elif al_pub == 2:
-        #         pub_stat = 'Recovered'
-        #     else:
-        #         pub_stat = 'Default'
-        #
-        #     print(f'|{count:2d}. Case: {cid} Stat: {pub_stat:9s} Event: {event}')
         print('-' * 127)
 
         print('-' * 50, f'{"Alert not Published":^25s}', '-' * 50)
         print_alert(self.filter_alerts_not_published())
-        # For alert in self.filter_alerts_not_published():
-        #     cid, event = self.create_event(alert)
-        #     count += 1
-        #
-        #     # al_pub = alert['attach']['publish']
-        #     al_pub = alert['publish']
-        #     if al_pub == 1:
-        #         pub_stat = 'Alerted'
-        #     elif al_pub == 2:
-        #         pub_stat = 'Recovered'
-        #     else:
-        #         pub_stat = 'Default'
-        #
-        #     print(f'|{count:2d}. Case: {cid} Stat: {pub_stat:9s} Event: {event}')
         print('-' * 127)
 
         count = 0
@@ -971,8 +981,6 @@ class DevMon(object):
             l1 = 'info' if r1 else 'error'
             self.clog.colorlog(f'Case [{cid}] push recovery to rsyslog server [{r1}]', l1)
 
-            # case_core = TheSameCasePart()
-            # case_attach = CaseUpdatePart()
             case = Case()
 
             for key, value in d_case.items():
@@ -980,20 +988,6 @@ class DevMon(object):
                     case.__setattr__(key, value)
                 except AttributeError:
                     pass
-            # for key, value in d_case['core'].items():
-            #     try:
-            #         case_core.__setattr__(key, value)
-            #     except AttributeError:
-            #         pass
-            #
-            # for key, value in d_case['attach'].items():
-            #     try:
-            #         case_attach.__setattr__(key, value)
-            #     except AttributeError:
-            #         pass
-
-            # case.core = case_core
-            # case.attach = case_attach
 
             r2 = self.update_case_attach(cid, case)
             l2 = 'info' if r2 else 'error'
@@ -1031,12 +1025,11 @@ class DevMon(object):
 
     def alert(self, show: bool = True):
 
-        multithread = self.multithread
-        a2b_interval_in_sec = self.interval
+        multithread = self.config.multithread
         alert = True
 
         start = perf_counter()
-        a_cases = self.create_cases('a', multithread=multithread, alert=alert)
+        a_cases = self.build_cases('a', multithread=multithread, alert=alert)
         self._info(f'All A side snmp agents checked, spent {perf_counter() - start:.2f} seconds, '
                    f'multi-threading [{multithread}]')
 
@@ -1046,10 +1039,10 @@ class DevMon(object):
                    f'spent {perf_counter() - start:.2f} seconds, '
                    f'multi-threading [{multithread}]')
 
-        time.sleep(a2b_interval_in_sec)
+        time.sleep(self.config.interval)
 
         start = perf_counter()
-        b_cases = self.create_cases('b', multithread=multithread, alert=alert)
+        b_cases = self.build_cases('b', multithread=multithread, alert=alert)
         self._info(f'All B side snmp agents checked, '
                    f'spent {perf_counter() - start:.2f} seconds, '
                    f'multi-threading [{multithread}]')
@@ -1068,13 +1061,13 @@ class DevMon(object):
 
         self.show_all_alerts() if show else None
 
-    def service_alert(self):
+    def alert_loop(self):
         """
         Running the tool as a Linux service.
         Checking the status of failed device each 'interval' time.
         """
         try:
-            patrol = float(self.patrol) * 60
+            patrol = float(self.config.patrol) * 60
         except TypeError:
             patrol = 300
 
@@ -1083,7 +1076,8 @@ class DevMon(object):
             time.sleep(patrol)
 
     def sync_rid(self):
-        cmdb = CMDB(host=self.cmdb_server, user=self.cmdb_user, password=self.cmdb_pass, database=self.cmdb_db)
+        cmdb = CMDB(host=self.config.cmdb_server, user=self.config.cmdb_user,
+                    password=self.config.cmdb_pass, database=self.config.cmdb_db)
         mongo_data = cmdb.select_id()
 
         return self.cmdb_mongo.collection.insert_many(mongo_data)
@@ -1125,26 +1119,26 @@ class DevMon(object):
         self.influx.insert_points(influx_points) if influx else None
         self.mongots.insert_dicts([asdict(p) for p in mongo_points]) if mongo else None
 
-    def perf_service(self, device: str = None,
-                     mongo: bool = False,
-                     influx: bool = True,
-                     perf_interval_sec: int = 60):
+    def perf_loop(self, device: str = None,
+                  mongo: bool = False,
+                  influx: bool = True,
+                  perf_interval_sec: int = 60):
         while True:
             mongo_points, influx_points = self._perf_gather(device, mongo, influx)
             self._perf_insert(mongo_points=mongo_points, influx_points=influx_points, mongo=mongo, influx=influx)
             time.sleep(perf_interval_sec)
 
-    def alert_influx(self):
+    def alert_with_influx(self):
         """
         for testing
         """
         self.refresh_config(init_influx=True)
-        cases = self.create_cases(multithread=True, alert=True)
+        cases = self.build_cases(multithread=True, alert=True)
         points = []
         [points.append(self.influx.case_to_point(case)) for case in cases]
         self.influx.insert_points(points)
         time.sleep(5)
-        cases = self.create_cases(multithread=True, alert=True)
+        cases = self.build_cases(multithread=True, alert=True)
         points = []
         [points.append(self.influx.case_to_point(case)) for case in cases]
         self.influx.insert_points(points)
@@ -1157,10 +1151,10 @@ class DevMon(object):
         self.refresh_config(init_mongo=False, init_influx=False, service=False)
 
         if device:
-            cases = self.create_cases(device=device, pm=True)
+            cases = self.build_cases(device=device, pm=True)
         else:
-            # cases = self.create_cases('a', pm=True) + self.create_cases('b', pm=True)
-            cases = self.create_cases(pm=True)
+            # cases = self.build_cases('a', pm=True) + self.build_cases('b', pm=True)
+            cases = self.build_cases(pm=True)
 
         all_stats = {}
         for c in cases:
@@ -1273,7 +1267,7 @@ if __name__ == '__main__':
         try:
             if sys.argv[2] in ['-s', '--service']:
                 devmon.refresh_config(init_mongo=True, service=True)
-                devmon.service_alert()
+                devmon.alert_loop()
         except IndexError:
             devmon.refresh_config(init_mongo=True)
             devmon.alert()  # add a sleep interval
@@ -1289,7 +1283,7 @@ if __name__ == '__main__':
         try:
             if sys.argv[2] in ['-s', '--service']:
                 devmon.refresh_config(service=True, init_influx=True)
-                devmon.perf_service(influx=True)
+                devmon.perf_loop(influx=True)
         except IndexError:
             print(USAGE)
 
