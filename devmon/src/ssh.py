@@ -38,7 +38,7 @@ except ImportError:
 
 
 class PySSHClient(object):
-    def __init__(self, agent: Agent = None, hide_pass: HidePass = None, openssh: bool = False):
+    def __init__(self, agent: Agent = None, hide_pass: HidePass = None):
         self.host = agent.address
 
         ssh_detail = agent.ssh_detail
@@ -64,7 +64,12 @@ class PySSHClient(object):
 
         self.conn_error = None
 
-        self.openssh = openssh
+        self.openssh = agent.ssh_detail.openssh
+
+        eoc = agent.ssh_detail.end_of_command
+        eos = agent.ssh_detail.end_of_symbol
+        self.end_of_command = eoc if eoc else 'echo EOT'
+        self.end_of_symbol = eos if eos else 'EOT'
 
     def _connect_paramiko(self, timeout: int = None, auth_timeout: int = None, banner_timeout: int = None) -> bool:
         client = paramiko.SSHClient()
@@ -149,13 +154,16 @@ class PySSHClient(object):
                                       stderr=subprocess.STDOUT,
                                       shell=True)
 
-            client.stdin.write(b'echo EOT\n')
+            # client.stdin.write(b'echo EOT\n')
+            time.sleep(random())
+            client.stdin.write(f'\n\n{self.end_of_command}\n'.encode())
             client.stdin.flush()
 
             while True:
                 line = client.stdout.readline().decode().strip('\n')
 
-                if line == 'EOT':
+                if line.startswith(self.end_of_symbol):
+                # if line == 'EOT':
                     break
 
             self.connected = True
@@ -174,7 +182,8 @@ class PySSHClient(object):
             return output
 
         cmd = f'{cmd}\n'.encode()
-        EOT = 'echo EOT $?\n'.encode()
+        # EOT = 'echo EOT $?\n'.encode()
+        EOT = f'{self.end_of_command}\n'.encode()
 
         # exit_code = 0
         # output = ''
@@ -205,10 +214,10 @@ class PySSHClient(object):
             while True:
                 line = stdout.readline().decode()
 
-                if line.startswith('EOT'):
+                if line.startswith(self.end_of_symbol):
                     break
                 output += line
-        except BrokenPipeError as err:
+        except (BrokenPipeError, AttributeError) as err:
             output = f'EXEC_CMD_ERROR {err}'
 
         return output.strip('\n ')
@@ -234,7 +243,7 @@ class PySSHClient(object):
                 if self.openssh else self._connect_paramiko(timeout, auth_timeout, banner_timeout))
 
     def read_ssh_stat(self) -> list[EntryValue]:
-        ssh_stat_value = 'up' if self.connect(1) else 'down'
+        ssh_stat_value = 'up' if self.connect(self.timeout) else 'down'
         ssh_stat_void = EntryValue(objectname='sysSshdStat',
                                    instance='0',
                                    value=ssh_stat_value,
@@ -321,11 +330,12 @@ class PySSHClient(object):
 
 
 if __name__ == '__main__':
-    agent = Agent(address='21.21.78.192', ssh_detail=SSHDetail(username='root', password='R00t@789'))
-    client = PySSHClient(agent=agent, openssh=True)
+    agent = Agent(address='21.21.78.192', ssh_detail=SSHDetail(username='root', password='R00t@789', openssh=True))
+    client = PySSHClient(agent=agent)
     client.connect()
     print(client.getoutput('vmstat 2 2'))
 
+    agent = Agent(address='21.21.78.192', ssh_detail=SSHDetail(username='root', password='R00t@789', openssh=False))
     pyclient = PySSHClient(agent=agent)
     pyclient.connect()
     print(pyclient.getoutput('vmstat 2 2'))

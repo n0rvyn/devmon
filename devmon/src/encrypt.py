@@ -42,7 +42,7 @@ class HidePass(object):
     def decrypt(self, codes: bytes = None) -> str:
         try:
             mixed_pass = base64.b64decode(codes).decode()
-        except binascii.Error as err:
+        except (binascii.Error, UnicodeDecodeError) as err:
             return ''
 
         l_mixed_pass = list(mixed_pass)

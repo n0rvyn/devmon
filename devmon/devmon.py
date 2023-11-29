@@ -77,9 +77,7 @@ class DevMon(object):
 
         # self.last_idb_points = None
         self.mongo_point = MongoPoint
-
         self.config = Config()
-
         self.cases: list[Case] = []
 
     def _load_agents(self):
@@ -406,83 +404,85 @@ class DevMon(object):
     #                          entry_value=entry_value,
     #                          add_rid=rid,
     #                          source=self.config.source)
-
     def _insert_case(self, case: Case = None):
-        if not case.address:
-            return None
+        return self.mongo.insert_case(case)
 
-        # the 'core' part of the case exist in MongoDB
-        case_mongo: Case = self.is_case_exist(case)
-
-        # the method 'is_case_exist' return Case object
-        # if the attribute 'count' of the returned case is equal to default value 0
-        # the case 'c' not exists in MongoDB
-        self._debug(f'Received case from method [is_case_exist] [{case_mongo}]')
-
-        # if case_mongo.attach.count == 0:  # default case has 0 value for count
-        if case_mongo.count == 0:  # default case has a zero value for key 'count'
-            # case.count = 1
-            case.count = 1
-            self._debug(f'New case: [{case}] received, waiting for inserting.')
-
-            if case.alert:  # the new case does not exist in MongoDB, and 'alert = True'
-                case.type = '1'
-                # case.attach.type = '1'
-                self._debug(f'Case [{case}] alert is True, set case.attach.type to 1.')
-
-            else:  # case not exist in MongoDB, and 'alert = False'
-                case.type = '3'
-                # case.attach.type = '3'
-                self._debug(f'Case [{case}] alert is False, set case.attach.type to 3.')
-
-            # new case received, insert it to MongoDB
-            i_rtn = self.mongo.insert_dict(asdict(case), insert_even_exist=True)
-
-            lvl = 'info' if i_rtn else 'error'
-            self.clog.colorlog(f'Insert new case [{case.id}] [{i_rtn}]', lvl)
-
-        else:  # the case already exists
-            self._debug(f'The core part of case received already exist in MongoDB, '
-                        f'case in Mongo: [{case_mongo}], new case: [{case}].')
-
-            if case_mongo.alert:
-                if case.alert:  # alert the case exists and which remain alert, count++
-                    case.count += case_mongo.count
-                    case.type = '1'
-                    case.publish = 0  # set to 0, waiting for pushing alert to rsyslog server
-
-                    self._debug(f'Alert case [{case_mongo.id}] recalled, set attach.type to 1, count++.')
-
-                else:  # Alert case exists, but stat turns to normal. It's a recovery event.
-                    case.type = '2'  # case is recovered
-                    # case.attach.count = 1  # do not reset the count
-                    case.publish = 1  # alert pushed, waiting for pushing recovery to rsyslog server
-
-                    self._debug(f'Alert case [{case_mongo.id}] stat return to normal, '
-                                f'set attach.type to 2, reset attach.count to 1.')
-
-            else:  # normal case exists
-                if case.alert:  # normal case exists and recalls as abnormal
-                    case.count = 1  # abnormal case count reset
-                    case.type = '1'  # alert case
-                    case.publish = 0  # waiting for pushing alert
-
-                    self._debug(f'Normal case [{case_mongo.id}] exit but recalled as abnormal, '
-                                f'set attach.type to 1, reset attach.count to 1.')
-
-                else:  # normal case exists and remains normal
-                    case.type = '3'
-                    case.count += 1  # normal case count++
-                    case.publish = 0  # reset publishing stat to 0
-
-                    self._debug(f'Normal case [{case_mongo.id}] exist, '
-                                f'set attach.type to 3, reset attach.count to 1.')
-
-            # only update the 'attach' part of the case
-            u_rtn = self.update_case_attach(case_id=case_mongo.id, case=case)
-            msg = f'Update exist case [{case_mongo.id}] [{u_rtn}]'
-            errmsg = f'Update exist case [{case_mongo.id}] [{u_rtn}] [{case_mongo}] [{case}]'
-            self._info(msg) if u_rtn else self._error(errmsg)
+    # def ______insert_case(self, case: Case = None):
+    #     if not case.address:
+    #         return None
+    #
+    #     # the 'core' part of the case exist in MongoDB
+    #     case_mongo: Case = self.is_case_exist(case)
+    #
+    #     # the method 'is_case_exist' return Case object
+    #     # if the attribute 'count' of the returned case is equal to default value 0
+    #     # the case 'c' not exists in MongoDB
+    #     self._debug(f'Received case from method [is_case_exist] [{case_mongo}]')
+    #
+    #     # if case_mongo.attach.count == 0:  # default case has 0 value for count
+    #     if case_mongo.count == 0:  # default case has a zero value for key 'count'
+    #         # case.count = 1
+    #         case.count = 1
+    #         self._debug(f'New case: [{case}] received, waiting for inserting.')
+    #
+    #         if case.alert:  # the new case does not exist in MongoDB, and 'alert = True'
+    #             case.type = '1'
+    #             # case.attach.type = '1'
+    #             self._debug(f'Case [{case}] alert is True, set case.attach.type to 1.')
+    #
+    #         else:  # case not exist in MongoDB, and 'alert = False'
+    #             case.type = '3'
+    #             # case.attach.type = '3'
+    #             self._debug(f'Case [{case}] alert is False, set case.attach.type to 3.')
+    #
+    #         # new case received, insert it to MongoDB
+    #         i_rtn = self.mongo.insert_dict(asdict(case), insert_even_exist=True)
+    #
+    #         lvl = 'info' if i_rtn else 'error'
+    #         self.clog.colorlog(f'Insert new case [{case.id}] [{i_rtn}]', lvl)
+    #
+    #     else:  # the case already exists
+    #         self._debug(f'The core part of case received already exist in MongoDB, '
+    #                     f'case in Mongo: [{case_mongo}], new case: [{case}].')
+    #
+    #         if case_mongo.alert:
+    #             if case.alert:  # alert the case exists and which remain alert, count++
+    #                 case.count += case_mongo.count
+    #                 case.type = '1'
+    #                 case.publish = 0  # set to 0, waiting for pushing alert to rsyslog server
+    #
+    #                 self._debug(f'Alert case [{case_mongo.id}] recalled, set attach.type to 1, count++.')
+    #
+    #             else:  # Alert case exists, but stat turns to normal. It's a recovery event.
+    #                 case.type = '2'  # case is recovered
+    #                 # case.attach.count = 1  # do not reset the count
+    #                 case.publish = 1  # alert pushed, waiting for pushing recovery to rsyslog server
+    #
+    #                 self._debug(f'Alert case [{case_mongo.id}] stat return to normal, '
+    #                             f'set attach.type to 2, reset attach.count to 1.')
+    #
+    #         else:  # normal case exists
+    #             if case.alert:  # normal case exists and recalls as abnormal
+    #                 case.count = 1  # abnormal case count reset
+    #                 case.type = '1'  # alert case
+    #                 case.publish = 0  # waiting for pushing alert
+    #
+    #                 self._debug(f'Normal case [{case_mongo.id}] exit but recalled as abnormal, '
+    #                             f'set attach.type to 1, reset attach.count to 1.')
+    #
+    #             else:  # normal case exists and remains normal
+    #                 case.type = '3'
+    #                 case.count += 1  # normal case count++
+    #                 case.publish = 0  # reset publishing stat to 0
+    #
+    #                 self._debug(f'Normal case [{case_mongo.id}] exist, '
+    #                             f'set attach.type to 3, reset attach.count to 1.')
+    #
+    #         # only update the 'attach' part of the case
+    #         u_rtn = self.update_case_attach(case_id=case_mongo.id, case=case)
+    #         msg = f'Update exist case [{case_mongo.id}] [{u_rtn}]'
+    #         errmsg = f'Update exist case [{case_mongo.id}] [{u_rtn}] [{case_mongo}] [{case}]'
+    #         self._info(msg) if u_rtn else self._error(errmsg)
 
     def multi_insert_cases(self, cases: list[Case]):
         threads = [Thread(target=self._insert_case, args=(case,)) for case in cases]
@@ -550,7 +550,7 @@ class DevMon(object):
         # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
         snmp = ContextSNMP(agent, snmpwalk=self.config.snmpwalk)
 
-        ssh = PySSHClient(agent, self.hp, openssh=True)
+        ssh = PySSHClient(agent, self.hp)
 
         if agent.ssh_detail.password:  # only check ssh stat when the ssh server's password is available
             _ssh_stat_entry = Entry(table='sysSshStat', label='sysSshStat', description='SSH服务状态', reference='up')
@@ -627,12 +627,12 @@ class DevMon(object):
         return agent_oid_voids
 
     def build_cases(self,
-                     side: Side = None,
-                     multithread: bool = True,
-                     device: str = None,
-                     perf: bool = False,
-                     pm: bool = False,
-                     alert: bool = False) -> list[Case]:
+                    side: Side = None,
+                    multithread: bool = True,
+                    device: str = None,
+                    perf: bool = False,
+                    pm: bool = False,
+                    alert: bool = False) -> list[Case]:
         agents = self.all_agents
 
         if side == 'a':
@@ -724,10 +724,10 @@ class DevMon(object):
         return cases
 
     def _build_case(self, agent: Agent,
-                     entry: Entry = None,
-                     entry_value: EntryValue = None,
+                    entry: Entry = None,
+                    entry_value: EntryValue = None,
                     # rid: str = None,
-                     # source: str = None,
+                    # source: str = None,
                     ) -> Case:
 
         rid = agent.rid if agent.rid else self.find_rid(agent.addr_in_cmdb)
@@ -839,9 +839,10 @@ class DevMon(object):
     def create_event(self, case_in_mongo: dict) -> tuple[str, str]:
         # flt = {'type': {"$in": ['1', '2']}}
         l_event = []
-
+        tmp = None
         try:
             for key in self.config.event_keys:
+                tmp = key
                 try:
                     l_event.append(case_in_mongo[key])
                 except KeyError:
@@ -850,6 +851,7 @@ class DevMon(object):
             event = f'{self.config.event_delimiter}'.join(l_event)
 
         except TypeError:  # case_in_mongo not exist or met wrong input
+            print(f'{case_in_mongo["id"], tmp} KeyError')
             event = ''
             self._error(f'met [TypeError] with case [{case_in_mongo}')
 
@@ -959,8 +961,6 @@ class DevMon(object):
         2. Set 'publish' to value 2
         """
         flt = {'id': case_id}
-        # cases = self.mongo.find_dict(flt)
-        # d_case = cases[0]
         d_case = self.mongo.find_one(flt)
         cid, event = self.create_event(d_case)
 
@@ -995,7 +995,8 @@ class DevMon(object):
 
             b_rtn = True if r1 and r2 else False
 
-        # elif d_case['attach']['type'] == '2' and d_case['attach']['publish'] != 2:  # recovery not sent to rsyslog server
+        # elif d_case['attach']['type'] == '2' and d_case['attach']['publish'] != 2:
+        # recovery not sent to rsyslog server
         elif d_case['type'] == '2' and d_case['publish'] != 2:  # recovery not sent to rsyslog server
             b_rtn = True if self.push_recovery(cid, event) else False
 

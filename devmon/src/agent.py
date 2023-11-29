@@ -43,6 +43,9 @@ class SSHDetail:
     auth_timeout:   int = 30  # timeout (in seconds) to want for SSH authorization
     banner_timeout: int = 30  # timeout (in seconds) for SSH banner to be present
     invoke_shell: bool = False
+    openssh: bool = False
+    end_of_command: str = None
+    end_of_symbol: str = None
     entries: list[Entry] = None
 
 
@@ -51,7 +54,7 @@ class Host:
     address: str = None  # the address of the device
     region:  str = 'Default Region'  # Data Center, e.g. DCA, DCB...
     area:    str = 'Default Area'    # Business area, e.g. CBP, MBA...
-    addr_in_cmdb: str = address      # an address related with CMDB resource ID
+    addr_in_cmdb: str = f'{address}'      # an address related with CMDB resource ID
     rid: str = 'NO_RESOURCE_ID_ERROR'  # the device resource ID in CMDB
 
 

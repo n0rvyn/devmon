@@ -104,7 +104,7 @@ def __pickup_hosts(host_data: list[dict] = None) -> list[Host]:
             try:
                 host_dict.update({key: h[key]})
             except KeyError:
-                pass
+                host_dict.update({key: h['address']}) if key == 'addr_in_cmdb' else None
         [host.__setattr__(key, value) for (key, value) in host_dict.items()]
         hosts.append(host)
 

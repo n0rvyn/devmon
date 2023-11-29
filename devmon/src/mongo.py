@@ -20,10 +20,12 @@ from pymongo.server_api import ServerApi
 from pymongo import errors
 from threading import Thread
 from datetime import datetime
+from dataclasses import asdict
 import pytz
 from .point import Point, PointMeta
 from .entry import Entry, EntryValue
 from .agent import Agent, SNMPDetail, SSHDetail
+from .case import Case, CaseUpdatePart, TheSameCasePart
 
 
 class MongoDB(object):
@@ -114,6 +116,154 @@ class MongoDB(object):
         threads = [Thread(target=self.insert_dict, args=(d,)) for d in data]
         [t.start() for t in threads]
         [t.join() for t in threads]
+
+    def find_case(self, case: Case = None) -> Case:
+        """
+        Checking MongoDB to figure out the case exist or not.
+        The core part of the Case() identified the same case.
+        """
+        flt = {'id': case.id}
+
+        case_in_mongo = Case()
+        d_case = self.find_one(flt)
+
+        try:
+            for key, value in d_case.items():
+                case_in_mongo.__setattr__(key, value)
+        except (TypeError, AttributeError):
+            pass
+
+        return case_in_mongo
+
+    def insert_case(self, case: Case = None):
+        if not case.address:
+            return False
+
+        case_in_mongo: Case = self.find_case(case)
+
+        # if case_in_mongo.attach.count == 0:  # default case has 0 value for count
+        if case_in_mongo.count == 0:  # default case has a zero value for key 'count'
+            case.count = 1
+
+            if case.alert:  # the new case does not exist in MongoDB, and 'alert = True'
+                case.type = '1'
+
+            else:  # case not exist in MongoDB, and 'alert = False'
+                case.type = '3'
+
+            # new case received, insert it to MongoDB
+            return self.insert_dict(asdict(case), insert_even_exist=True)
+
+        else:  # the case already exists
+            if case_in_mongo.alert:
+                if case.alert:  # alert the case exists and which remain alert, count++
+                    case.count += case_in_mongo.count
+                    case.type = '1'
+                    case.publish = 0  # set to 0, waiting for pushing alert to rsyslog server
+
+                else:  # Alert case exists, but stat turns to normal. It's a recovery event.
+                    case.type = '2'  # case is recovered
+                    case.publish = 1  # alert pushed, waiting for pushing recovery to rsyslog server
+
+            else:  # normal case exists
+                if case.alert:  # normal case exists and recalls as abnormal
+                    case.count = 1  # abnormal case count reset
+                    case.type = '1'  # alert case
+                    case.publish = 0  # waiting for pushing alert
+
+                else:  # normal case exists and remains normal
+                    case.type = '3'
+                    case.count += 1  # normal case count++
+                    case.publish = 0  # reset publishing stat to 0
+
+            # only update the 'attach' part of the case
+            return self.update_case_attach(case_id=case_in_mongo.id, case=case)
+
+    def update_case_attach(self, case_id: str = None, case: Case = None):
+        """
+        Read the case created
+        update to the case which has the same fields (depends on method is_case_exit()) in the MongoDB (id=case_id)
+        """
+        attach = CaseUpdatePart()
+        for key, value in asdict(case).items():
+            attach.__setattr__(key, value)
+
+        flt = {'id': case_id}
+        update = {key: value for key, value in asdict(attach).items()}
+        return self.update_dict(flt, update=update)
+
+    # def close_case(self, case_id: str = None, content: str = None, current_value: str = None):
+    #     """
+    #     Where case in 'close case' means:
+    #     1. The type of case is 1
+    #     2. Already pushed alert event to rsyslog server
+    #
+    #     Which 'close' means:
+    #     1. Push a recovery message to rsyslog server
+    #     2. Set 'publish' to value 2
+    #     """
+    #     flt = {'id': case_id}
+    #     d_case = self.find_one(flt)
+    #     cid, event = self.create_event(d_case)
+    #
+    #     # if d_case['attach']['type'] == '1' and d_case['attach']['publish'] == 1:
+    #     if d_case['type'] == '1' and d_case['publish'] == 1:
+    #         self._debug(f'Met case {d_case} whose type=1, publish=1')
+    #
+    #         d_case['content'] = content
+    #         d_case['current_value'] = current_value
+    #         d_case['publish'] = 2
+    #         d_case['current_value'] = current_value
+    #         d_case['type'] = '2'
+    #
+    #         cid, recovery = self.create_event(d_case)
+    #         self._debug(f'Create recovery message [{recovery}]')
+    #
+    #         r1 = self.push_recovery(cid, recovery)
+    #         l1 = 'info' if r1 else 'error'
+    #         self.clog.colorlog(f'Case [{cid}] push recovery to rsyslog server [{r1}]', l1)
+    #
+    #         case = Case()
+    #
+    #         for key, value in d_case.items():
+    #             try:
+    #                 case.__setattr__(key, value)
+    #             except AttributeError:
+    #                 pass
+    #
+    #         r2 = self.update_case_attach(cid, case)
+    #         l2 = 'info' if r2 else 'error'
+    #         self.clog.colorlog(f'Update case [{cid}] to mongoDB [{r2}]', l2)
+    #
+    #         b_rtn = True if r1 and r2 else False
+    #
+    #     # elif d_case['attach']['type'] == '2' and d_case['attach']['publish'] != 2:  # recovery not sent to rsyslog server
+    #     elif d_case['type'] == '2' and d_case['publish'] != 2:  # recovery not sent to rsyslog server
+    #         b_rtn = True if self.push_recovery(cid, event) else False
+    #
+    #     else:
+    #         b_rtn = True if self._update_attach_value_by_id(cid, 'type', '3') else False
+    #
+    #     try:
+    #         d_case = self.mongo.find_one({'id': case_id})
+    #
+    #         if d_case['publish'] == 0:
+    #             pub_stat = 'Default'
+    #         elif d_case['publish'] == 1:
+    #             pub_stat = 'Alerted'
+    #         elif d_case['publish'] == 2:
+    #             pub_stat = 'Recovered'
+    #         else:
+    #             pub_stat = 'Unknown'
+    #
+    #         cid, msg = self.create_event(d_case)
+    #
+    #         print(f'Case: {d_case["id"]} Stat: {pub_stat} Event: {msg}')
+    #     except IndexError:
+    #         print(f'Fetching case {case_id} from MongoDB failed.')
+    #         b_rtn = False
+    #
+    #     return True if b_rtn else False
 
 
 class MongoPoint(object):
