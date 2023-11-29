@@ -18,20 +18,27 @@ import threading
 
 import paramiko
 import subprocess
+from subprocess import PIPE
 import time
 import socket
 import os
 import sys
-from .encrypt import HidePass
 from random import randint
 from threading import Thread
 from random import random
-from .agent import Agent, SNMPDetail, SSHDetail
-from .entry import Entry, EntryValue
+
+try:
+    from .agent import Agent, SNMPDetail, SSHDetail
+    from .entry import Entry, EntryValue
+    from .encrypt import HidePass
+except ImportError:
+    from encrypt import HidePass
+    from agent import Agent, SNMPDetail, SSHDetail
+    from entry import EntryValue, Entry
 
 
 class PySSHClient(object):
-    def __init__(self, agent: Agent = None, hide_pass: HidePass = None):
+    def __init__(self, agent: Agent = None, hide_pass: HidePass = None, openssh: bool = False):
         self.host = agent.address
 
         ssh_detail = agent.ssh_detail
@@ -57,7 +64,9 @@ class PySSHClient(object):
 
         self.conn_error = None
 
-    def connect(self, timeout: int = None, auth_timeout: int = None, banner_timeout: int = None):
+        self.openssh = openssh
+
+    def _connect_paramiko(self, timeout: int = None, auth_timeout: int = None, banner_timeout: int = None) -> bool:
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -86,7 +95,7 @@ class PySSHClient(object):
         self.client = client
         return self.connected
 
-    def getoutput(self, cmd, timeout: int = 10, invoke_shell: bool = None, get_pty: bool = False) -> str:
+    def _getoutput_paramiko(self, cmd, timeout: int = 10, invoke_shell: bool = None, get_pty: bool = False) -> str:
         output = ''
         time.sleep(random())
 
@@ -126,9 +135,91 @@ class PySSHClient(object):
 
         return output
 
-    def getstatusoutput(self, cmd, timeout: int = 10) -> tuple[int, str]:
+    def _connect_openssh(self, timeout: int = None) -> bool:
+        timeout = timeout if timeout else self.timeout
+
+        ssh_cmd = (f'sshpass -p {self.password} '
+                   f'ssh {self.user}@{self.host} -T '
+                   f'-o ConnectTimeout={timeout} '
+                   f'-o StrictHostKeyChecking=No')
+        try:
+            client = subprocess.Popen(ssh_cmd,
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.STDOUT,
+                                      shell=True)
+
+            client.stdin.write(b'echo EOT\n')
+            client.stdin.flush()
+
+            while True:
+                line = client.stdout.readline().decode().strip('\n')
+
+                if line == 'EOT':
+                    break
+
+            self.connected = True
+            self.client = client
+
+        except BrokenPipeError as err:
+            self.connected = False
+            self.conn_error = f'CONN_SSHD_ERROR: {err}'
+
+        return self.connected
+
+    def _exec_command_openssh(self, cmd: str = None) -> PIPE:
+        output = None, None, None
+
+        if not self.connected or not cmd:
+            return output
+
+        cmd = f'{cmd}\n'.encode()
+        EOT = 'echo EOT $?\n'.encode()
+
+        # exit_code = 0
+        # output = ''
+
+        try:
+            self.client.stdin.write(cmd)
+            self.client.stdin.write(EOT)
+            self.client.stdin.flush()
+
+            # while True:
+            #     line = self.client.stdout.readline().decode().strip('\n')
+            #
+            #     if line.startswith('EOT'):
+            #         exit_code = line.split()[-1]
+            #         break
+            #
+            #     output += f'{line}\n'
+
+        except BrokenPipeError as err:
+            raise err
+
+        return self.client.stdout
+
+    def _getoutput_openssh(self, cmd):
+        output = ''
+        stdout = self._exec_command_openssh(cmd)
+        try:
+            while True:
+                line = stdout.readline().decode()
+
+                if line.startswith('EOT'):
+                    break
+                output += line
+        except BrokenPipeError as err:
+            output = f'EXEC_CMD_ERROR {err}'
+
+        return output.strip('\n ')
+
+    def getoutput(self, cmd: str = None, timeout: int = 10, invoke_shell: bool = None, get_pty: bool = False):
+        return (self._getoutput_paramiko(cmd, timeout, invoke_shell, get_pty)
+                if not self.openssh else self._getoutput_openssh(cmd))
+
+    def ____getstatusoutput(self, cmd, timeout: int = 10) -> tuple[int, str]:
         cmd = f'{cmd}; echo $?'
-        l_output = self.getoutput(cmd, timeout).rstrip('\n').split('\n')
+        l_output = self._getoutput_openssh(cmd).rstrip('\n').split('\n')
 
         output = '\n'.join(l_output[0:-1])
         try:
@@ -137,6 +228,10 @@ class PySSHClient(object):
             code = 1
 
         return code, output
+
+    def connect(self, timeout: int = None, auth_timeout: int = None, banner_timeout: int = None) -> bool:
+        return (self._connect_openssh(timeout)
+                if self.openssh else self._connect_paramiko(timeout, auth_timeout, banner_timeout))
 
     def read_ssh_stat(self) -> list[EntryValue]:
         ssh_stat_value = 'up' if self.connect(1) else 'down'
@@ -215,105 +310,25 @@ class PySSHClient(object):
 
         return e_vals
 
-    def shutdown(self):
+    def _shutdown_para(self):
         return self.client.close() if self.client else False
 
+    def _shutdown_openssh(self):
+        return self._exec_command_openssh('exit')
 
-class OpenSSHClient(object):
-    def __init__(self, host: str = None, user: str = None, timeout: int = 3):
-        self.host = host
-        self.user = user
-        self.timeout = timeout
-
-    def _init_openssh(self):
-        ssh_cmd = f'ssh {self.user}@{self.host} -T -o ConnectTimeout={self.timeout}'
-        try:
-            client = subprocess.Popen(ssh_cmd,
-                                      stdin=subprocess.PIPE,
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.STDOUT,
-                                      shell=True)
-
-            client.stdin.write(b'echo EOT\n')
-            client.stdin.flush()
-
-            while True:
-                line = client.stdout.readline().decode().strip('\n')
-
-                if line == 'EOT':
-                    break
-
-            self.connected = True
-
-        except BrokenPipeError as err:
-            raise err
-
-        self.client = client
-        return self.connected
-
-    def _rsh_openssh(self, cmd: str = None, timeout: int = 3) -> tuple[int, str]:
-        if not cmd or not self.connected:
-            return 127, ''
-
-        cmd = f'{cmd}\n'.encode()
-        EOT = 'echo EOT $?\n'.encode()
-
-        code = 0
-        output = ''
-
-        try:
-            self.client.stdin.write(cmd)
-            self.client.stdin.write(EOT)
-            self.client.stdin.flush()
-
-            while True:
-                line = self.client.stdout.readline().decode().strip('\n')
-
-                if line.startswith('EOT'):
-                    exit_code = line.split()[-1]
-                    break
-
-                output += f'{line}\n'
-
-        except BrokenPipeError as err:
-            raise err
-
-        return code, output
-
-    def getoutput(self, command, timeout=None) -> list:
-        """
-        return: output list after executed.
-        """
-        _output = []
-        _return_code = 0
-
-        if not self.connected:
-            return _output
-
-        else:
-            try:
-                _return_code, _output = self._rsh_openssh(command, timeout=timeout)
-            except ValueError:
-                pass
-
-        return _output
-
-    def getstatusoutput(self, command, timeout=None):
-        _output = []
-        _return_code = 0
-
-        if not self.connected:
-            return _output
-
-        else:
-            try:
-                _return_code, _output = self._rsh_openssh(command, timeout=timeout)
-            except ValueError:
-                pass
-
-        _output.insert(0, _return_code)
-        return _output
+    def shutdown(self):
+        return self._shutdown_para() if not self.openssh else self._shutdown_openssh()
 
 
 if __name__ == '__main__':
-    pass
+    agent = Agent(address='21.21.78.192', ssh_detail=SSHDetail(username='root', password='R00t@789'))
+    client = PySSHClient(agent=agent, openssh=True)
+    client.connect()
+    print(client.getoutput('vmstat 2 2'))
+
+    pyclient = PySSHClient(agent=agent)
+    pyclient.connect()
+    print(pyclient.getoutput('vmstat 2 2'))
+
+    print(client.shutdown(), pyclient.shutdown())
+

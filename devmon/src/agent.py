@@ -6,7 +6,10 @@
 """
 from dataclasses import dataclass
 from typing import Literal
-from .entry import EntryValue, Entry
+try:
+    from .entry import EntryValue, Entry
+except ImportError:
+    from entry import Entry, EntryValue
 
 
 Version = Literal[

@@ -550,7 +550,7 @@ class DevMon(object):
         # snmp = SNMP(agent, snmpwalk=self.snmpwalk)
         snmp = ContextSNMP(agent, snmpwalk=self.config.snmpwalk)
 
-        ssh = PySSHClient(agent, self.hp)
+        ssh = PySSHClient(agent, self.hp, openssh=True)
 
         if agent.ssh_detail.password:  # only check ssh stat when the ssh server's password is available
             _ssh_stat_entry = Entry(table='sysSshStat', label='sysSshStat', description='SSH服务状态', reference='up')
