@@ -113,7 +113,7 @@ class Entry:
     regexp: str = None
 
     # timeout in seconds to read the command output from a remote host
-    timeout: int = 30
+    timeout: int = 6
 
 
 @dataclass

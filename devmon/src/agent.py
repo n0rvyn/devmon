@@ -54,7 +54,7 @@ class Host:
     address: str = None  # the address of the device
     region:  str = 'Default Region'  # Data Center, e.g. DCA, DCB...
     area:    str = 'Default Area'    # Business area, e.g. CBP, MBA...
-    addr_in_cmdb: str = f'{address}'      # an address related with CMDB resource ID
+    addr_in_cmdb: str = None      # an address related with CMDB resource ID
     rid: str = 'NO_RESOURCE_ID_ERROR'  # the device resource ID in CMDB
 
 

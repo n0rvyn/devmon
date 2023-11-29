@@ -77,7 +77,7 @@ class PySSHClient(object):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         try:
-            time.sleep(random()*10 + random()*10)  # TODO necessary???
+            time.sleep(random())  # TODO necessary???
             client.connect(hostname=self.host,
                            port=self.port,
                            username=self.user,

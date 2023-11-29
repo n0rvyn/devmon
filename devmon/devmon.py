@@ -15,6 +15,7 @@
 ---Short description of this Python module---
 
 """
+import multiprocessing
 import time
 import influxdb_client_3
 # from yaml import safe_load
@@ -26,7 +27,7 @@ from getpass import getpass
 # from random import choices
 # from string import ascii_letters, digits
 from threading import Thread
-# from multiprocessing import Process
+from multiprocessing import Process, Manager
 # from multiprocess import Process
 from time import perf_counter
 from inspect import currentframe
@@ -78,7 +79,9 @@ class DevMon(object):
         # self.last_idb_points = None
         self.mongo_point = MongoPoint
         self.config = Config()
+
         self.cases: list[Case] = []
+        self.agents_with_values = []
 
     def _load_agents(self):
         try:
@@ -595,9 +598,10 @@ class DevMon(object):
             snmp.snmps[0].down = True
 
         try:
-            threads.extend([Thread(target=__read_entry, args=(entry, False, True))
-                            for entry in agent.ssh_detail.entries if entry is not None])
+            # threads.extend([Thread(target=__read_entry, args=(entry, False, True))
+            #                 for entry in agent.ssh_detail.entries if entry is not None])
 
+            [__read_entry(entry, False, True) for entry in agent.ssh_detail.entries if entry is not None]
             # procs.extend(
             #     [Process(target=__read_entry, args=(entry, False, True)) for entry in agent.ssh_detail.entries if
             #      entry is not None])
@@ -633,7 +637,8 @@ class DevMon(object):
                     perf: bool = False,
                     pm: bool = False,
                     alert: bool = False) -> list[Case]:
-        agents = self.all_agents
+        # agents = self.all_agents
+        agents = [agt for agt in self.all_agents if agt.address == device] if device else self.all_agents
 
         if side == 'a':
             agents = self.a_side_agents
@@ -641,18 +646,14 @@ class DevMon(object):
         elif side == 'b':
             agents = self.b_side_agents
 
-        elif device:
-            agents = []
-            for agt in self.all_agents:
-                if agt.address == device:
-                    agents = [agt]
-                    break
+        # elif device:
+        #     agents = []
+        #     for agt in self.all_agents:
+        #         if agt.address == device:
+        #             agents = [agt]
+        #             break
 
-        if not agents:
-            self._warn(f'Nothing found in devlist side [{side}], device [{device}], return None value case.')
-            return [Case()]
-        else:
-            self._debug(f'Read devlist form side [{side}], devices addresses [{[agt.address for agt in agents]}].')
+        # self._debug(f'Read devlist form side [{side}], devices addresses [{[agt.address for agt in agents]}].')
 
         v_threads = []
         agents_entries_values = []
@@ -667,13 +668,33 @@ class DevMon(object):
         def cre_cases(_agent: Agent, _entry: Entry, _entry_value: EntryValue):
             cases.append(self._build_case(_agent, _entry, _entry_value))
 
+        def read_with_processing(agent: Agent):
+            shared_list.extend(self._read_agent(agent, perf, pm, alert))
+
+        # TODO deleting this
+        start = time.perf_counter()
+        multiprocessing.set_start_method('fork')
+        with Manager() as manager:
+            shared_list = manager.list()
+            proc = [Process(target=read_with_processing, args=(agent, )) for agent in agents]
+
+            [p.start() for p in proc]
+            [p.join() for p in proc]
+
+            agents_entries_values = list(shared_list)
+        print('Multiprocessing: ', time.perf_counter() - start)
+
+        agents_entries_values = []
         if multithread:
             """
             r_threads = [Thread(target=self._read_snmp_agent, args=(agent, )) for agent in agents]
             """
+            # TODO after multiprocessing been verified, delete those 3 lines
+            start = time.perf_counter()
             r_threads = [Thread(target=read_agent, args=(agent,)) for agent in agents]
             _ = [t.start() for t in r_threads]
             _ = [t.join() for t in r_threads]
+            print('Multithreading: ', time.perf_counter() - start)
 
             # for agent, oid, l_voids in self.snmp_agents:
             # for agent, oid, l_voids in snmp_agents:
@@ -701,16 +722,17 @@ class DevMon(object):
             """
             testing multiple processing
             """
-
+            #
             # v_procs = []
-            # [v_procs.extend([Process(target=self._cre_case, args=(agent, oid, void,))
+            # [v_procs.extend([Process(target=self._build_case, args=(agent, oid, void,))
             #                  for void in l_voids]) for (agent, oid, l_voids) in agents_entries_values]
             #
             # start = time.perf_counter()
             # _ = [t.start() for t in v_procs]
             # _ = [t.join() for t in v_procs]
             # print(f'Multiple processing: side: {side} {time.perf_counter() - start}')
-
+            # print('case from processing: ', self.cases)
+            #
         else:
             [read_agent(agent) for agent in agents]
             [[cre_cases(agent, oid, void) for void in l_voids] for (agent, oid, l_voids) in agents_entries_values]
@@ -721,6 +743,7 @@ class DevMon(object):
             #         # self._cre_snmp_case(agent, oid, void)
             #         cre_cases(agent, oid, void)  # the result already been appended
 
+        # print('case from threading: ', self.cases)
         return cases
 
     def _build_case(self, agent: Agent,
@@ -732,7 +755,6 @@ class DevMon(object):
 
         rid = agent.rid if agent.rid else self.find_rid(agent.addr_in_cmdb)
         rid = rid if rid else 'Null_Resource_ID'
-
         return build_case(agent, entry, entry_value, rid, self.config.source)
 
     # def _cre_case(self,
