@@ -137,7 +137,7 @@ def build_case(agent: Agent, entry: Entry = None,
 
     b_core = s_core.encode()
     h = hashlib.shake_128(b_core)
-    cid = h.hexdigest(25)
+    cid = h.hexdigest(25)  # TODO got the same ID if ONLY 'address' is specified for Host() dataclass
 
     attach = CaseUpdatePart(count=1, alert=alert, content=content, current_value=current_val)
 

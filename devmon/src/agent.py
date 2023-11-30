@@ -73,4 +73,4 @@ class Agent(Host):
 class AgentGroup:
     agent: list[Host] = None
     snmp_detail: SNMPDetail = None
-    ssh_detail: SSHDetail = None
+    ssh_detail:   SSHDetail = None

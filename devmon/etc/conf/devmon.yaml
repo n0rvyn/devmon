@@ -35,7 +35,6 @@ influx_token: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS5oTWk2ZVR3dU1QRlRpMXAzSmp5UnNPeVdwN
 influx_org: 'orgs'
 influx_database: 'devmon'
 
-
 # Remote log server (str) and port (int)
 rlog_server: 'localhost'
 rlog_port: 514
@@ -47,7 +46,7 @@ notify_window: 8:00-18:00
 # Log level: 'debug', 'info', 'warn', 'error', 'critical'
 log_level: 'debug'
 # Set to 'True' to display messages to screen
-log_display: False
+log_show: False
 
 # set to 'True' to enable multiple threading
 multithread: True

@@ -673,7 +673,7 @@ class DevMon(object):
 
         # TODO deleting this
         start = time.perf_counter()
-        multiprocessing.set_start_method('fork')
+        multiprocessing.set_start_method('fork', force=True)
         with Manager() as manager:
             shared_list = manager.list()
             proc = [Process(target=read_with_processing, args=(agent, )) for agent in agents]
@@ -684,17 +684,13 @@ class DevMon(object):
             agents_entries_values = list(shared_list)
         print('Multiprocessing: ', time.perf_counter() - start)
 
-        agents_entries_values = []
+        # agents_entries_values = []
         if multithread:
-            """
-            r_threads = [Thread(target=self._read_snmp_agent, args=(agent, )) for agent in agents]
-            """
-            # TODO after multiprocessing been verified, delete those 3 lines
-            start = time.perf_counter()
-            r_threads = [Thread(target=read_agent, args=(agent,)) for agent in agents]
-            _ = [t.start() for t in r_threads]
-            _ = [t.join() for t in r_threads]
-            print('Multithreading: ', time.perf_counter() - start)
+            # start = time.perf_counter()
+            # r_threads = [Thread(target=read_agent, args=(agent,)) for agent in agents]
+            # _ = [t.start() for t in r_threads]
+            # _ = [t.join() for t in r_threads]
+            # print('Multithreading: ', time.perf_counter() - start)
 
             # for agent, oid, l_voids in self.snmp_agents:
             # for agent, oid, l_voids in snmp_agents:
@@ -703,14 +699,14 @@ class DevMon(object):
             #     v_threads.extend([Thread(target=cre_cases, args=(agent, oid, void)) for void in l_voids])
 
             """
-                the last version:
-                v_threads = ([Thread(target=cre_cases, args=(agent, oid, void)) for void in l_voids])
-                missing some void in l_voids ...
-                
-                the reason is: 
-                in each 'snmp_agents' loop, v_threads is initiated with the new list value.
-                which means, it should be extended, NOT appended or initiated.
-                """
+            the last version:
+            v_threads = ([Thread(target=cre_cases, args=(agent, oid, void)) for void in l_voids])
+            missing some void in l_voids ...
+            
+            the reason is: 
+            in each 'snmp_agents' loop, v_threads is initiated with the new list value.
+            which means, it should be extended, NOT appended or initiated.
+            """
             [v_threads.extend([Thread(target=cre_cases, args=(agent, oid, void,))
                                for void in l_voids]) for (agent, oid, l_voids) in agents_entries_values]
 
