@@ -18,7 +18,7 @@ from influxdb_client_3 import InfluxDBClient3, Point, InfluxDBError, write_clien
 from dataclasses import asdict
 from .agent import Agent, SNMPDetail, SSHDetail
 from .entry import Entry, EntryValue
-from .case import Case, TheSameCasePart, CaseUpdatePart
+from .case import Case, TheSameCasePart, CaseUpdatePart, MetaData, Data
 
 
 class InfluxDB(object):
@@ -82,8 +82,10 @@ class InfluxDB(object):
         # point = Point(case.object)
         point = Point('alert_test3')
 
-        metadata = TheSameCasePart()
-        data = CaseUpdatePart()
+        # metadata = TheSameCasePart()
+        metadata = MetaData()
+        # data = CaseUpdatePart()
+        data = Data()
 
         for key in asdict(metadata).keys():
             value = asdict(case)[key]

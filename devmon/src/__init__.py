@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 from .agent import Version, Agent, SNMPDetail, SSHDetail, Host
 from .entry import Entry, WaterMark, ArithType, EntryValue, ArithPosition
-from .case import Case, CaseType, TheSameCasePart, CaseUpdatePart
+# from .case import Case, CaseType, TheSameCasePart, CaseUpdatePart, MetaData, Data
+from .case import Case, CaseType, MetaData, Data
 from .event import EventType
 from .point import PointMeta, Point
 from .read_devlist import read_agents
@@ -11,7 +12,6 @@ from .log import ColorLogger
 from .pushmsg import PushMsg
 from .mongo import MongoDB, MongoPoint
 from .cmdb import CMDB
-# from .cre_case import entry_to_case, cre_case
 from .buildcase import build_case
 from .encrypt import HidePass
 from .influx import InfluxDB
@@ -32,8 +32,6 @@ __all__ = [
     'CMDB',
     'ContextSNMP',
     'Case',
-    'TheSameCasePart',
-    'CaseUpdatePart',
     'Entry',
     'EntryValue',
     'EventType',
@@ -57,8 +55,6 @@ __all__ = [
     'CaseType',
     'ArithType',
     'ArithPosition',
-    'TheSameCasePart',
-    'CaseUpdatePart',
     'EventType',
     'Point',
     'PointMeta',
@@ -68,8 +64,9 @@ __all__ = [
     'MongoDB',
     'CMDB',
     'ContextSNMP',
-    # 'entry_to_case',
     'HidePass',
+    'MetaData',
+    'Data',
     'MongoPoint',
     'InfluxDB',
     'read_agents',

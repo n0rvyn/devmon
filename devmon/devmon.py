@@ -34,7 +34,8 @@ from inspect import currentframe
 from pymongo import errors, timeout
 from src import ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
 # from src import entry_to_case, ColorLogger, PushMsg, MongoDB, CMDB, ContextSNMP, HidePass
-from src import Entry, EntryValue, Case, CaseUpdatePart, EventType
+# from src import Entry, EntryValue, Case, CaseUpdatePart, EventType
+from src import Entry, EntryValue, Case, Data, MetaData, EventType
 from src import Point, MongoPoint
 from src import InfluxDB, PySSHClient
 from src import Agent, read_agents
@@ -506,7 +507,8 @@ class DevMon(object):
         Read the case created
         update to the case which has the same fields (depends on method is_case_exit()) in the MongoDB (id=case_id)
         """
-        attach = CaseUpdatePart()
+        # attach = CaseUpdatePart()
+        attach = Data()
         for key, value in asdict(case).items():
             attach.__setattr__(key, value)
 

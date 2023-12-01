@@ -18,13 +18,13 @@ import hashlib
 from dataclasses import asdict
 from .agent import Agent, SNMPDetail, SSHDetail
 from .entry import Entry, EntryValue
-from .case import Case, TheSameCasePart, CaseUpdatePart
+from .case import Case, TheSameCasePart, CaseUpdatePart, MetaData, Data
 
 
 def build_case(agent: Agent, entry: Entry = None,
                entry_value: EntryValue = None,
                rid: str = None,
-                  source: str = None) -> Case:
+               source: str = None) -> Case:
     """
     A threading target for creating case, based on SNMP agent, OID, and value of OID.
     """
@@ -118,17 +118,18 @@ def build_case(agent: Agent, entry: Entry = None,
     # rid = snmp_agent.rid if snmp_agent.rid else self.find_rid(snmp_agent.addr_in_cmdb)
     # rid = rid if rid else 'Null_Resource_ID'
 
-    core = TheSameCasePart(rid=rid,  # modify from 'rid=rid' to 'rid=add_rid'
-                           region=agent.region,
-                           area=agent.area,
-                           addr_in_cmdb=agent.addr_in_cmdb,
-                           severity=entry.severity,
-                           object=case_object,
-                           sources=source,
-                           description=description,
-                           threshold=f'{threshold}',
-                           index=entry_value.instance,
-                           address=agent.address)
+    # core = TheSameCasePart(rid=rid,  # modify from 'rid=rid' to 'rid=add_rid'
+    core = MetaData(rid=rid,  # modify from 'rid=rid' to 'rid=add_rid'
+                    region=agent.region,
+                    area=agent.area,
+                    addr_in_cmdb=agent.addr_in_cmdb,
+                    severity=entry.severity,
+                    object=case_object,
+                    sources=source,
+                    description=description,
+                    threshold=f'{threshold}',
+                    index=entry_value.instance,
+                    address=agent.address)
 
     try:
         s_core = ''.join(asdict(core).values())
@@ -139,7 +140,8 @@ def build_case(agent: Agent, entry: Entry = None,
     h = hashlib.shake_128(b_core)
     cid = h.hexdigest(25)  # TODO got the same ID if ONLY 'address' is specified for Host() dataclass
 
-    attach = CaseUpdatePart(count=1, alert=alert, content=content, current_value=current_val)
+    # attach = CaseUpdatePart(count=1, alert=alert, content=content, current_value=current_val)
+    attach = Data(count=1, alert=alert, content=content, current_value=current_val)
 
     case = Case(id=cid, entry=entry, entry_value=entry_value)
     for key, value in asdict(core).items():
@@ -149,7 +151,6 @@ def build_case(agent: Agent, entry: Entry = None,
         case.__setattr__(key, value)
 
     return case
-
 
 # def entry_to_case(agent: Agent = None,
 #                   entry: Entry = None,
