@@ -18,7 +18,7 @@ import hashlib
 from dataclasses import asdict
 from .agent import Agent, SNMPDetail, SSHDetail
 from .entry import Entry, EntryValue
-from .case import Case, TheSameCasePart, CaseUpdatePart, MetaData, Data
+from .case import Case, MetaData, Data
 
 
 def build_case(agent: Agent, entry: Entry = None,

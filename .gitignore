@@ -2,8 +2,6 @@
 /devmon/crtrecords/
 /devmon/todo/
 /devmon/pymodules/
-/devmon/devlist/examples/example.IBM.TS3500.yaml
-/devmon/devlist/examples/example.ssh.linux.yaml
 /build
 /dist
 __pycache__/

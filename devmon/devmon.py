@@ -43,6 +43,7 @@ from src import Agent, read_agents
 from src import load_config, Config, build_case
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
+_NAME_ = os.path.basename(__file__)
 _ROOT_ = '/etc/devmon' if _ROOT_.startswith('/tmp') else _ROOT_
 
 _LOG_ = os.path.abspath(os.path.join(_ROOT_, 'log/devmon.log'))
@@ -523,7 +524,8 @@ class DevMon(object):
         #     msg = f'Updating the case [{case_id}] attach [{key}] value [{value}] [{rtn}]'
         #     self._info(msg) if rtn else self._error(msg)
 
-    def is_case_exist(self, case: Case = None) -> Case:
+    # moved to src/mongo.py, origin name: is_case_exist
+    def _____is_case_exist(self, case: Case = None) -> Case:
         """
         Checking MongoDB to figure out the case exist or not.
         The core part of the Case() identified the same case.
@@ -1260,33 +1262,41 @@ class DevMon(object):
             print('\n'.join(all_errors))
 
 
-if __name__ == '__main__':
-    USAGE = (f'Usage: \n'
-             f'  {sys.argv[0]} alert [-s | --service]  # one-time alert or as a service \n'
-             f'  {sys.argv[0]} query \n'
-             f'  {sys.argv[0]} sync  # syncing resources ID from CMDB to MongoDB \n'
-             f'  {sys.argv[0]} close <CASE ID> <content (field 4)> <current value (field 7)>\n'
-             f'  {sys.argv[0]} pm [device] \n'
-             f'  {sys.argv[0]} perf [-s | --service] # run performance checking\n'
-             f'  {sys.argv[0]} hide <PASSWORD>  # converting password to strings \n'
+_USAGE_ = (f'Usage: {_NAME_} <alert | perf> [-s | --service]'
+           f'\n'
+           f'Actions: '
+             f'  {_NAME_} alert [-s | --service]  # one-time alert or running as a service \n'
+             f'  {_NAME_} query \n'
+             f'  {_NAME_} sync  # syncing resources ID from CMDB to MongoDB \n'
+             f'  {_NAME_} close <CASE ID> <content (field 4)> <current value (field 7)>\n'
+             f'  {_NAME_} pm [device] \n'
+             f'  {_NAME_} perf [-s | --service] # run performance checking\n'
+             f'  {_NAME_} hide <PASSWORD>  # converting password to strings \n'
              f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.\n'
              f'\ne.g., \n'
              f'  export DEVMON_SECRET=""; export DEVMON_POS_CODE=0'
              )
 
+
+if __name__ == '__main__':
     devmon = DevMon()
     act = opt = None
     try:
         act = sys.argv[1]
     except IndexError:
-        print(USAGE)
+        print(_USAGE_)
+
+    try:
+        opt = sys.argv[2]
+    except IndexError:
+        opt = ''
 
     if act in ['query', 'sync', 'close']:
         devmon.refresh_config(init_mongo=True)
 
     if act == 'alert':
         try:
-            if sys.argv[2] in ['-s', '--service']:
+            if opt in ['-s', '--service']:
                 devmon.refresh_config(init_mongo=True, service=True)
                 devmon.alert_loop()
         except IndexError:
@@ -1302,11 +1312,11 @@ if __name__ == '__main__':
 
     elif act == 'perf':
         try:
-            if sys.argv[2] in ['-s', '--service']:
+            if opt in ['-s', '--service']:
                 devmon.refresh_config(service=True, init_influx=True)
                 devmon.perf_loop(influx=True)
         except IndexError:
-            print(USAGE)
+            print(_USAGE_)
 
     elif act == 'query':
         devmon.show_all_alerts()
