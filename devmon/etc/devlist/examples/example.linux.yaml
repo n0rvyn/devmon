@@ -1,0 +1,230 @@
+---
+host:
+  - address: SomeAddress  # the address which been listened to by SNMP Daemon
+    region: SomeRegion  # The region of device, e.g., DCA, DCB, DataCenterA...
+    area: SomeArea  # the business area
+    addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
+    rid: 'THis is resource ID'
+snmp:
+  version: '2c'  # the SNMPD version
+  community: 'public'  # the SNMPD community
+  timeout: 1  # second(s) to timeout
+  retries: 1  # time(s) to retry after failed
+  entries:
+    - table: 'sysName.0'
+      label: SystemName
+      description: '主机名'
+      show: True
+    - table: 'hrMemorySize.0'
+      label: 'Memory Size'
+      description: '内存大小'
+      unit: KiB
+      show: True
+    - table: 'ifOperStatus'  # the base part of an OID range
+      label: 'NetworkInterface'
+      description: '网卡状态'
+      read_name_from: 'ifDescr'  # OID symbol to fetch a related name
+      exclude_keywords:
+        - 'lo'
+        - 'sit0'
+        - 'virbr0'
+        - 'br0'
+      enum:
+        '1': 'up(1)'
+        '2': 'down(2)'
+      reference: 'up(1)'  # a reference value which been constableered as normal stat
+    - table: 'hrStorageUsed'
+      table_index: 'hrStorageIndex'
+      label: 'StorageUsedPercent'
+      description: '存储设备使用率'
+      exclude_index: '7, 8, 10, 11, 37, 38, 41, 72'
+      exclude_value: 'Physical memory, Cached memory, Shared memory, /dev/shm, Available memory'
+      exclude_keywords:
+        - 'media'
+      read_name_from: 'hrStorageDescr'
+      arithmetic: '%'
+      read_arith_value_from: 'hrStorageSize'
+      arith_position: 2
+      watermark:
+        low: -1
+        high: 85
+    # OID configuration for Memory Usage Percent
+    - table: 'memSysAvail'
+      label: 'MemoryFreePercent'
+      description: '内存使用率'
+      read_arith_value_from: 'memTotalRealX'
+      arithmetic: '%'
+      arith_position: 2
+      watermark:
+        low: 0
+        high: 20
+        restricted: True
+    - table: 'ssCpuNumCpus'
+      label: 'CpuNum'
+      description: 'CPU数量'
+      reference: '4'
+    - table: 'memAvailSwap.0'
+      label: 'SWAPAvailablePercent'
+      description: '交换空间使用率'
+      read_arith_value_from: 'memTotalSwap'
+      arithmetic: '%'
+      arith_position: 2
+      watermark:
+        low: 80
+        high: 100
+    - table: 'diskIOLA15'
+      label: 'Disk I/O Load 15(min) Avg'
+      description: '硬盘I/O负载15分钟平均值'
+      read_name_from: 'diskIODevice'
+      severity: '1'
+      watermark:
+        low: 50
+        high: 80
+        restricted: True
+    - table: 'diskIOLA15'
+      label: 'Disk I/O Load 15(min) Avg'
+      description: '硬盘I/O负载15分钟平均值'
+      alert: '严重异常，请管理员务必关注！'
+      read_name_from: 'diskIODevice'
+      severity: '3'
+      watermark:
+        low: 80
+        high: 100
+        # when set to True, an alert will be sent when the value is between 'low' and 'high'
+        # otherwise, a value out of the scope will generate an alert
+        restricted: True
+    - table: 'ssCpuIdle'
+      label: 'CPU Idle'
+      description: 'CPU空闲率'
+      severity: '1'
+      watermark:
+        low: 0
+        high: 60
+        restricted: True  # Alert when CPU IDLE is between 0-60
+    - table: 'hrSWRunPerfCPU'  # index is the proc ID
+      table_index: 'hrSWRunIndex'
+      show_index: True
+      label: 'swRunningCpuStat'
+      read_name_from: 'hrSWRunName'
+      unit: 'centi-second'
+      perf: True
+    - table: 'hrSWRunPerfMem'
+      table_index: 'hrSWRunIndex'
+      show_index: True
+      label: 'swRunningMemStat'
+      unit: 'KB'
+      read_name_from: 'hrSWRunName'
+      perf: True
+    - group:
+        - 'diskIONRead'
+        - 'diskIONWritten'
+        - 'diskIONReadX'
+        - 'diskIONWrittenX'
+      table_index: 'diskIOIndex'
+      label: 'diskIoRWStat'
+      read_name_from: 'diskIODevice'
+      unit: bytes
+      perf: True
+    - group:
+        - 'diskIOReads'
+        - 'diskIOWrites'
+      table_index: 'diskIOIndex'
+      label: 'diskIoAccessStat'
+      read_name_from: 'diskIODevice'
+      unit: number
+      perf: True
+    - group:
+        - 'diskIOLA1'
+        - 'diskIOLA5'
+        - 'diskIOLA15'
+      table_index: 'diskIOIndex'
+      exclude_keywords:
+        - loop
+        - dm
+      label: 'diskIoLoadStat'
+      read_name_from: 'diskIODevice'
+      unit: percent
+      perf: True
+    - group:
+        - ifOutErrors
+        - ifOutDiscards
+        - ifOutUcastPkts
+        - ifOutOctets
+        - ifInUnknownProtos
+        - ifInErrors
+        - ifInDiscards
+        - ifInUcastPkts
+        - ifInOctets
+        - ifSpeed
+      table_index: 'ifIndex'
+      label: 'sysInterfaceStat'
+      exclude_keywords:
+        - 'lo'
+        - 'sit0'
+        - 'virbr0'
+        - 'br0'
+      read_name_from: 'ifName'
+      perf: True
+    - group:
+        - 'ssSwapIn'
+        - 'ssSwapOut'
+        - 'memAvailReal'
+      label: 'SysMemSwapStat'
+      unit: kB
+      perf: True
+    - group:
+        - 'ssCpuUser'
+        - 'ssCpuSystem'
+        - 'ssCpuIdle'
+        - 'hrProcessorLoad'
+      label: 'SysCpuStat'
+      unit: 'percent'
+      perf: True
+    - group:
+        - memTotalSwap.0
+        - memAvailSwap.0
+        - memTotalReal.0
+        - memAvailReal.0
+        - memTotalFree.0
+        - memMinimumSwap.0
+        - memShared.0
+        - memBuffer.0
+        - memCached.0
+      label: 'sysMemRawStat'
+      unit: 'kB'
+      perf: True
+    - group:
+        - ssSysInterrupts.0
+        - ssSysContext.0
+        - ssRawInterrupts.0
+        - ssRawContexts.0
+      label: 'sysCpuIrContStat'
+      unit: 'number'
+      perf: True
+    - group:
+        - ssCpuRawUser
+        - ssCpuRawNice
+        - ssCpuRawSystem
+        - ssCpuRawIdle
+        - ssCpuRawWait
+        - ssCpuRawKernel
+        - ssCpuRawInterrupt
+        - ssCpuRawSoftIRQ
+        - ssCpuRawSteal
+        - ssCpuRawGuest
+        - ssCpuRawGuestNice
+      label: 'sysCpuRawStat'
+      unit: ticks
+      perf: True
+    - group:
+        - ssIORawSent
+        - ssIORawReceived
+        - ssRawSwapIn
+        - ssRawSwapOut
+      label: 'sysIORawStat'
+      unit: 'blocks'
+      perf: True
+
+ssh:
+  username: 'root'
+  password: 'SSBsb3ZlIENoaW5hICYgQ2hpbmVzZS54eA=='

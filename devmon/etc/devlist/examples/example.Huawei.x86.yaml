@@ -1,0 +1,44 @@
+---
+host:
+  - address: IBM_TS_ADDRESS  # the address which be listened by SNMP Daemon
+    region: DataCanterA  # the region of device, e.g. DCA, DCB, DataCenterA...
+    area: Development  # the business area
+    addr_in_cmdb: SomeAddr  # the address which related with Resource ID in CMDB
+    rid: ''
+ssh:
+  username: 'hscroot'
+  password: <PASSWORD>
+  entries:
+    - table: 'lssvcevents -t hardware --filter status=Open'
+      label: ''
+      reference: ''
+
+    - table: 'lshmc -V'
+
+    - table: 'lssysconn -r all'
+
+    - table: 'lsled -r sa -t phys -m Server-8408-E8E-SN2173B8W'
+
+# """
+#        user = user if user else 'root'
+#        password = password if password else 'Huawei12#$'
+#
+#        return self.getoutput('version')
+#
+#        # ipmcget -t led -d ledstate -v led2
+#        # ipmcget -t led -d list
+#        return self.getoutput('ipmcget -t led -d list')
+#
+#        return self.getoutput(f'ipmcget -t led -d ledstate -v {led_name}')
+#
+#        # ipmcget -t sensor -d list
+#        all_sensors = self.getoutput('ipmcget -t sensor -d list')
+#
+#
+#        # ipmcget -t fru0 -d health
+#        output = self.getoutput('ipmcget -t fru0 -d health')
+#
+#        # ipmcget -t fru0 -d fruinfo
+#        _type = self.getoutput('ipmcget -t smbios -d systemname')[0].split(':')[-1]
+#        _sn = self.getoutput('ipmcget -d serialnumber')[0].split(':')[-1]
+#"""
