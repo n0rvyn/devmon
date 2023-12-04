@@ -680,7 +680,7 @@ class DevMon(object):
         multiprocessing.set_start_method('fork', force=True)
         with Manager() as manager:
             shared_list = manager.list()
-            proc = [Process(target=read_with_processing, args=(agent, )) for agent in agents]
+            proc = [Process(target=read_with_processing, args=(agent,)) for agent in agents]
 
             [p.start() for p in proc]
             [p.join() for p in proc]
@@ -1265,18 +1265,16 @@ class DevMon(object):
 _USAGE_ = (f'Usage: {_NAME_} <alert | perf> [-s | --service]'
            f'\n'
            f'Actions: '
-             f'  {_NAME_} alert [-s | --service]  # one-time alert or running as a service \n'
-             f'  {_NAME_} query \n'
-             f'  {_NAME_} sync  # syncing resources ID from CMDB to MongoDB \n'
-             f'  {_NAME_} close <CASE ID> <content (field 4)> <current value (field 7)>\n'
-             f'  {_NAME_} pm [device] \n'
-             f'  {_NAME_} perf [-s | --service] # run performance checking\n'
-             f'  {_NAME_} hide <PASSWORD>  # converting password to strings \n'
-             f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.\n'
-             f'\ne.g., \n'
-             f'  export DEVMON_SECRET=""; export DEVMON_POS_CODE=0'
-             )
-
+           f'  {_NAME_} alert [-s | --service]  # one-time alert or running as a service \n'
+           f'  {_NAME_} query \n'
+           f'  {_NAME_} sync  # syncing resources ID from CMDB to MongoDB \n'
+           f'  {_NAME_} close <CASE ID> <content (field 4)> <current value (field 7)>\n'
+           f'  {_NAME_} pm [device] \n'
+           f'  {_NAME_} perf [-s | --service] # run performance checking\n'
+           f'  {_NAME_} hide <PASSWORD>  # converting password to strings \n'
+           f'\nexport environment parameters DEVMON_SECRET and DEVMON_POS_CODE before run the tool as a service.\n'
+           f'\ne.g., \n'
+           f'  export DEVMON_SECRET=""; export DEVMON_POS_CODE=0')
 
 if __name__ == '__main__':
     devmon = DevMon()
