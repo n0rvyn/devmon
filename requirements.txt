@@ -3,7 +3,7 @@ PyMySQL
 pymongo
 paramiko
 pytz
-influxdb3-python
+influxdb3-python[pandas]
 pyarrow<13.1,>=13.0
 numpy<=1.26.1
-pandas
+# pandas
