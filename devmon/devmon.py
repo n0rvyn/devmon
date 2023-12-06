@@ -834,7 +834,24 @@ class DevMon(object):
         """
         Find out all dict(s) in MongoDB those 'type' equal to '1' and alert not pushed to rsyslog server
         """
+        # TODO filtering 'sshdStat' events count>=2; others count not sensitive.
         flt = {'type': '1', 'publish': 0}
+        flt = (
+            {
+                "$or":
+                [
+                    {
+                        "type": "1",
+                        "count": {"$lte": 1},
+                        "$or": [{"object": "sysSshdStat"}, {"object": "sysSnmpdStat"}]
+                    },
+                    {
+                        "type": "1",
+                        "count": {"$lte": 1},
+                        "object": {"$not": {"$eq": "sysSshdStat"}}
+                    }
+                ]
+            })
         return self.mongo.find_many(flt)
 
     def filter_alerts_all(self) -> list[dict]:
