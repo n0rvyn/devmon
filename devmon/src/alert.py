@@ -14,7 +14,14 @@
 ---Pushing messages to remote log server---
 """
 from subprocess import getoutput
+from typing import Literal
+from threading import Thread
 import socket
+
+
+EventType = Literal[
+    'alert', 'recovery', 'message'
+]
 
 
 class PushMsg(object):
@@ -23,17 +30,6 @@ class PushMsg(object):
         self.port = port
         self.nc = nc_path if nc_path else getoutput('which nc')
         self.nc_args = '-w1 -u'
-
-        # if not path.exists(self.nc):
-        #     raise FileNotFoundError
-
-    # def ____push(self, msg: str):
-    #     # for macos, '-w1' means different with different nc versions.
-    #     echo_path = getoutput('which echo')
-    #     cmd = f"""{echo_path} '{msg}' | {self.nc} {self.nc_args} {self.server} {self.port}"""
-    #     return_code = getstatusoutput(cmd)[0]
-    #
-    #     return true if return_code == 0 else false
 
     def push(self, msg: str = None):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -51,7 +47,3 @@ class PushMsg(object):
             except ConnectionRefusedError:
                 return False
 
-
-if __name__ == '__main__':
-    pm = PushMsg('localhost', nc_path='/usr/bin/nc', port=10514)
-    print(pm.push(f"""{getoutput('date "+%y/%m/%d %H:%M:%S"')} Hello World! """))

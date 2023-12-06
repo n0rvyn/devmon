@@ -41,6 +41,7 @@ from src import InfluxDB, PySSHClient
 from src import Agent, read_agents
 # from src import SSHDetail, SNMPDetail
 from src import load_config, Config, build_case
+from getopt import getopt
 
 _ROOT_ = os.path.abspath(os.path.dirname(__file__))
 _NAME_ = os.path.basename(__file__)
@@ -489,13 +490,20 @@ class DevMon(object):
     #         errmsg = f'Update exist case [{case_mongo.id}] [{u_rtn}] [{case_mongo}] [{case}]'
     #         self._info(msg) if u_rtn else self._error(errmsg)
 
-    def multi_insert_cases(self, cases: list[Case]):
-        threads = [Thread(target=self._insert_case, args=(case,)) for case in cases]
-        [t.start() for t in threads]
-        [t.join() for t in threads]
+    # def multi_insert_cases(self, cases: list[Case]):
+    #     threads = [Thread(target=self._insert_case, args=(case,)) for case in cases]
+    #     [t.start() for t in threads]
+    #     [t.join() for t in threads]
 
-    def insert_cases(self, cases: list[Case]):
-        [self._insert_case(ca) for ca in cases]
+    def insert_cases(self, cases: list[Case], multithread: bool = False):
+        if multithread:
+            # threads = [Thread(target=self._insert_case, args=(case, )) for case in cases]
+            threads = [Thread(target=self.mongo.insert_case, args=(case, )) for case in cases]
+            [t.start() for t in threads]
+            [t.join() for t in threads]
+        else:
+            # [self._insert_case(ca) for ca in cases]
+            [self.mongo.insert_case(ca) for ca in cases]
 
     def _update_attach_value_by_id(self, case_id: str, update_key: str, to_value):
         flt = {'id': case_id}
@@ -1074,7 +1082,8 @@ class DevMon(object):
                    f'multi-threading [{multithread}]')
 
         start = perf_counter()
-        self.multi_insert_cases(a_cases) if multithread else self.insert_cases(a_cases)
+        # self.multi_insert_cases(a_cases) if multithread else self.insert_cases(a_cases)
+        self.insert_cases(a_cases, multithread=multithread)
         self._info(f'All A side snmp cases inserted to MongoDB, '
                    f'spent {perf_counter() - start:.2f} seconds, '
                    f'multi-threading [{multithread}]')
@@ -1088,7 +1097,8 @@ class DevMon(object):
                    f'multi-threading [{multithread}]')
 
         start = perf_counter()
-        self.multi_insert_cases(b_cases) if multithread else self.insert_cases(b_cases)
+        # self.multi_insert_cases(b_cases) if multithread else self.insert_cases(b_cases)
+        self.insert_cases(b_cases, multithread=multithread)
         self._info(f'All B side snmp cases inserted to MongoDB, '
                    f'spent {perf_counter() - start:.2f} seconds, '
                    f'multi-threading [{multithread}]')
@@ -1296,6 +1306,8 @@ _USAGE_ = (f'Usage: {_NAME_} <alert | perf> [-s | --service]'
 if __name__ == '__main__':
     devmon = DevMon()
     act = opt = None
+
+    getopt(sys.argv[1:], '-s', ['service', 'alert', 'query', 'sync', 'close'])
     try:
         act = sys.argv[1]
     except IndexError:
@@ -1310,11 +1322,10 @@ if __name__ == '__main__':
         devmon.refresh_config(init_mongo=True)
 
     if act == 'alert':
-        try:
-            if opt in ['-s', '--service']:
-                devmon.refresh_config(init_mongo=True, service=True)
-                devmon.alert_loop()
-        except IndexError:
+        if opt in ['-s', '--service']:
+            devmon.refresh_config(init_mongo=True, service=True)
+            devmon.alert_loop()
+        else:
             devmon.refresh_config(init_mongo=True)
             devmon.alert()  # add a sleep interval
 
@@ -1326,11 +1337,10 @@ if __name__ == '__main__':
         devmon.pm(device=dev)
 
     elif act == 'perf':
-        try:
-            if opt in ['-s', '--service']:
-                devmon.refresh_config(service=True, init_influx=True)
-                devmon.perf_loop(influx=True)
-        except IndexError:
+        if opt in ['-s', '--service']:
+            devmon.refresh_config(service=True, init_influx=True)
+            devmon.perf_loop(influx=True)
+        else:
             print(_USAGE_)
 
     elif act == 'query':

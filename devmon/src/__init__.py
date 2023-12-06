@@ -4,12 +4,11 @@ from .agent import Version, Agent, SNMPDetail, SSHDetail, Host
 from .entry import Entry, WaterMark, ArithType, EntryValue, ArithPosition
 # from .case import Case, CaseType, TheSameCasePart, CaseUpdatePart, MetaData, Data
 from .case import Case, CaseType, MetaData, Data
-from .event import EventType
 from .point import PointMeta, Point
 from .read_devlist import read_agents
 from .snmp import SNMP, ContextSNMP
 from .log import ColorLogger
-from .pushmsg import PushMsg
+from .alert import EventType, PushMsg
 from .mongo import MongoDB, MongoPoint
 from .cmdb import CMDB
 from .buildcase import build_case
@@ -26,7 +25,6 @@ __all__ = [
     'Agent',
     'SNMP',
     'ColorLogger',
-    'PushMsg',
     # 'entry_to_case',
     'MongoDB',
     'CMDB',
