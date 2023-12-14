@@ -841,19 +841,25 @@ class DevMon(object):
         """
         # TODO filtering 'sshdStat' events count>=2; others count not sensitive.
         # flt = {'type': '1', 'publish': 0}
+        count_threshold = 2
         flt = (
             {
                 "$or":
                 [
                     {
                         "type": "1",
-                        "count": {"$lte": 1},
-                        "$or": [{"object": "sysSshdStat"}, {"object": "sysSnmpdStat"}]
+                        "count": {"$gte": count_threshold},
+                        "$or": [{"object": "sysSshdStat"}, {"object": "sysSnmpdStat"}],
+                        "publish": 0
                     },
                     {
                         "type": "1",
-                        "count": {"$lte": 1},
-                        "object": {"$not": {"$eq": "sysSshdStat"}}  # TODO add $or for snmpdStat
+                        "count": {"$lt": count_threshold},
+                        "$and": [
+                            {"object": {"$not": {"$eq": "sysSshdStat"}}},
+                            {"object": {"$not": {"$eq": "sysSshdStat"}}}  # TODO verify with MongoDB Compass
+                        ],
+                        "publish": 0
                     }
                 ]
             })
@@ -1234,7 +1240,7 @@ class DevMon(object):
                 err = f'{c.entry_value.value} {c.entry_value.unit}' if c.entry_value.unit else c.entry_value.value
 
             label = c.entry.label
-            self._warn(f'Met a NoneType label: {label}, oid: {c.entry}') if label else None
+            self._warn(f'Met a NoneType label: {label}, oid: {c.entry}') if not label else None
             label = label if label else 'None'
 
             try:

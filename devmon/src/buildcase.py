@@ -128,7 +128,7 @@ def build_case(agent: Agent, entry: Entry = None,
                     sources=source,
                     description=description,
                     threshold=f'{threshold}',
-                    index=entry_value.instance,
+                    # index=entry_value.instance,
                     address=agent.address)
 
     try:
@@ -141,7 +141,7 @@ def build_case(agent: Agent, entry: Entry = None,
     cid = h.hexdigest(25)  # TODO got the same ID if ONLY 'address' is specified for Host() dataclass
 
     # attach = CaseUpdatePart(count=1, alert=alert, content=content, current_value=current_val)
-    attach = Data(count=1, alert=alert, content=content, current_value=current_val)
+    attach = Data(count=1, alert=alert, content=content, current_value=current_val, index=entry_value.instance)
 
     case = Case(id=cid, entry=entry, entry_value=entry_value)
     for key, value in asdict(core).items():

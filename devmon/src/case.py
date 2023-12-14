@@ -43,6 +43,7 @@ class CaseUpdatePart:
     current_value: str = None
     publish: PublishStat = 0
     visible: bool = True  # todo add to case
+    index: str = None  # the index of OID and VOID; this parameter makes the OID table or OID range cases been separated
 
 
 @dataclass
@@ -57,7 +58,6 @@ class TheSameCasePart:
     description: str = None
     object: str = None
     threshold: str = None  # watermark for countable value or reference for others
-    index: str = None  # the index of OID and VOID; this parameter makes the OID table or OID range cases been separated
     # the SNMPD listened address;
     # make sure the different hosts those have the same OIDs configuration will be created to different cases.
 

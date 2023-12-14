@@ -159,22 +159,29 @@ class MongoDB(object):
                 if case.alert:  # alert the case exists and which remain alert, count++
                     case.count += case_in_mongo.count
                     case.type = '1'
-                    case.publish = 0  # set to 0, waiting for pushing alert to rsyslog server
+                    case.publish = 0  # set to 0, waiting for pushing alert to rsyslog server if alert is True
 
                 else:  # Alert case exists, but stat turns to normal. It's a recovery event.
                     case.type = '2'  # case is recovered
-                    case.publish = 1  # alert pushed, waiting for pushing recovery to rsyslog server
+
+                    if case.object == 'sysSshdStat' and case_in_mongo.count < 2:
+                        # case.type = '3'
+                        # case.alert = False
+                        # case.count = 1
+                        case.publish = 0  # type equals 3 and publish equals 0, nothing been pushed.
+                    else:
+                        case.publish = 1  # alert pushed, waiting for pushing recovery to rsyslog server
 
             else:  # normal case exists
+                case.publish = 0  # reset publishing stat to 0
+
                 if case.alert:  # normal case exists and recalls as abnormal
                     case.count = 1  # abnormal case count reset
                     case.type = '1'  # alert case
-                    case.publish = 0  # waiting for pushing alert
 
                 else:  # normal case exists and remains normal
                     case.type = '3'
                     case.count += 1  # normal case count++
-                    case.publish = 0  # reset publishing stat to 0
 
             # only update the 'attach' part of the case
             return self.update_case_attach(case_id=case_in_mongo.id, case=case)
